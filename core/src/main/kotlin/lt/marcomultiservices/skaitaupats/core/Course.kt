@@ -139,7 +139,9 @@ object CourseBuilder {
             val id = nextId()
             val rnd = Random(id * 7919)
             val words = buildList { repeat(minOf(4, pendingWords.size)) { add(pendingWords.removeFirst()) } }
-            val sentences = buildList { repeat(minOf(2, pendingSentences.size)) { add(pendingSentences.removeFirst()) } }
+            // A lesson without new words reads more sentences, so it is not over after two.
+            val sentenceCount = if (words.isEmpty()) 4 else 2
+            val sentences = buildList { repeat(minOf(sentenceCount, pendingSentences.size)) { add(pendingSentences.removeFirst()) } }
             val ex = mutableListOf<Exercise>()
             words.forEachIndexed { i, w ->
                 ex += Exercise.ReadWord(w)

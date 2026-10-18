@@ -48,7 +48,7 @@ tap "Pamoka 8"; sleep 3; shot 08_skaitome 1
 tap "Toliau"; sleep 2; shot 08b_zodis 1
 tap "Uždaryti"; sleep 2
 swipe; swipe; swipe; swipe; swipe
-tap "Pamoka 18"; sleep 3; shot 09_pasakaite 2
+tap "Pamoka 19"; sleep 3; shot 09_pasakaite 2
 tap "Klausyk"; sleep 1; shot 10_skaitymas 1
 tap "Toliau"; sleep 2; shot 10b_puslapis 1
 tap "Uždaryti"; sleep 2

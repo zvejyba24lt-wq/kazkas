@@ -1,79 +1,173 @@
 02cc2a69720bd8bf|Ant
 4ff47348d541b914|Ant kėdės sėdi katė.
+d6825eeb1f4693a6|Ant medžio tupi paukštis.
+58f3ad54edbfc029|Ant stalo – bananai ir obuoliai.
+03146bcdb2a6422d|Ant žolės guli obuolys.
 2c0566810b1410c5|Antis
 3081b253f262ad69|Antis plaukia.
+f6df368af42a332f|Arklys
+b70bad1a282b36b7|Arklys bėga per lauką.
+4cb3c886dbaf6479|Atbėgo
+2bedcc3963430d2f|Atbėgo šuo Reksas.
+ef009844fc64f472|Atėjo
+91de86eeebb883c2|Atėjo žiema.
 69f2e19499724e3d|Avis
 37772408df9d6ae9|Avis ėda.
+c6f56c4a51c5f528|Ačiū
+2a65191646599edf|Aš
+38a2e34ea0f8c472|Aš moku skaityti!
+187df5314566c0c2|Balionas
+d4a88fe0fcb34ff5|Balionas pakilo į dangų.
+40880286482e1363|Bet
+843998c72e8cc38a|Bet obuolys labai didelis!
 ca8a3df5255fc010|Bitė
 67cf471ccc09d661|Bitė ieško gėlės.
 e7c26f02771d5423|Bitė nusileidžia ant gėlės.
+2bf1871576955ed3|Bitė renka medų.
 87ba7e22cb73acbe|Bitė skrenda virš pievos.
 4f47182227467f38|Bitė skrenda.
+b0ea177f4ccc5eac|Blynai
+6ff8b1611ccb7961|Blynai su uogiene – skanumėlis!
 0857da86cdfbad9c|Cirke
 22796d436016d4f2|Cirke yra dramblys.
 9c105a88b046656c|Citrina
 0e86d66bf61baf80|Citrina rūgšti.
+e7ecf9cdeb16fad0|Cukrus
+749c63bc9489b6c0|Cukrus saldus.
+eb1933b8431b0d50|Dabar
+b0dea46e57b32dcc|Dabar ežiukas turės ką valgyti.
+b39f0783560c7a3c|Danguje
+b20611135ba62f6b|Danguje – vaivorykštė!
+d296149fbe5cb3b4|Danguje – vaivorykštė.
 52624a03e99d12e8|Debesis
 9d205e6ba83d6c7a|Debesis plaukia dangumi.
+94eac530e83f0e11|Delfinas
+a08cb1c68852a4e2|Delfinas šokinėja iš vandens.
+35b57096405ddf22|Draugas
+bb2d8721f69a8434|Draugas atnešė dovaną.
 cc32a510815e02ca|Dėžėje
 1dc3bb83a6cbb004|Dėžėje – mažas šuniukas!
 05612ebd768716b3|Ema
+3a841e6726286ff4|Ema apsiauna guminius batus.
 6dba94f9a5e49816|Ema ilsisi.
+1d33cca7bc6d9877|Ema ir mama.
+d26b91f6e0b64a34|Ema nori grįžti rytoj!
+0743de7329058b97|Ema susiranda draugę Liną.
+52b3a262baf3a431|Emą
+6e60c2c88dcb334c|Ežiukas
+02c98fd048f634bf|Ežiukas ir obuolys
+6a032107cdc74027|Ežiukas nori jį parsinešti.
+b65ed172f59c6f50|Ežiukas užsimeta jį ant spyglių.
 15703638b772ae87|Ežys
+33f0811dbb1b295c|Ežys ieško obuolių.
 c29ca2f4b21b72ac|Ežys labai dygus.
+a7373e00953b5fbf|Futbolas
+4fe1897d26d3b08c|Futbolas – smagus žaidimas.
 d9262384615da545|Fėja
 8e9217a16ac8310d|Fėja moja lazdele.
 7bd565cc2bfa4fe9|Fėja paklausė: „Ko tu nori?“
 95ec9e793fdea163|Fėja pamojavo lazdele.
+fff0776fcd98c922|Fėja turi sparnus.
 d094522827526199|Gaidys
 719fca60a4adecc3|Gaidys gieda.
 2537322b314d4280|Grybauti
+eb2f0781fa43d663|Gėlės
+ab51e0d251cdca5e|Gėlės kvepia.
+4ddbf965a0a9c434|Herbata
+29a91465d446a644|Herbata karšta.
 586d74d63d72c065|Hokėjus
 f6eff496283eee5f|Hokėjus – žiemos sportas.
 96e58e54c681c01b|Ir
 d78a2e5dcbe072a7|Ir atbėgo kitas zuikis!
 2d7e8f262ce9bfe1|Ji
 23cec5cd05c8580a|Ji pamatė paukštį.
+6d88567d2e142de6|Ji turi naują kuprinę.
+d9cb5c23242c96ee|Ji šokinėja per balas.
+f0aa0e880043134c|Jie
+a4cd07c99a678150|Jie lipdo sniego senį.
+3122e3dcd300fce2|Jis
+66a43c600af82abd|Jis miegos iki pavasario.
+11d03afc4509aa5f|Jis susirado jaukų urvą.
+71f87a3171de18ca|Jis turi karvę ir arklį.
 78f8c37c0d20bfe0|Jonas
 8fea7a059a61d3a1|Jonas eina namo.
+1a9280390f83985d|Jonas turi dviratį.
+aee6496c8c9d9ba3|Jos
+859a5f61a2eafbdd|Jos kartu piešia saulę.
 0c5a9018c1675575|Jūra
 878329ff5a2670bb|Jūra didelė ir mėlyna.
 00bad91ec12bb8f8|Jūra didelė.
+7a9989473a558cde|Kamuolys
+62d6ee2dbf365cd8|Kamuolys nuriedėjo į krūmus.
+372692db085ccd2c|Karvė
+3d2a2d7ff717d01f|Karvė duoda pieno.
+ae51572930e0addf|Karvė ėda žolę.
 48709e3a11ade693|Katė
 5c6742d2bbfa0a6d|Katė Mira išbėgo į sodą.
 0eaef66017e72161|Katė atsako: „Miau, miau!“
 628c3326a9a6e61e|Katė ilsisi.
 bab2c91e65840472|Katė miega.
+7d49d1e07ff75bd3|Katė tupi ant kilimo.
 72681cb7b71d2a29|Katė įlipo į medį.
+8551445f04786015|Kepame blynus
+9f4fb8af33c68eab|Kieme
+45bebbf410336437|Kieme vaikšto vištos ir gaidys.
 cbdc4d49dbbc471d|Kiškiai
 c29eded0e85faf3a|Kiškiai pasislėpė.
 87e9c9c765bb53ff|Kiškiai šoka.
 fddb30d6e3268c64|Kiškis
+9a368a0cce2e561c|Kiškis valgo morką.
 0e7c11716f0e0147|Kiškis šoka.
 d7f41e2825e232f9|Ko
+8575249e8f2d1b1d|Kur kamuolys?
 58c0f4393d7d0e99|Kuris žodis tinka paveikslėliui?
 822168c9449dfb36|Kurį skiemenį girdi?
 5565ad29f1d95a80|Labai gerai!
+1c97381b85e223e8|Labanaktis
+29902d6037adc31c|Labanaktis, meškiuk!
 b275e67a2b54e43c|Labas! Skaitome kartu?
+52fd330f027ac085|Laivelis
+78be0b9a52d3fbc5|Laivelis dingo už posūkio.
+d67600778f7aa931|Laivelis plaukia greitai.
 6b2d22891c1f5ef8|Lapė
+d07847a952b927ca|Lapė lekia.
 2b264e5914476b87|Lapė liko alkana.
 5e2c075e3185a8b0|Lapė nori pelės.
+cb044251675b11ae|Lietus
+c36025988c3a1272|Liną
+7468701f31098187|Liūtas
+ae05be5530340eb5|Liūtas – žvėrių karalius.
+eb28d01c1ad36a8f|Lyja
+ecf206faf153a937|Lyja lietus.
+90e58ea228abcc39|Lėktuvas
+650b971f0d3e30b3|Lėktuvas skrenda aukštai.
 381e7f304447ca1e|Mama
 91cdc33390c54b02|Mama ir Simas.
+a0d81a3fe5183594|Mama ir tėtis eina.
 2ec93730721fabec|Mama iškepė pyragą.
+b634dab419d38834|Mama išmuša kiaušinius.
+562a0104bef3d3ba|Mama mezga šaliką.
 a7015611d715c751|Mama myli mane.
 46e67cd00ce91d3e|Mama nupirko duoną.
 6cd7821210d25fa6|Mama prisirinko pilną krepšį.
 f67d903ca28a5491|Mama renka kriaukles.
 8b70bb3a4d458cf2|Man
+06821fc6e766a360|Man patinka ledai.
 88b0b7bb623e843b|Man čia labai gera.
+faea25a88ab65eb0|Mano
+d84aa67cf3d47a41|Mano kepurė raudona.
 c4e8689e49841e5c|Matau
 30593fb3a68d2a68|Matau katę.
 8311e539fa0c1d59|Mes
 fc3b80a6d70a82e5|Mes ieškome grybų.
+304658871ded44de|Mes padedame seneliui.
 0709706b69c37caa|Mes važiuojame prie jūros.
 1c601d6bac1c6c62|Meška
 a9e6c448dc12c4aa|Meška nori medaus.
+b1e036dbe811c8bf|Meškiukas
+4191064e482c0f37|Meškiukas eina miegoti
+4108b07d7c701b72|Meškiukas labai pavargo.
+37a856a7f8b4dc3d|Meškiukas užmigo.
 a035b01727f8cb91|Miau
 0ba9f2880a769f30|Mira
 947f8657bc259a81|Mira ir paukštis
@@ -83,21 +177,31 @@ c4e4e8a3c4a5661a|Mira įlipo į medį.
 3b118d4f1171c00f|Miške daug grybų.
 a4b97805445befd9|Miške daug medžių.
 a67006ac6ff67318|Miške gyveno mažas zuikis.
+2d29b93481c67bb3|Mokytoja
+f37ff0b04158b403|Mokytoja labai maloni.
 fc7d9c152cf1e3eb|Močiutė
 9241e6bad06dac9d|Močiutė atnešė didelę dėžę.
+26c7865bcfd7404a|Močiutė kepa pyragą.
+7d911cc2279e7f0c|Naktį
+d5d14aeccea6a787|Naktį varlytė sėdi prie tvenkinio.
+c0b3b83a2f44281b|Naktį šviečia mėnulis.
 a98a550b17858d7f|Noriu
 08ad9474709bb767|Nuo
 108d1177bcddebcf|Nuo tada jie visada kartu.
 08a914cde0503969|O
 457c934ed77eab4e|O Mira liko medyje.
 5dbb185558538a95|O aš plaukiu kaip žuvis!
+451343914ff1602b|O mėnulis vis dar šviečia danguje.
 137f0a12b551fb52|O čia mano kambarys.
 85af677094676f85|Obuolys
 aed0c7e6ecf681e9|Obuolys nukrito.
 5e6e2f8022077f22|Pabandyk dar kartą.
+047368da8aa317f1|Pagausiu
 a3f6ff91e2b99f90|Pamoka baigta! Puikiai padirbėjai!
+b6f4de1c58e743db|Pas senelį kaime
 a553e2529d5208d6|Paskui
 b0ae9a72eeb868de|Paskui bitė skrenda namo.
+33dcb6d6dc0ac7bd|Paskui išlenda saulė.
 9720346c50db9be5|Paukštis
 4756d6a6642ad573|Paukštis nuskrido.
 c52b379b0eac7748|Pačiūžos
@@ -107,11 +211,20 @@ f2cdaf0450c64a9c|Pelytė
 b97b58923079c68a|Pelė
 103bee93c6c8ee13|Pelė ir lapė
 60a015c98d0f14ff|Pelė lekia namo!
+f76868a2374eaa97|Pelė mato sūrį.
 f6b3c8380d8d8550|Pelė tupi ant akmens.
 5b0df5525b4e3029|Pelė tupi.
 0b6aba26973a5ed4|Perskaityk ir surask paveikslėlį.
 830f36228ec55d8a|Perskaityk sakinį.
 dba3ab799990c8b8|Perskaityk žodį.
+dbba932526f32ebd|Pingvinai
+d89adfc66ef7e7bc|Pingvinai gyvena ten, kur šalta.
+dc26af87f9b1378d|Pirma diena mokykloje
+7bc08d11cab67e19|Pliumpt
+2582798cd2cec278|Pliumpt! Vandenyje tik ratilai.
+b135c8568258082e|Popierinis laivelis
+95b1614510395a83|Pradeda
+5b98e681bf0d75ef|Pradeda lyti lietus.
 89d5c774f49bb07b|Prie jūros
 b3a74c9e8c9c2248|Puiku!
 76918a1660300369|Raidė a nosinė, kaip ąžuolas.
@@ -146,19 +259,34 @@ b81ee04514fed4fe|Raidė vė, kaip vilkas.
 67ec9bc1b78655e7|Raidė čė, kaip česnakas.
 36682c106151c40a|Raidė ė, kaip ėriukas.
 ca9d18c5d1488582|Raidė žė, kaip žuvis.
+ca00f65728a5fec2|Reksai
 55c5eac485d9325d|Reksas
 03a96aa3339085c6|Reksas atsisėda ir laukia.
+d5ee59ef4209cf97|Reksas ištraukė kamuolį!
 d739005a8aab13ea|Reksas lekia paskui!
 8328acaac76b8268|Reksas mato kiškius.
 b315f5b3989f11e1|Rita
 641c9c1358890712|Rita ir Ema.
 f2ddb91623608000|Rudenį
 7352bc1d89c80a65|Rudenį einame į mišką.
+582fc2fd118213f0|Rudenį ežiukas eina per sodą.
+b491aff5d0e4bd00|Rytą
+1f02145eb77095fe|Rytą danguje daug debesų.
 c17159a68af2ae6d|Saulė
 a22025a0c347f12b|Saulė kaitina.
+671a6e2e3517bd2b|Sekmadienio
+e5037a3a76cd9339|Sekmadienio rytą kepame blynus.
+de669db41dfb2467|Senelis
+4d33373ea6877f63|Senelis gyvena kaime.
+4ab4b23f7e74262b|Senelis skaito knygą.
 d92a7d9f2a689cf3|Simas
+b69cf2e6b9f7cbe2|Simas mato Emą.
+b3405a2d851c5019|Sniego
+4acdca05d1c0198e|Sniego senis
+cf372a8b75fb8003|Sniego senis labai gražus!
 ef4e739a99dccd3a|Sode
 5c958cfecf39c5d5|Sode daug obuolių.
+5afb80ea2c94f432|Sudie
 1aa908564fe4b209|Sujunk raides.
 48d9c512a8703a6b|Surask raidę a nosinė.
 189c3d72bac64bf5|Surask raidę a.
@@ -195,6 +323,7 @@ b4cf3c03f764366d|Surask raidę zė.
 e6624f9a7703bff4|Sūris
 6849e8462fa5eed6|Sūris skanus.
 cfa9a401b0f24ca6|Tai
+3a6deeac87a25419|Tai Rita.
 4abd41e3191263e3|Tai Tomas.
 08a8307b759c09d4|Tai bitė.
 415e6c18b41553ae|Tai katė.
@@ -207,103 +336,192 @@ fa4a093498a853a6|Tai mano namas.
 6e7125fa859bf19b|Tai šuo Reksas.
 e7b181bf5ea299ae|Teisingai!
 5fad2aa041dd6f0f|Tomas
+4f04223691506ed7|Tomas ieško, bet neranda.
+0e9609106502037a|Tomas ir Ema eina į kiemą.
 09f90db8510aa4be|Tomas ir katė
 d89a2f80978c837f|Tomas ir katė – kartu.
 a008c87d57111055|Tomas labai laimingas.
+cc7db0822809c43d|Tomas mojuoja: „Sudie, laiveli!“
+76dd5e4d9cb78e51|Tomas paleido jį į upelį.
+ac753b374f391c9f|Tomas pila miltus ir pieną.
 4ae7ea3aa2bc0abb|Tomas rado baravyką!
 385d096d9532b6c1|Tomas sako: „Miau!“
+a40447bf436196de|Tomas spyrė kamuolį.
 f0f3821380711c2f|Tomas turi ratus.
 c2e75ec14e9a68c3|Tomas turi šunį.
 e4143f9e99ba942e|Tomo
 5b6c9467a61d2e9f|Tomo gimtadienis
+99798e60c171cd16|Traukinys
+c074ca6aab3c4877|Traukinys važiuoja greitai.
 aca42d06d45e615d|Tėtis
 da498479b169eb63|Tėtis atnešė kopėčias.
+8c45ecc94a9a546c|Tėtis kepa blynus keptuvėje.
+9a4aeb8af9292e56|Tėtis kepa duoną.
 f137e972cbf12ef5|Tėtis lėtas.
 68e338d55f1dde8c|Tėtis neša kėdę.
+525b6395618a76ee|Tėtis padarė popierinį laivelį.
 998a4fc3827d1cbc|Tėtis padovanojo knygą.
 e3ac53849ce0d3af|Tėtis stato smėlio pilis.
+05e2dfa9fe4941c2|Vaikai
+223c2e41f3dba9ad|Vaikai žaidžia kieme.
 c62d108f08704115|Vakare
+31efe78ba265ff7e|Vakare geriame šiltą pieną.
 dbaa0dd3d4660088|Vakare valgome grybų sriubą.
+3037ebfb5b247d7e|Vandenyje
+d3c28407894e7069|Vandenyje ji mato mėnulį.
+48750cdae191de22|Varlytė
+42a030ac1135f9b8|Varlytė ir mėnulis
+5e622d4699bb0935|Varlytė šoka į vandenį.
 8b9e23f9b7e2f284|Varlė
 fe723054dec62dc4|Varlė tupi ant akmens.
 636d47f50863b91f|Vieną
 3db406b991312f51|Vieną dieną jis sutiko fėją.
+8a74efe691e7ade0|Vietoj
+2cd2d0e0e6407afd|Vietoj akių – akmenukai.
+b910984dfc400098|Vietoj nosies – morka.
+4f078c6b9b61ee0e|Vilkas
+f5747405004abd7d|Vilkas staugia.
+3c0852bf3676bd07|Visi
+6584e8ba5ba33f78|Visi valgome kartu.
+dc1265a45048c9d3|Voras
+3cea1f3c12d083e6|Voras mezga tinklą.
 46d08a2e1250c68d|Zebras
 4c9e49be942d04c0|Zebras dryžuotas.
 79c9b73da3433d0c|Zuikis
 dd3d41c970880233|Zuikis atsakė: „Noriu draugo.“
 325cdbf64bc31cf3|Zuikis bėga.
+68a5bc8631838cbc|Zuikis graužia kopūstą.
 ad869bab2e232cf3|Zuikis ir fėja
 86f7e437faa5a7fc|a
 3ed4c27fe6a45eff|agurkas
+02fbace1e40c9f1d|akių
 9d2e05d03129d60e|akmens
+0d79cafe0d83c931|akmenukai
 d7d51b8a3825d13b|alkana
 de73eac0c305038f|an
+46ac518944da6387|ananasas
 64bd05d891425661|ant
 b035079502990775|antis
+d3d9cae6d0923fe4|antys
+cf9b3f96b4c125e3|apsiauna
+23d8e0156062165c|ar
+6f636128ff757bd7|arbūzas
+fce43787288be25c|arklys
+314330d2537d2c78|arklį
 81455f7337b918bd|atbėgo
 9c972bb41497cc06|atnešė
 702f9d2b5252b8ff|atsako
 71a2d8857f04565b|atsakė
 db5f9a581a05fbad|atsisėda
+f095160c09b366f6|au
+8ccd1ea7a7387979|auga
+09e19f67395e0db6|aukštai
+3a15d97648b5a68d|autobusas
 1a9508cad4a305e5|avis
 06350f4cca390958|aš
+1fdbc1e55b115702|aštunkojis
 6c0596b8ac609191|ba
+3ab181db6bfd5182|balandis
+570e8ff7ab7c1d02|balas
+25681db9388674fa|balionas
+2580d49ff4060824|ban
+4acac183a3443b81|bananai
 d13218f1b0f9b38b|bananas
+b5dec4fc0df24335|banginis
 b071538356e919d9|baravykas
 21d1e95249dd61eb|baravyką
 1d31d94f30d40df7|bas
 7343557f3c9b5345|batas
+2bb3133141994004|batus
 986b1bc1eb8de896|be
+c033816b54c9eccf|bet
+f1d248de39d8e8f0|bež
+2cd437df36f9935c|beždžionė
 aab9b7bd17003da2|bi
 630f4099e1ab7f40|bitė
+d314679a087b53d2|bly
+83f8c1c045a0fed7|blynai
+c48697250ec26670|blynus
+19f8aa3ac19155d8|blys
 dc45fe023482b3b8|bo
 0311eeecdb50f082|bras
 6721d9fb11ca730b|bu
+abe22d3fe06d063f|bul
+4568776a03f3ae5e|bulvė
 5f015d0061d1b8cf|buo
+9344da3c7fbb85e6|bė
 458d56e91a5ddcd4|bėga
+c1a54005a3e85ec8|bū
 ca8d6869ef255cc0|būg
 be2144d08849bd02|būgnas
-1c42c72cf95aa1b7|ca
 b452d6b23b3c28f8|ce
 5a4fe08359c7f973|ci
 38ea3b126b9ff8c6|cir
 00f5c1ca5287cdd6|cirkas
 3e88625d1df8a8dc|citrina
-a601df4481028a4a|cū
+87dda20416649f2a|co
+cdd4f874095045f4|da
+5da94e1089740ddd|dai
 2591e5f46f28d303|dan
+1f3378c2c16bc129|danguje
 2886ade670c914dd|dangumi
+03bbe876dfab1cfa|dangų
 69e55b9e577640a4|dantis
+08fb52cf0b3735a3|dar
 bebabb62faccb84a|das
 de80e1c69703b1a9|daug
 600ccd1b71569232|de
 8e71a6d62399ebc6|debesis
+ec4166d9be0eac81|debesų
+fea453f853c8645b|del
+149046c4273e6350|delfinas
+f502e82c25bba5a0|di
+b3809f6571c5aafa|didelis
 698677c49bd51542|didelė
 b62505b5719c98f1|didelę
 6bcd22b534c92421|dieną
+0375aa5a46bc0b3e|dingo
 5be58a3a0eb92eb6|dis
 eadcd9bd2a09c75a|do
+8ed0eb82fab6730a|dovana
+2b9e294b04f84336|dovaną
+b87e5f603d4e13d3|dram
 c1a3e3509ef895c7|dramblys
 a54c79aef0a85e7d|draugo
+1cbb996963fe4350|draugę
+e14fe174cf5b50fa|dru
+78819dcc4a48e87a|drugys
 a0865f2718001089|dryžuotas
 fa114377ef35b25e|du
 16ef1d431149d2a0|duo
+281201dcfddf96ef|duoda
 faaa354a516f8fcc|duona
 d4d92d1101729e7b|duoną
+793d0b355137cad2|dvi
+442566bf23103485|dviratis
+428d4811e70413d2|dviratį
 6d9730cd7aa2cf30|dygus
 bc091443680dfe09|dys
 728624ccb3c5009f|dė
 1cda16a242526d1b|dėžę
+547b23d72b380b81|dū
+3498e4adaf3a33fe|dūda
+03f36a20bc07cb32|džio
 58e6b3a414a1e090|e
 6834f33f02b047f0|eina
 eac7985c11c5a657|einame
+54d9dc6d1bc513ee|ežiukas
 479bb460f056a867|ežys
 215a956168f77421|fa
 ee3e4af9c48a69f5|fe
 6b163fa3bad47a62|fi
-ddbc4e272b36cab2|fu
+a2f17ed1c6a8bc31|fla
+627a487f82b2df0c|flamingas
+19082866d46a5a57|fo
+e81a34531252d40c|fotoaparatas
 0b987d5b4d5455ed|fut
 0ad226265d04a785|futbolas
+898353c8bdf4d1da|fy
 5d3c3bc51049136b|fė
 9c4639b129fb9e8c|fėja
 4211d6db641a2c49|fėją
@@ -311,57 +529,107 @@ ddbc4e272b36cab2|fu
 2e4db20783b08228|gagena
 12d245751b868408|gai
 49bcabc6ab90b7de|gaidys
+a80b4514b2169c50|galvoja
 facafa7487839936|gas
 a9060bd552571145|ge
 fdeca1538ffc24c2|gera
+f70ecea276d05851|geriame
+fc7794c8c4e6955e|gi
 0aef283c8c5394a2|gieda
 24aa01834218cc83|gimtadienis
+7017032239df0ec9|gitara
 1ec558a60b5dda24|go
+9f81612f74f27529|graužia
 5fa1718cda58e862|graži
+1c9ee6f35a1ccbaf|gražus
+6a8ace0c3cc5926e|greitai
 558d44d13f48fa9c|gry
 2b06118e942777b6|grybas
 26060ce9e493a581|grybų
+7adcba0f506655fa|grįžti
+552dafc798f92c8f|gul
+4b131f9cecad9c1d|gulbė
+494b9f3a14afdf4f|guli
+50761cf1d17f1488|guminius
 b5c9e9b5420917ad|gur
+1fd642f1bc120a76|gy
+0565ec831fb67e4c|gys
+3c550dd4566a5979|gyvatė
 f5147f4a11685d31|gyvena
 b32f8364a72eeb62|gyveno
 79f5e7e338761e44|gė
 7c216aaba5db1552|gėlė
 b2f4d6efe880c5c7|gėlės
-30f088ea6673877c|he
+d1e902214b544054|gės
+ad99f0e4b102c42d|gū
+999400659233415a|her
+1b16c531f6934d01|herbata
+c22b5f9178342609|hi
+ef12f608c3485d8e|hipopotamas
 9a76a857ad399b49|ho
 a271fa5c66383f00|hokėjus
-cf7e7191fb5b4cdc|hū
+06b08b32563194c5|hu
+762970b018df21a1|hy
 fc63fcf2a90f12c1|ieško
 ef43e7c8a375c27e|ieškome
+6394210ce21ac27f|iki
 7b85dc984121066a|ilsisi
 aa1553beed5d8173|ir
+8e699857811f25e3|iš
 f1fa946f14e65f97|išbėgo
 15564889da7f09cb|iškepė
+4f93bdc949e5d943|iškrito
+650ee5df1ca22329|išlenda
+2695a81722f1aadc|išmuša
+a61e83ab56351db4|ištraukė
 84572ef2253ef81e|ja
 098481fbcf1199b3|jau
+7c925503ce32d0a0|jaukų
 7991fa5f1d43a971|jautis
 5bc56a2873ad8cef|ji
 ee86feb4ce419260|jie
 820ae7ecdd2a8333|jis
 bd73d35759d75cc2|jo
-a7ae639ea556171c|ju
 bf353fa4999f2f14|jus
+31ad08da0ac889ea|jė
+01abd605866da52d|jį
 8be35b8a6c0ade0e|jū
 d6ad3aafa8310a09|jūra
 8137ef13c8acea9c|jūros
 d312cc75dc28ced7|ka
+4dee50366f17f562|kaime
 aa07cae7866051d8|kaip
 9cf1f89da8e553d0|kaitina
+99d807f598538f31|kal
+df0379403db9fd96|kalnas
 3ec44662f57984a0|kambarys
 160bd2ed9e9e4ad9|kamuolys
+d082c10f4c850f18|kamuolį
+b98df4a979819387|kar
+54596ed51026003e|karalius
 3651a3250c60848e|kartu
+00535571e072dac0|karvė
+46c46c6353e4c4b0|karvę
+12c8f484f0997ce9|karšta
+292d05723cb27d25|karūna
 21313a463d0b8597|kas
 df8f8b52d44cc645|katė
 3f058e872dcd9c48|katę
+9b2ee4c59d22af8f|kaulo
 15d5e1d3b948fd59|ke
+8f686c0bf1c9747d|kepa
+68567846c3e62f7e|kepame
+e7afadd259aac97f|keptuvėje
 8704cf0a1aecdf73|kepurė
 81d211101ecc428c|ki
+b38cc4524785fe80|kiau
+7eef2c2beccc2e26|kiaulė
+9615368fe61ec27c|kiaušinis
+4600a2327294a41c|kiaušinius
+db9063952275f1d2|kieme
+1e1814a91a759f47|kiemą
 c9b5dac1c53fda8b|kilimas
+c7b7bdb7a7339d78|kilimo
 c0159612b0ef3213|kir
 b1e681a1521996ae|kirmėlė
 2ef12cbbeea42516|kis
@@ -369,233 +637,433 @@ dca2709224854b85|kitas
 48e22b8375f77ffd|kiš
 f318411ee4bbcf1c|kiškis
 d7898428c1692375|kiškius
+79c969ce4fb142fa|klys
+1252ef23fa614ce8|kny
+007c11ec5089dc0f|knyga
 132d407b2ca9c5d2|knygą
 65a7da8f45e5a2f3|ko
 8f14bfb756551c0f|koja
 1d89eeae9e88b3dd|kojinė
 ae8e89fc2ed4a938|kopėčias
+9ca6c3391936bbd5|kopūstas
+f9d28cafa498d4a3|kopūstą
 e5a58f4e15f9704b|krepšį
+37b50da7b98ed0e2|kriau
 96613a99f34d6089|kriaukles
+5b93718b0d820d5a|kriaušė
+6a816293c7b7f3a2|kro
+d195df3dd0104421|krokodilas
+35893e64ccfa65be|krūmus
 78fa1053807e92ee|ku
 339b85df6e85b3f0|kumelė
+ccd76b21d3a3fd55|kup
+96400a9741cc2128|kupranugaris
+f32497b74160bcda|kuprinė
+5353ed1ee8ed595e|kuprinę
+8bcac5dabf062198|kur
+db222c3b2ecb81b8|kvepia
+db75407102bcda48|ką
 1ff95c8b7833adda|kė
 cda466c684ac1a83|kėdė
 a9d936f489093a43|kėdės
 636bb7aea66aba52|kėdę
+1fb073b98055013f|kū
 3efd4c0fe185135d|la
 bae4901d8a5f98bb|labai
+526242588032599f|lai
+fcff19e67b0e1b2f|laikrodis
 c859f12c7b244bec|laimingas
+c60adcdf93b0cc74|laivas
+db1db7b156a756ae|laiveli
+b617ada8190725ce|laivelį
+422b386b66e37272|laivą
+be53d38d7ed0aba9|laiš
+16d4e3d32591751d|laiškas
 7fe3c01c6cc5490b|lama
+3ed79aa6d5c36a10|lan
 9ecf8b8a8001311f|lapas
 c777bf72f267a0e5|lapė
 5db3d4f1d6b4d177|las
 8536b4f5b6cca81f|laukia
+748d8df9e966062f|lauką
 44b864517454e47e|lazdele
 593b743b207e10ff|le
+dc2c5a298de57d73|ledai
 bd57ddb7bb4e9833|lekia
 41db30f8022117ed|li
+54e2fcb9cc6fe546|lie
+7a3c3432c64dbbbf|lietus
 b3da4a87f0d8cb69|liko
+2fbd5cf618af2b5d|lio
+1d7aec1cbda27e5c|lipdo
 dfc4a9789f42e942|lis
+2d4f01c2f7525263|liū
+29a0ff07f3d71807|liūtas
 638e8f0171575864|lo
 d6ea442480377983|loja
 3f76228c99e5664d|lu
 ec59449017e5b632|ly
 820b0a33311704b1|lys
+3d27e956bdc24c6f|lyti
 d85d9b67e3e371e5|lė
+3fece0892678eedd|lėk
+3b251a0be34015a2|lėktuvas
+911bbc204a0cbc34|lėkš
+621a498e03cb1db2|lėkštė
+5d544565f4e1ebae|lėlė
 ac3e49ac95dc78a4|lėtas
 cd90a85e99735e8d|lū
 b7d22190a98dab68|lūpos
 1382244e1784be14|ma
+6102b3a4badc733c|maloni
 99df988b77e60a17|mama
 dfe0ef17be118ac0|mane
 abf1aa4a5e1ac3fe|mano
 5f8992a5f5df2e39|mas
 3d5c73dbafe57ce4|mato
+8fa95ab80fdc313b|mašina
 ecb9dde7b21e2d16|mažas
 b1c1d8736f20db3f|me
 280602150849eb83|medaus
 fab9e623fde822d1|medis
 8ac5e20265ba3fdf|medyje
 90de3fff243bdcf4|medį
+eb74274daae1e699|medų
+5ee64143b51dbdc5|medžio
 9a53b70fd63959f4|medžių
 c9caf75baf7ae57a|metai
+7ee0b93752124199|mezga
 4842f36f557b8a1c|meš
 877873f4af8e6768|meška
+b8de945a2924b75f|meškiuk
 9c51ad8660eaae45|mi
 6d3673b42a9a5b9f|miau
 054c1aea330afe0e|miega
+2e0bc02a0712bf20|miegos
+60b8d49d2ef42752|miltus
+b6c935d4f3c7b220|min
 226e5f7b0408f353|mišką
 6adbae8c894eee14|mo
 96c3249ed2eadbf1|moja
+5b05d2c147f16678|mojuoja
+6cee9e52bc6d2d4a|moku
+11c54546a1111d51|mokyklą
+553f4c5a03c591c1|moliūgas
+f573504dc9c7e9e9|mor
+16d73afe6a45024d|morka
+fdbb8eac9274ef95|morką
 0e802e243c0fc962|muo
 8a426ebb2e9f0dac|myli
 0853b491271413f1|mė
 71d301ed70544e19|mėlyna
+1b46357156284760|mėnulis
+499f3fbfed5233ae|mėnulį
 a604ccd91d2deb0b|mėta
-eaaade3586e77e35|mū
 5efb4ac2212f109e|na
+491705162410b1e0|nai
+534565cb01f61006|naktį
 8d93297edb648732|namai
 b22ee798bcb5482f|namas
 74eb609643973514|namo
 2ebfe0545d8bc51b|namuose
 0e0c78c72d4215bc|nas
 974724866eee14b1|naujos
+e546e5ffc19333c9|naują
 f60d2a2f7993d582|ne
+4ef5b9fa2a95e04e|neranda
 e0885565bd4a40ef|neša
 c5f2aaa81dbf93ba|ni
+5ad140d5f4b7cad9|nia
+fd8ea867ee0975a0|nis
 fd1286353570c570|no
 0148d83165f204fd|nori
+008870b44681c0d6|nos
+d81cb8cd22d440c5|nosies
 326042a7a7e77c50|nosis
 539e0278337f619b|nu
 826111f86d20c48e|nukrito
+887ea5aa4198df51|nuo
 2d0d524ce36bc3b9|nupirko
+b3702ce9448b304c|nuriedėjo
 8f5a075a33d70a3d|nusileidžia
 853253fcf7fc9e4c|nuskrido
+74b73c75a76df0c9|nys
 13df79aabf8111d9|nė
 7a81af3e591ac713|o
+be7faa851f928ab5|obuoliai
 af364e9ff5167a22|obuolių
 1ca298b8dbb477d6|obuolys
 a1ce7ae924adbc50|oras
+aa76ccf328f21b42|ož
+90e7880b17cf5412|ožka
 379fc0d5299a71ac|pa
+4ef040f71147d210|padarė
+1eca8dbe05fdd945|padedame
 fd3c9ea1142dee52|padovanojo
+11fe04f37911aec5|pakilo
 f5e046d513a8037f|paklausė
+21c749f6c8863db3|paleido
 7c7dc446fb6a3c55|pamatė
 467edc5964f6a529|pamojavo
+e79113f506e4480c|par
+dfca9bf783317b4b|parsinešti
 19c2a0dbd8e3a41b|pas
 61e79a0eb50b7b7f|pasislėpė
 0cf44f76f81bd6d3|paskui
+76ed5e874f63f624|patinka
+4b355402b9a3eb7e|paukštis
 ad3981c87fc151de|paukštį
+830f59b8817e2c69|pavargo
+c74f46de3a33897a|pavasario
 0185625c42f8cd5c|pačiūžos
 1db828bcd41de753|pe
 787010b9c200c360|pelytė
 f475f64b09c3843c|pelė
+113a65ee7b733c6b|pelėda
 8a187aaeeb25cbd4|pelės
+8205aed0c460f4ec|per
 b02e5b66ace6dc3b|pi
 cfb3e59a2a0aa3e2|pie
 804442c2367c44cc|pienas
+48ec060ea84e2fce|pieno
+d43d7299faca2b39|pieną
 c760d3560b010fcd|pievos
 09941be1fc8d0cce|pieš
+da5869e0ca9d8ec2|piešia
 2ec03a07b9b98d49|pieštukas
+415fad35c82036d1|pila
 40fe106c0d1f29cf|pilis
 2e08bf8a6d2cf15c|pilną
+572982bbc4f29ee9|ping
+1fe2edc3df61831d|pingvinas
+d244a428f38f2966|pirš
+bda31eabe5d982f8|pirštinė
 4ab12ed685ea2aa5|plaukia
 75c87f2714e13509|plaukiu
 13a5d51391f6a6ff|po
+0c922bd5b8b984d6|pomidoras
+be228f0abb845e51|popierinį
 1478c028a16709cb|pos
+cb77086a83f931a3|posūkio
 dc25f31de7787e3a|prie
 e47d8c019ebec223|prisirinko
 f03aa350a4cc1088|pu
+e4f0417469c79673|puo
+5f9be303669cb7fa|puodelis
 902afd8803af75ec|py
 2ac2ce6aa725ba13|pyragas
 ed77993930a08524|pyragą
 11871d1618fd267e|pė
+46db0c75fe74345c|pūs
 fb2b9eca64fdf068|ra
 d0558d99292ce563|rado
+a74e182e49abf625|rak
+e61aada6e053d6f0|raketa
+1bd8c54db1ed4adb|raktas
 24765b4c90fc2e23|ran
 558a9f7495a16f82|ras
 0ce08d79f3de669b|rasa
 1301667f681752a8|ratas
+c1c5f1ce098003bb|ratilai
 fe54049aa9606004|ratus
+40ffd2385fe78547|raudona
 c387c982a132d05c|re
 ae17285a7f452344|renka
 268013331b64ca4d|ri
 72d14d174b071664|ris
+fea1e0e38d887e37|ritulys
 eed1903a65fb5137|ro
+f1f1bba36200188a|robotas
 67b8b1c4fedb2e38|ru
+084e247f7e9a9699|ruo
+9171ae1369d265b9|ruonis
 3af89e20f6b8fc95|ry
+d78b07c7cb8f1ba3|ryklys
+9f9f4d5ff17e9076|rykš
 e567826d2b4a38c2|rytas
+115bf1305751667a|rytoj
+b6ced2d0e14ea337|rytą
 c85c282c375d5eb4|rė
+bffe29ab8c70d374|rū
 dc7c9f48a7be214a|rūgšti
 3608a6d1a05aba23|sa
+f0488e300067bc29|sai
 17a73611b494f298|sako
 9a2505d5dd7d6c91|sala
+ca27550b84c5fe1b|saldus
+850c21b70195cc94|salotos
+d80a9e5ac1c9f434|sas
 ceb129127024ef8e|sau
 d3edad798deb40c1|saulė
+e1ddbfc56b66877c|saulėta
+780513464f17bb28|saulę
+a80396c333801d34|sausainis
 00762ccfa703393e|se
+15e02ada2fc54430|seneliui
+fbf8e2c5aee4ce1d|senis
+c9dc0681c8d3810c|senį
 7dd9b33881225c7a|si
 51a3d642c59e9571|sis
+de8778554e708ad7|skaito
+95d7a8581ccf9530|skaityti
+4855611684566299|skanumėlis
 299b144f22704071|skanus
 5fef9929ef01103c|skrenda
+631c2b4b1b38efad|skruz
+1dac5bbbb5a5646d|skruzdėlė
+85c2bebea7e2cbc0|smagus
+f4b441eacfa3c755|smui
+b7aa047781f06a71|smuikas
 f19e82525bed5202|smėlio
+dd16ac4fa9464a8a|snie
+25bb531a3dac3ee5|sniegas
+e682e08babc5ff3d|sniego
+b5afa9e78c51ecc4|sninga
 cd1b646ebd1f6844|so
 216fbd8c5cb00d0b|sodą
+c7ad05fa280498e8|sparnus
 6a399a9ac562188e|sportas
+29820ba9752199bc|spyglių
+2fb18ccff73a3328|spyrė
+bb6131f7fb4bb2a9|srai
+9470059e3ea59e1b|sraigė
+f91c080eea538ffe|sriu
+5d35e34eeba9aa8b|sriuba
 bccf01ee5b0264cb|sriubą
+f53381bfd01108de|stalo
 d606c1241fc17e48|stato
+6814a2d968285392|staugia
+363eb224f6ff8d3c|su
+ffecaa02b236e85d|susirado
+58026f942a7d47f4|susiranda
 882a25c70f8cc94b|sutiko
+2f9bd288b6619986|svo
+32642ba11f552332|svogūnas
+1d4daae77833ec89|sy
 56bf0c0337a3e951|sė
 96dce2952d6fe3b0|sėdi
 f1d358c15ff7456e|sū
 ff2e1fed111bd2b0|sūris
+aaaf38810fda364c|sūrį
 00a6ba21da70f3e7|ta
 42e4a3e115d92f06|tada
 ff155b80030ba65f|tai
 6849a273c4502027|tas
+dd3562449147ffc7|ten
 41c76e5218177bb9|ti
+ab58dc7e90f20c50|tig
+49c8cebe3f7ee930|tigras
+3bd41d4732f09ccb|tik
+03717d61faaf16e5|tinklą
 123238900818df5c|tis
 4374aaee247fb237|to
+a06ad5dbbfe4f53e|tor
+25ade8d0ceb11a2d|tortas
+4f956f26eec05f8c|tos
+99a5b47b46099351|trau
+180e5625e6549d23|traukinys
 54bf01f1ecb704d3|tri
 a3da4c6307d230e1|tu
+72fec05ee2db575d|tun
 2e9d89199caf4165|tupi
 48fdc59fef88e46e|turi
+a737b19a35ab5049|turės
+bcadbdf5ceb10af6|tus
+56bf0fa89b4721b0|tvenkinio
 32ad247f77b8a066|ty
 caeb33fbc76af768|tė
 5b3ad430b6c512e8|tėtis
 51e69892ab49df85|u
+8b438931efa6fa40|ug
+f39989b29c8189f4|ugnis
 628b7c6524b37f68|uo
 2903ee632059a832|uoga
+e45d1442eb3ceee9|uogiene
 23727068cd1bdf55|uola
+b6b5814a03710ddc|upe
+7a6756c8b60b642c|upelį
 1c01543cfc8ac40d|upė
+f754fe8205a5d2e7|upės
+b5adc78cedc5a4fa|urvą
+68ad3c1887d05249|už
+7e17c07ed396b400|užmigo
+5e42332d82e00d94|užsimeta
+665a4dc918ddfb85|va
+120032fb7016df5f|vai
+c0dce6ab8ac9497b|vaikšto
+ee7e0dcc3645f02b|vaivorykštė
+bec92bf4e3f9b3aa|valgo
 2668e01d1eac3795|valgome
+6b4b6870e7c12099|valgyti
+77efd3476b3ca03e|vandens
 f97bca44b30b6e3a|vandenyje
+6a96c1ae43f5f507|vandenį
 e5b4e786e382d03c|var
+6f391d109f57712d|varlytė
 1a35e431d8922959|varlė
+10b2cb7373d30182|varpas
+8723baf2cf4683b8|vas
+f488fc032084b001|važiuoja
 230eec5e4352d021|važiuojame
 934cff2debe78535|ve
+833da188871dde4c|vi
 10d9a20df66cd782|vil
 3f363435b8d15a15|vilkas
 12a4893f63bbc3c4|virš
 675c84dc90671639|vis
 6020e0ab02e81cf3|visada
+987585c11a448e01|vištos
 fadd56ec452f3249|vo
 717a0cce3fb26ae9|voras
-a29d050bee78d40b|vu
+9afb9f713d75063d|voverė
 dd22245476c3588a|vy
+89bb60d73817c2f9|vynuogės
+11210e3fed311178|vyš
+35d900aae0e37daa|vyšnia
 79724ff9d8b6ea1a|vė
 69e1422e08fc11ee|vėl
 b970cd7256c9725c|vėžys
 6cdf02d474ddcbe4|yra
+5878f333bf37fcfb|zas
 2a30b5bdc3f31b44|ze
 665ab0d4dfbe309f|zebras
+aeda07913f53d1e0|zo
+e3abab127fc08e94|zu
 21565ff4b8b330b8|zui
 ff05cba9948d2462|zuikis
-dcccef1c61b9892f|zy
-6f5fbd7f3b7dcba1|zė
+f011928f8f730cb1|zū
 8165af18aea4fd89|ą
 3336007067f570d0|ąsotis
 ce809fa3d46d2b3b|ąžuolas
 533b79878c5c2cee|Čia
+25f881222b023b98|Čia auga ąžuolas.
 da89ad549537224f|Čia gyvena katė Mira.
 a568e4e95f507a8a|Čia gyvena mama ir tėtis.
 3b1b21d8fa556129|Čia gyvena šuo Reksas.
 4587409311cedbf5|Čia mano namai
 633b5720a8116cbf|Čia mano namai.
 d6151a4917ee1a6b|Čia mano namas.
-558b77e5ee7c0b9c|ča
 030704aafdf41862|čes
 a54c21103737fb46|česnakas
-6d890e9b2554842e|či
 d2d85f086f22b23a|čia
 9b4d02ec6e9f39dd|čiū
-d5bdf855f903120d|čy
+0023052f7a56978e|čo
+3e728f1f9a341a1c|čė
+2827d32d6d9ca57d|čū
 fb83ffb57a5a38b4|ėda
+34e05bb715ff718c|Įlipk
+fb006908015e7839|Įlipk į laivą.
 5138b92d0bca1fd7|į
 e19d31462dd7fdb2|įlipo
 3b68f340fdc60b99|įrankis
+446d40509eca998c|Šalia
+e643ce70571597a8|Šalia plaukia antys.
 4cb734cb2ff7ea5e|Šaunu!
 a4e3b15f322d0086|Šiandien
+16508963a7b49ac0|Šiandien Ema eina į mokyklą.
 1e1e278accfc6c2c|Šiandien Tomo gimtadienis.
 92c803c09064548e|Šiandien jau daug išmokai! Naujos pamokos bus rytoj. O senas gali kartoti.
+2300f1919280fe04|Šiandien šilta ir saulėta.
 ef0b8976e4a12c64|Šią pamoką atrakins tėveliai.
 aa48914f51d5288e|Štai
 4e3fd7b8b4496fed|Štai graži gėlė!
@@ -603,40 +1071,69 @@ aa48914f51d5288e|Štai
 2558a866523bc0dc|Šuo Reksas
 3282cf49a73d0a85|Šuo ir katė.
 8a9df4f835d6830f|Šuo loja.
+14b6898a0e3fe6c6|Šuo nori kaulo.
 f7a22775b25c4d8b|ša
+a024261b2495b3cf|šalikas
+36b92bd7e50ba2ea|šaliką
+7cc8be7751b1da6c|šalta
 f00ff6c104c16f61|šauk
 7f7a2f39a9d7be47|šaukštas
+7a640c61b6beeaa6|še
 8d52e5873874832b|ši
+4b8378b448995e4d|šikš
+15b6dc7590105716|šikšnosparnis
+d1f8b0713f2bccd2|šilta
+da2b13c1a53943db|šiltą
 259bad3e0c3a1ff0|šo
 37c902817fd95e53|šoka
+d941fe154d58b5d4|šokinėja
 86ae85f0c56ff84e|šokoladas
 95609b9c927ad717|štas
 a35ace184d8b1d2c|šuniukas
 958f95517c7759ef|šunį
 929be57aba23501b|šuo
-3d02b13fd3273f71|šy
+7e45e1b32a60feab|šviečia
 01bf8dc052778cdc|šė
+4164e229a8775154|Ūdra
+056cdf05a88e3080|Ūdra plaukia upe.
+5d9958a6ef487540|ū
 5c7f2533f9c86bd6|ūd
 87b2766e1bde34cc|ūdra
+a524352a30a62f39|Žiemą
+48911d989e110d7b|Žiemą iškrito daug sniego.
+57d27d51e6e0e1de|Žiemą sninga.
 b838f53f9d647f2c|Žuvis
 db08c23fc8c80ec0|Žuvis plaukia vandenyje.
+fc5325de0c4d39b2|Žvaigždės
+f4a3c2085538ed1b|Žvaigždės šviečia naktį.
 f5162604713b5ab0|Žąsis
 087d9f72496e1c3a|Žąsis gagena.
-37d596c870540ac0|ža
+4460f95f475ba099|Žąsys
+5ad7a30dd5701cca|Žąsys eina prie upės.
+e68b097da17a628b|žaidimas
+8288aed5db616f85|žaidžia
 6ab87cba4220f510|žais
 73e2113690b86b50|žaislas
 4fd15caafae898bb|že
 04056ce5d431237b|žemė
 38a295f279e73b0c|ži
+c3c15f0649ed65b3|žiema
 9748d654b9795d52|žiemos
 3d12bbf5f20de073|žirafa
+baed05bbf4571cc2|žolės
+5ea9f20a4c7beda1|žolę
 30e7583320faa69a|žos
 360c9a0125f0df52|žu
 7aa04566d33b6882|žuo
 ce0f9928094a1a74|žuvis
+abb01f386883c887|žva
 8f81d930de0b6221|žvaigž
 412a4d16b9209631|žvaigždė
+55fdda0818b1b1d7|žvakė
+99a41948c99f2c78|žvėrių
+7fa08d99dd8f225e|žy
 dcb4858927c686eb|žys
 321db298f276432e|žą
 554bb5a3d0d1b63e|žąsis
-1ea9de855837e313|žū
+6cab33a468426380|„Ačiū, Reksai!“ – sako Tomas.
+3eaabe26ce9d76d7|„Pagausiu mėnulį!“ – galvoja ji.

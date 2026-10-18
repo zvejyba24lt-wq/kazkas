@@ -57,8 +57,8 @@ class CourseTest {
         val n = course.lessons.size
         println("Lessons: $n")
         course.lessons.forEach { l -> println("${l.id}. ${l.kind} ${l.title} [${l.exercises.size}]") }
-        assertTrue(n in 45..75, "lesson count $n")
-        assertEquals(10, course.lessons.count { it.kind == LessonKind.STORY })
+        assertTrue(n in 90..130, "lesson count $n")
+        assertEquals(20, course.lessons.count { it.kind == LessonKind.STORY })
         assertTrue(course.lessons.all { it.exercises.isNotEmpty() })
         assertEquals((1..n).toList(), course.lessons.map { it.id })
         println("Spoken texts: ${course.spokenTexts().size}")

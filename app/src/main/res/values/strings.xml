@@ -13,7 +13,7 @@
     <string name="progress_none">Dar nebaigta nė viena pamoka.</string>
     <string name="progress_hard">Sunkiau sekasi: %1$s</string>
     <string name="buy_title">Be reklamų ir be ribų</string>
-    <string name="buy_text">Nemokamai galima išmokti visą kursą: %1$d pamokos, visos 32 raidės ir 10 pasakaičių. Tik ne daugiau kaip %2$d naujos pamokos per dieną, o po pamokos rodoma trumpa vaikams skirta reklama. Baigtas pamokas kartoti galima be ribų. Vienas pirkimas visam laikui panaikina reklamas ir dienos ribą, be prenumeratos.</string>
+    <string name="buy_text">Nemokamai galima išmokti visą kursą: %1$d pamokos, visos 32 raidės ir 20 pasakaičių. Tik ne daugiau kaip %2$d naujos pamokos per dieną, o po pamokos rodoma trumpa vaikams skirta reklama. Baigtas pamokas kartoti galima be ribų. Vienas pirkimas visam laikui panaikina reklamas ir dienos ribą, be prenumeratos.</string>
     <string name="buy_button">Atrakinti už %1$s</string>
     <string name="buy_today">Šiandien naujų pamokų: %1$d iš %2$d.</string>
     <string name="buy_restore">Atkurti pirkimą</string>

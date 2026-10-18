@@ -125,7 +125,87 @@
     {"w": "ho-kė-jus", "emoji": "🏒"},
     {"w": "fė-ja", "emoji": "🧚"},
     {"w": "ži-ra-fa", "emoji": "🦒"},
-    {"w": "fut-bo-las"}
+    {"w": "fut-bo-las"},
+    {"w": "sa-lo-tos", "emoji": "🥗"},
+    {"w": "ra-ke-ta", "emoji": "🚀"},
+    {"w": "ro-bo-tas", "emoji": "🤖"},
+    {"w": "lai-vas", "emoji": "🚢"},
+    {"w": "au-to-bu-sas", "emoji": "🚌"},
+    {"w": "lėkš-tė", "emoji": "🍽️"},
+    {"w": "puo-de-lis", "emoji": "☕"},
+    {"w": "ar-bū-zas", "emoji": "🍉"},
+    {"w": "a-na-na-sas", "emoji": "🍍"},
+    {"w": "mo-li-ū-gas", "emoji": "🎃"},
+    {"w": "mor-ka", "emoji": "🥕"},
+    {"w": "po-mi-do-ras", "emoji": "🍅"},
+    {"w": "svo-gū-nas", "emoji": "🧅"},
+    {"w": "bul-vė", "emoji": "🥔"},
+    {"w": "kriau-šė", "emoji": "🍐"},
+    {"w": "vyš-nia", "emoji": "🍒"},
+    {"w": "vy-nuo-gės", "emoji": "🍇"},
+    {"w": "liū-tas", "emoji": "🦁"},
+    {"w": "tig-ras", "emoji": "🐯"},
+    {"w": "dram-blys", "emoji": "🐘"},
+    {"w": "bež-džio-nė", "emoji": "🐒"},
+    {"w": "ping-vi-nas", "emoji": "🐧"},
+    {"w": "ruo-nis", "emoji": "🦭"},
+    {"w": "kiau-lė", "emoji": "🐷"},
+    {"w": "kar-vė", "emoji": "🐄"},
+    {"w": "ož-ka", "emoji": "🐐"},
+    {"w": "ar-klys", "emoji": "🐎"},
+    {"w": "dru-gys", "emoji": "🦋"},
+    {"w": "srai-gė", "emoji": "🐌"},
+    {"w": "skruz-dė-lė", "emoji": "🐜"},
+    {"w": "ba-lan-dis", "emoji": "🕊️"},
+    {"w": "pe-lė-da", "emoji": "🦉"},
+    {"w": "gul-bė", "emoji": "🦢"},
+    {"w": "kro-ko-di-las", "emoji": "🐊"},
+    {"w": "gy-va-tė", "emoji": "🐍"},
+    {"w": "del-fi-nas", "emoji": "🐬"},
+    {"w": "ban-gi-nis", "emoji": "🐋"},
+    {"w": "ry-klys", "emoji": "🦈"},
+    {"w": "aš-tun-ko-jis", "emoji": "🐙"},
+    {"w": "kup-ra-nu-ga-ris", "emoji": "🐪"},
+    {"w": "vo-ve-rė", "emoji": "🐿️"},
+    {"w": "šikš-nos-par-nis", "emoji": "🦇"},
+    {"w": "lėk-tu-vas", "emoji": "✈️"},
+    {"w": "trau-ki-nys", "emoji": "🚂"},
+    {"w": "dvi-ra-tis", "emoji": "🚲"},
+    {"w": "ma-ši-na", "emoji": "🚗"},
+    {"w": "ka-rū-na", "emoji": "👑"},
+    {"w": "var-pas", "emoji": "🔔"},
+    {"w": "rak-tas", "emoji": "🔑"},
+    {"w": "lai-kro-dis", "emoji": "⏰"},
+    {"w": "kny-ga", "emoji": "📚"},
+    {"w": "laiš-kas", "emoji": "✉️"},
+    {"w": "do-va-na", "emoji": "🎁"},
+    {"w": "ba-lio-nas", "emoji": "🎈"},
+    {"w": "žva-kė", "emoji": "🕯️"},
+    {"w": "pirš-ti-nė", "emoji": "🧤"},
+    {"w": "ša-li-kas", "emoji": "🧣"},
+    {"w": "lie-tus", "emoji": "🌧️"},
+    {"w": "snie-gas", "emoji": "❄️"},
+    {"w": "vai-vo-rykš-tė", "emoji": "🌈"},
+    {"w": "mė-nu-lis", "emoji": "🌛"},
+    {"w": "ug-nis", "emoji": "🔥"},
+    {"w": "kal-nas", "emoji": "⛰️"},
+    {"w": "gi-ta-ra", "emoji": "🎸"},
+    {"w": "smui-kas", "emoji": "🎻"},
+    {"w": "tor-tas", "emoji": "🎂"},
+    {"w": "le-dai", "emoji": "🍦"},
+    {"w": "sau-sai-nis", "emoji": "🍪"},
+    {"w": "sriu-ba", "emoji": "🍲"},
+    {"w": "kiau-ši-nis", "emoji": "🥚"},
+    {"w": "bly-nai", "emoji": "🥞"},
+    {"w": "dū-da", "emoji": "🎺"},
+    {"w": "kup-ri-nė", "emoji": "🎒"},
+    {"w": "ko-pūs-tas", "emoji": "🥬"},
+    {"w": "her-ba-ta", "emoji": "🍵"},
+    {"w": "hi-po-po-ta-mas", "emoji": "🦛"},
+    {"w": "fla-min-gas", "emoji": "🦩"},
+    {"w": "fo-to-a-pa-ra-tas", "emoji": "📷"},
+    {"w": "lė-lė"},
+    {"w": "ri-tu-lys"}
   ],
   "sentences": [
     "Mama ir Simas.",
@@ -178,7 +258,56 @@
     "Citrina rūgšti.",
     "Cirke yra dramblys.",
     "Hokėjus – žiemos sportas.",
-    "Fėja moja lazdele."
+    "Fėja moja lazdele.",
+    "Ema ir mama.",
+    "Tai Rita.",
+    "Simas mato Emą.",
+    "Mama ir tėtis eina.",
+    "Katė tupi ant kilimo.",
+    "Pelė mato sūrį.",
+    "Lapė lekia.",
+    "Tėtis kepa duoną.",
+    "Mano kepurė raudona.",
+    "Vilkas staugia.",
+    "Voras mezga tinklą.",
+    "Ant medžio tupi paukštis.",
+    "Šuo nori kaulo.",
+    "Kiškis valgo morką.",
+    "Jonas turi dviratį.",
+    "Bitė renka medų.",
+    "Ant stalo – bananai ir obuoliai.",
+    "Gėlės kvepia.",
+    "Ežys ieško obuolių.",
+    "Žiemą sninga.",
+    "Žvaigždės šviečia naktį.",
+    "Ūdra plaukia upe.",
+    "Čia auga ąžuolas.",
+    "Žąsys eina prie upės.",
+    "Įlipk į laivą.",
+    "Mama mezga šaliką.",
+    "Vaikai žaidžia kieme.",
+    "Lėktuvas skrenda aukštai.",
+    "Traukinys važiuoja greitai.",
+    "Liūtas – žvėrių karalius.",
+    "Pingvinai gyvena ten, kur šalta.",
+    "Karvė ėda žolę.",
+    "Arklys bėga per lauką.",
+    "Šiandien šilta ir saulėta.",
+    "Lyja lietus.",
+    "Danguje – vaivorykštė.",
+    "Naktį šviečia mėnulis.",
+    "Močiutė kepa pyragą.",
+    "Senelis skaito knygą.",
+    "Aš moku skaityti!",
+    "Man patinka ledai.",
+    "Draugas atnešė dovaną.",
+    "Balionas pakilo į dangų.",
+    "Zuikis graužia kopūstą.",
+    "Cukrus saldus.",
+    "Herbata karšta.",
+    "Futbolas – smagus žaidimas.",
+    "Fėja turi sparnus.",
+    "Delfinas šokinėja iš vandens."
   ],
   "stories": [
     {
@@ -299,6 +428,126 @@
         {"t": "Fėja pamojavo lazdele.", "emoji": "✨"},
         {"t": "Ir atbėgo kitas zuikis!", "emoji": "🐇"},
         {"t": "Nuo tada jie visada kartu.", "emoji": "❤️"}
+      ]
+    },
+    {
+      "title": "Sniego senis",
+      "emoji": "⛄",
+      "pages": [
+        {"t": "Žiemą iškrito daug sniego.", "emoji": "❄️"},
+        {"t": "Tomas ir Ema eina į kiemą.", "emoji": "👫"},
+        {"t": "Jie lipdo sniego senį.", "emoji": "⛄"},
+        {"t": "Vietoj nosies – morka.", "emoji": "🥕"},
+        {"t": "Vietoj akių – akmenukai.", "emoji": "🪨"},
+        {"t": "Sniego senis labai gražus!", "emoji": "😊"}
+      ]
+    },
+    {
+      "title": "Kur kamuolys?",
+      "emoji": "⚽",
+      "pages": [
+        {"t": "Tomas spyrė kamuolį.", "emoji": "⚽"},
+        {"t": "Kamuolys nuriedėjo į krūmus.", "emoji": "🌿"},
+        {"t": "Tomas ieško, bet neranda.", "emoji": "🔍"},
+        {"t": "Atbėgo šuo Reksas.", "emoji": "🐶"},
+        {"t": "Reksas ištraukė kamuolį!", "emoji": "🐕"},
+        {"t": "„Ačiū, Reksai!“ – sako Tomas.", "emoji": "🤗"}
+      ]
+    },
+    {
+      "title": "Ežiukas ir obuolys",
+      "emoji": "🦔",
+      "pages": [
+        {"t": "Rudenį ežiukas eina per sodą.", "emoji": "🦔"},
+        {"t": "Ant žolės guli obuolys.", "emoji": "🍎"},
+        {"t": "Ežiukas nori jį parsinešti.", "emoji": "🦔"},
+        {"t": "Bet obuolys labai didelis!", "emoji": "😮"},
+        {"t": "Ežiukas užsimeta jį ant spyglių.", "emoji": "🦔"},
+        {"t": "Dabar ežiukas turės ką valgyti.", "emoji": "🍂"}
+      ]
+    },
+    {
+      "title": "Lietus",
+      "emoji": "🌧️",
+      "pages": [
+        {"t": "Rytą danguje daug debesų.", "emoji": "☁️"},
+        {"t": "Pradeda lyti lietus.", "emoji": "🌧️"},
+        {"t": "Ema apsiauna guminius batus.", "emoji": "👢"},
+        {"t": "Ji šokinėja per balas.", "emoji": "💦"},
+        {"t": "Paskui išlenda saulė.", "emoji": "☀️"},
+        {"t": "Danguje – vaivorykštė!", "emoji": "🌈"}
+      ]
+    },
+    {
+      "title": "Pas senelį kaime",
+      "emoji": "🐄",
+      "pages": [
+        {"t": "Senelis gyvena kaime.", "emoji": "👴"},
+        {"t": "Jis turi karvę ir arklį.", "emoji": "🐄"},
+        {"t": "Kieme vaikšto vištos ir gaidys.", "emoji": "🐓"},
+        {"t": "Karvė duoda pieno.", "emoji": "🥛"},
+        {"t": "Mes padedame seneliui.", "emoji": "🧺"},
+        {"t": "Vakare geriame šiltą pieną.", "emoji": "🌙"}
+      ]
+    },
+    {
+      "title": "Popierinis laivelis",
+      "emoji": "⛵",
+      "pages": [
+        {"t": "Tėtis padarė popierinį laivelį.", "emoji": "⛵"},
+        {"t": "Tomas paleido jį į upelį.", "emoji": "🏞️"},
+        {"t": "Laivelis plaukia greitai.", "emoji": "💨"},
+        {"t": "Šalia plaukia antys.", "emoji": "🦆"},
+        {"t": "Laivelis dingo už posūkio.", "emoji": "🌊"},
+        {"t": "Tomas mojuoja: „Sudie, laiveli!“", "emoji": "👋"}
+      ]
+    },
+    {
+      "title": "Meškiukas eina miegoti",
+      "emoji": "🐻",
+      "pages": [
+        {"t": "Atėjo žiema.", "emoji": "❄️"},
+        {"t": "Meškiukas labai pavargo.", "emoji": "🐻"},
+        {"t": "Jis susirado jaukų urvą.", "emoji": "🕳️"},
+        {"t": "Meškiukas užmigo.", "emoji": "😴"},
+        {"t": "Jis miegos iki pavasario.", "emoji": "🌸"},
+        {"t": "Labanaktis, meškiuk!", "emoji": "🌙"}
+      ]
+    },
+    {
+      "title": "Varlytė ir mėnulis",
+      "emoji": "🐸",
+      "pages": [
+        {"t": "Naktį varlytė sėdi prie tvenkinio.", "emoji": "🐸"},
+        {"t": "Vandenyje ji mato mėnulį.", "emoji": "🌕"},
+        {"t": "„Pagausiu mėnulį!“ – galvoja ji.", "emoji": "🤔"},
+        {"t": "Varlytė šoka į vandenį.", "emoji": "💦"},
+        {"t": "Pliumpt! Vandenyje tik ratilai.", "emoji": "🫧"},
+        {"t": "O mėnulis vis dar šviečia danguje.", "emoji": "🌕"}
+      ]
+    },
+    {
+      "title": "Pirma diena mokykloje",
+      "emoji": "🎒",
+      "pages": [
+        {"t": "Šiandien Ema eina į mokyklą.", "emoji": "🏫"},
+        {"t": "Ji turi naują kuprinę.", "emoji": "🎒"},
+        {"t": "Mokytoja labai maloni.", "emoji": "👩‍🏫"},
+        {"t": "Ema susiranda draugę Liną.", "emoji": "👭"},
+        {"t": "Jos kartu piešia saulę.", "emoji": "🎨"},
+        {"t": "Ema nori grįžti rytoj!", "emoji": "😃"}
+      ]
+    },
+    {
+      "title": "Kepame blynus",
+      "emoji": "🥞",
+      "pages": [
+        {"t": "Sekmadienio rytą kepame blynus.", "emoji": "🥞"},
+        {"t": "Mama išmuša kiaušinius.", "emoji": "🥚"},
+        {"t": "Tomas pila miltus ir pieną.", "emoji": "🥛"},
+        {"t": "Tėtis kepa blynus keptuvėje.", "emoji": "🍳"},
+        {"t": "Blynai su uogiene – skanumėlis!", "emoji": "🍓"},
+        {"t": "Visi valgome kartu.", "emoji": "🍽️"}
       ]
     }
   ]
