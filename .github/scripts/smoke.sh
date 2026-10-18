@@ -41,8 +41,12 @@ swipe
 tap "Pamoka 8"; sleep 3; shot 08_skaitome 1
 tap "Toliau"; sleep 2; shot 08b_zodis 1
 tap "Uždaryti"; sleep 2
-swipe; swipe; swipe; swipe
-tap "Pamoka 18" "Pamoka 17" "Pamoka 19"; sleep 3; shot 09_pasakaite 2
+for i in 1 2 3 4 5 6 7 8; do
+  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+  adb exec-out cat /sdcard/ui.xml | grep -q 'Pamoka 18"' && break
+  adb shell input swipe 540 1500 540 1100 400; sleep 1
+done
+tap "Pamoka 18"; sleep 3; shot 09_pasakaite 2
 tap "Klausyk"; sleep 1; shot 10_skaitymas 1
 tap "Toliau"; sleep 2; shot 10b_puslapis 1
 tap "Uždaryti"; sleep 2
