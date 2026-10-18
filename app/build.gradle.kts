@@ -15,6 +15,8 @@ android {
     compileSdk = 36
 
     defaultConfig {
+        // Lithuanian only: drop translated strings that libraries bring along.
+        resourceConfigurations += listOf("lt")
         applicationId = "lt.marcomultiservices.skaitaupats"
         minSdk = 26
         targetSdk = 36
@@ -67,8 +69,6 @@ android {
     }
 
     androidResources {
-        @Suppress("UnstableApiUsage")
-        generateLocaleConfig = true
         noCompress += listOf("json", "mp3")
     }
 

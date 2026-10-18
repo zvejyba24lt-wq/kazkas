@@ -24,7 +24,7 @@
     <string name="tip_2">Sėdėkite šalia ir girkite vaiką už kiekvieną bandymą, ne tik už teisingą atsakymą.</string>
     <string name="tip_3">Paspaudus skiemenį ar žodį, jis ištariamas. Paprašykite vaiką pakartoti garsiai.</string>
     <string name="tip_4">Pamoką galima kartoti, kiek norisi. Daugiau žvaigždučių gaunama, kai klaidų mažiau.</string>
-    <string name="tip_5">Lietuvių kalbos nemokantis tėvas ar mama gali padėti taip pat: programėlė pati ištaria kiekvieną raidę, skiemenį ir žodį.</string>
+    <string name="tip_5">Programėlė pati ištaria kiekvieną raidę, skiemenį ir žodį, todėl vaikas gali mokytis ir tada, kai jūsų nėra šalia.</string>
     <string name="privacy">Privatumo politika</string>
     <string name="privacy_text">Programėlė nerenka jokių vaiko ar jūsų duomenų, neturi reklamų ir veikia be interneto.</string>
     <string name="reset">Pradėti iš naujo</string>
