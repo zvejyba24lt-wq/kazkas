@@ -262,7 +262,7 @@ fun ReadWordView(e: Exercise.ReadWord, host: ExerciseHost) {
                 Chunky(
                     if (active) color else Palette.Paper, if (active) color.copy(alpha = 0.7f) else Palette.Line,
                     Modifier.height(110.dp).width((48 + s.length * 34).dp), corner = 24.dp, label = s,
-                    onClick = { host.speaker.say(s.lowercase()) },
+                    onClick = { heard = true; host.speaker.say(s.lowercase()) },
                 ) { Text(s, fontSize = 52.sp, fontWeight = FontWeight.ExtraBold, color = if (active) Color.White else color) }
             }
         }

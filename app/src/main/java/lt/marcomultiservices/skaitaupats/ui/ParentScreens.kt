@@ -99,8 +99,8 @@ fun ParentsScreen(
         .joinToString(", ") { it.key.uppercase() + it.key }
 
     Column(
-        Modifier.fillMaxSize().background(Palette.Cream).verticalScroll(rememberScrollState())
-            .statusBarsPadding().navigationBarsPadding().padding(20.dp),
+        Modifier.fillMaxSize().background(Palette.Cream).statusBarsPadding().verticalScroll(rememberScrollState())
+            .navigationBarsPadding().padding(20.dp),
         verticalArrangement = Arrangement.spacedBy(16.dp),
     ) {
         Row(verticalAlignment = Alignment.CenterVertically) {
