@@ -1,0 +1,70 @@
+name: Strompreis feed
+
+on:
+  schedule:
+    # Day-ahead results appear ~12:45-13:00 CET. Every 15 min in the publication window
+    # (GitHub cron can lag), plus one run after midnight for the day rollover and history.
+    - cron: "*/15 11-15 * * *"
+    - cron: "15 0 * * *"
+    - cron: "15 6 * * *"
+  workflow_dispatch:
+    inputs:
+      force:
+        description: "Fetch even if tomorrow is already published"
+        type: boolean
+        default: false
+  push:
+    branches: [main, "claude/**"]
+    paths: ["strompreis/**", ".github/workflows/strompreis-feed.yml"]
+
+permissions:
+  contents: write
+
+concurrency:
+  group: strompreis-feed
+  cancel-in-progress: false
+
+jobs:
+  feed:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Check out gh-pages (or start it)
+        run: |
+          if git ls-remote --exit-code --heads origin gh-pages >/dev/null; then
+            git clone --depth 1 --branch gh-pages "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git" site
+          else
+            mkdir site && cd site && git init -b gh-pages && git remote add origin "https://x-access-token:${GH_TOKEN}@github.com/${GITHUB_REPOSITORY}.git"
+          fi
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Copy static files
+        run: cp -r strompreis/static/. site/
+
+      - name: Fetch prices
+        id: fetch
+        env:
+          ENTSOE_API_KEY: ${{ secrets.ENTSOE_API_KEY }}
+        run: |
+          args="site"
+          if [ "${{ github.event_name }}" = "push" ] || [ "${{ inputs.force }}" = "true" ]; then args="$args --force"; fi
+          python3 strompreis/scripts/fetch_prices.py $args
+
+      - name: Publish
+        if: always()
+        working-directory: site
+        run: |
+          git config user.name "strompreis-bot"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+          git add -A
+          # status.json changes on every run; only publish when real content changed.
+          if git diff --cached --quiet -- . ':!v1/status.json'; then
+            echo "No price changes"
+            exit 0
+          fi
+          git commit -q -m "Prices $(date -u +%Y-%m-%dT%H:%MZ)"
+          for i in 1 2 3; do git push origin gh-pages && exit 0; sleep $((i*5)); git pull --rebase origin gh-pages || true; done
+          exit 1
