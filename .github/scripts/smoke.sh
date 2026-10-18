@@ -16,6 +16,10 @@ adb logcat -c
 adb shell am start -W -n "$PKG/.MainActivity"
 FAIL=0
 sleep 8
+# On a fresh emulator Google Play services restarts itself once and Android kills apps bound to it
+# (logged as "depends on provider ... in dying proc"). Give it time, then bring the app back.
+sleep 25
+adb shell am start -W -n "$PKG/.MainActivity"; sleep 6
 adb shell dumpsys activity activities | grep -m1 topResumedActivity | grep -q "$PKG" || { echo "App is not in the foreground after start"; FAIL=1; }
 shot 01_zemelapis 2
 
