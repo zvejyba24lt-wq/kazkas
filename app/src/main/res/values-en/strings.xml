@@ -1,0 +1,35 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string name="gate_title">For parents only</string>
+    <string name="gate_question">What is %1$d × %2$d?</string>
+    <string name="gate_hint">Answer</string>
+    <string name="gate_ok">OK</string>
+    <string name="gate_wrong">Not quite. Please try again.</string>
+    <string name="parents_title">For parents</string>
+    <string name="progress_title">Your child\'s progress</string>
+    <string name="progress_lessons">Lessons finished: %1$d of %2$d</string>
+    <string name="progress_letters">Letters learned: %1$s</string>
+    <string name="progress_none">No lesson finished yet.</string>
+    <string name="progress_hard">Needs more practice: %1$s</string>
+    <string name="buy_title">Full course</string>
+    <string name="buy_text">The first 8 lessons are free. The full course has %1$d lessons, all 32 Lithuanian letters and 10 short stories. One payment, no subscription, no ads.</string>
+    <string name="buy_button">Unlock for %1$s</string>
+    <string name="buy_restore">Restore purchase</string>
+    <string name="buy_unavailable">Purchases work when the app is installed from Google Play.</string>
+    <string name="buy_owned">The full course is unlocked. Thank you!</string>
+    <string name="test_mode">Test build: all lessons are unlocked.</string>
+    <string name="tips_title">How to learn</string>
+    <string name="tip_1">One lesson a day is enough: 5 to 10 minutes.</string>
+    <string name="tip_2">Sit next to your child and praise every try, not only right answers.</string>
+    <string name="tip_3">Tapping a syllable or word reads it aloud. Ask your child to repeat it out loud.</string>
+    <string name="tip_4">Lessons can be repeated any time. Fewer mistakes earn more stars.</string>
+    <string name="tip_5">You don\'t need to speak Lithuanian to help: the app says every letter, syllable and word itself. Everything your child sees stays in Lithuanian.</string>
+    <string name="privacy">Privacy policy</string>
+    <string name="privacy_text">The app collects no data about your child or you, shows no ads and works offline.</string>
+    <string name="reset">Start over</string>
+    <string name="reset_confirm">Delete all progress?</string>
+    <string name="reset_yes">Delete</string>
+    <string name="cancel">Cancel</string>
+    <string name="back">Back</string>
+    <string name="version">Version %1$s</string>
+</resources>
