@@ -6,6 +6,7 @@ import java.io.File
 fun main(args: Array<String>) {
     val content = ContentParser.parse(File(args[0]).readText())
     val texts = CourseBuilder.build(content).spokenTexts().sorted()
+    File(args[1]).parentFile?.mkdirs()
     File(args[1]).writeText(texts.joinToString("\n", postfix = "\n") { "${Audio.id(it)}|$it" })
     println("${texts.size} texts -> ${args[1]}")
 }
