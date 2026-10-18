@@ -54,14 +54,17 @@ private fun glyphFor(letter: String, size: IntSize): Glyph {
     val paint = Paint(Paint.ANTI_ALIAS_FLAG).apply {
         typeface = Typeface.create(Typeface.DEFAULT, Typeface.BOLD)
         textAlign = Paint.Align.CENTER
-        textSize = size.height * 0.78f
+        textSize = 100f
     }
-    val fm = paint.fontMetrics
+    // Scale so the letter itself (not the font's line height) fills most of the square, then centre it.
+    val bounds = android.graphics.Rect().also { paint.getTextBounds(letter, 0, letter.length, it) }
+    paint.textSize = 100f * minOf(size.height * 0.64f / bounds.height(), size.width * 0.62f / bounds.width())
+    paint.getTextBounds(letter, 0, letter.length, bounds)
     val x = size.width / 2f
-    val baseline = size.height / 2f - (fm.ascent + fm.descent) / 2f
+    val baseline = size.height / 2f - (bounds.top + bounds.bottom) / 2f
     val bitmap = Bitmap.createBitmap(size.width, size.height, Bitmap.Config.ALPHA_8)
     android.graphics.Canvas(bitmap).drawText(letter, x, baseline, paint)
-    val brush = paint.textSize * 0.13f
+    val brush = maxOf(bounds.height(), bounds.width()) * 0.13f
     val step = (brush * 0.5f).toInt().coerceAtLeast(2)
     val points = buildList {
         for (py in 0 until size.height step step) for (px in 0 until size.width step step) {

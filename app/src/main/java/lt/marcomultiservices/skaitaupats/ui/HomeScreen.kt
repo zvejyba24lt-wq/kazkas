@@ -83,12 +83,12 @@ fun HomeScreen(
             verticalAlignment = Alignment.CenterVertically,
         ) {
             Box(
-                Modifier.size(64.dp).clip(CircleShape).background(Palette.Paper).border(3.dp, Palette.Yellow, CircleShape)
+                Modifier.size(56.dp).clip(CircleShape).background(Palette.Paper).border(3.dp, Palette.Yellow, CircleShape)
                     .clickable { speaker.say(Phrases.WELCOME) },
                 contentAlignment = Alignment.Center,
-            ) { Wobble { Text("🦉", fontSize = 38.sp) } }
+            ) { Wobble { Text("🦉", fontSize = 34.sp) } }
             Column(Modifier.padding(start = 12.dp).weight(1f)) {
-                Text("Skaitau Pats", fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = Palette.Ink, maxLines = 1, softWrap = false)
+                Text("Skaitau Pats", fontSize = 21.sp, fontWeight = FontWeight.ExtraBold, color = Palette.Ink, maxLines = 1, softWrap = false)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     StarRow(3, size = 14.dp)
                     Text(
