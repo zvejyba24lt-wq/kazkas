@@ -128,7 +128,7 @@ fun ParentsScreen(
                         colors = ButtonDefaults.buttonColors(containerColor = Palette.Green),
                         modifier = Modifier.fillMaxWidth().height(56.dp),
                     ) {
-                        Text(stringResource(R.string.buy_button, product?.oneTimePurchaseOfferDetails?.formattedPrice ?: "12,99 €"), fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.buy_button, product?.oneTimePurchaseOfferDetails?.formattedPrice ?: "9,99 €"), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     }
                     OutlinedButton(onClick = { billing.connect() }, modifier = Modifier.fillMaxWidth()) {
                         Text(stringResource(R.string.buy_restore))
