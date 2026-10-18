@@ -70,6 +70,7 @@ d9262384615da545|Fėja
 fff0776fcd98c922|Fėja turi sparnus.
 d094522827526199|Gaidys
 719fca60a4adecc3|Gaidys gieda.
+84150df26f8c51f5|Gavai naują lipduką!
 2537322b314d4280|Grybauti
 eb2f0781fa43d663|Gėlės
 ab51e0d251cdca5e|Gėlės kvepia.
@@ -198,6 +199,7 @@ aed0c7e6ecf681e9|Obuolys nukrito.
 5e6e2f8022077f22|Pabandyk dar kartą.
 047368da8aa317f1|Pagausiu
 a3f6ff91e2b99f90|Pamoka baigta! Puikiai padirbėjai!
+ca0ddce57c0040b5|Parašyk raidę pirštu.
 b6f4de1c58e743db|Pas senelį kaime
 a553e2529d5208d6|Paskui
 b0ae9a72eeb868de|Paskui bitė skrenda namo.
