@@ -118,7 +118,7 @@ fun TraceLetterView(e: Exercise.TraceLetter, host: ExerciseHost) {
         }
     }
 
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(18.dp)) {
+    Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(18.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically, horizontalArrangement = Arrangement.spacedBy(12.dp)) {
             SoundButton(size = 52.dp, onClick = { host.speaker.say(Phrases.TRACE) })
             Text("Parašyk pirštu", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Palette.Soft)
@@ -143,7 +143,7 @@ fun TraceLetterView(e: Exercise.TraceLetter, host: ExerciseHost) {
                 val lineColor = Palette.Line
                 drawLine(lineColor, Offset(0f, g.baseline), Offset(this.size.width, g.baseline), strokeWidth = 3.dp.toPx())
                 drawIntoCanvas { c ->
-                    g.paint.color = Color(0xFFFFE3C7).toArgb()
+                    g.paint.color = Color(0xFFFFD2AE).toArgb()
                     c.nativeCanvas.drawText(letter, g.x, g.baseline, g.paint)
                 }
                 val ink = if (solved) Palette.Green else Palette.Orange

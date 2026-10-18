@@ -88,7 +88,7 @@ fun HomeScreen(
                 contentAlignment = Alignment.Center,
             ) { Wobble { Text("🦉", fontSize = 38.sp) } }
             Column(Modifier.padding(start = 12.dp).weight(1f)) {
-                Text("Skaitau Pats", fontSize = 26.sp, fontWeight = FontWeight.ExtraBold, color = Palette.Ink)
+                Text("Skaitau Pats", fontSize = 24.sp, fontWeight = FontWeight.ExtraBold, color = Palette.Ink, maxLines = 1, softWrap = false)
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     StarRow(3, size = 14.dp)
                     Text(
@@ -97,7 +97,7 @@ fun HomeScreen(
                     )
                 }
             }
-            Pill("📒", label = "Lipdukai", onClick = onAlbum)
+            Pill("🏅", label = "Lipdukai", onClick = onAlbum)
             Spacer(Modifier.width(8.dp))
             Pill("🔒 Tėvams", label = "Tėvams", onClick = onParents)
         }
