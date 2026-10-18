@@ -65,6 +65,8 @@ fun LessonScreen(
     lesson: Lesson,
     speaker: Speaker,
     onClose: () -> Unit,
+    /** The child tapped "back to the map" on the finished screen. */
+    onDone: () -> Unit,
     onFinished: (stars: Int, mistakesByLetter: Map<String, Int>) -> Unit,
 ) {
     var index by rememberSaveable(lesson.id) { mutableIntStateOf(0) }
@@ -131,7 +133,7 @@ fun LessonScreen(
             ) { i ->
                 Box(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentAlignment = Alignment.Center) {
                     if (i >= total) {
-                        Finished(Stars.forMistakes(mistakes), onClose)
+                        Finished(Stars.forMistakes(mistakes), onDone)
                     } else {
                         val e = lesson.exercises[i]
                         LaunchedEffect(i) { if (e.prompt.isNotEmpty()) speaker.say(e.prompt) }

@@ -13,11 +13,12 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
 import androidx.compose.runtime.saveable.rememberSaveable
 import androidx.compose.runtime.setValue
+import android.app.Activity
 import androidx.compose.ui.platform.LocalContext
 import kotlinx.coroutines.launch
 import lt.marcomultiservices.skaitaupats.BuildConfig
 import lt.marcomultiservices.skaitaupats.app
-import lt.marcomultiservices.skaitaupats.billing.BillingManager
+import lt.marcomultiservices.skaitaupats.core.FreePlan
 import lt.marcomultiservices.skaitaupats.data.Progress
 
 private sealed interface Screen {
@@ -27,14 +28,13 @@ private sealed interface Screen {
     data object Parents : Screen
 }
 
-/**
- * Whether a lesson may be opened: the course is unlocked for it, and the one before is finished.
- * Test builds open every lesson so the whole course can be checked.
- */
-fun Progress.canOpen(id: Int): Boolean =
-    BuildConfig.TEST_UNLOCK || ((id == 1 || finished(id - 1) || finished(id)) && paidFor(id))
+/** The lesson before is finished. Test builds open lessons in any order so the whole course can be checked. */
+fun Progress.inOrder(id: Int): Boolean = BuildConfig.TEST_UNLOCK || id == 1 || finished(id - 1) || finished(id)
 
-fun Progress.paidFor(id: Int): Boolean = id <= BillingManager.FREE_LESSONS || owned || BuildConfig.TEST_UNLOCK
+/** The free version's daily limit allows it: a repeat, or not too many new lessons today. */
+fun Progress.withinLimit(id: Int): Boolean = adFree || FreePlan.mayOpen(finished(id), newToday())
+
+fun Progress.canOpen(id: Int): Boolean = inOrder(id) && withinLimit(id)
 
 @Composable
 fun AppRoot() {
@@ -71,6 +71,9 @@ fun AppRoot() {
                 lesson = app.course.lessons.first { it.id == s.id },
                 speaker = app.speaker,
                 onClose = { go("home") },
+                onDone = {
+                    if (p.adFree) go("home") else app.ads.showAfterLesson(context as Activity) { go("home") }
+                },
                 onFinished = { stars, mistakes ->
                     scope.launch { app.progress.finishLesson(s.id, stars, mistakes) }
                 },
@@ -81,6 +84,7 @@ fun AppRoot() {
                 progress = p,
                 billing = app.billing,
                 onReset = { scope.launch { app.progress.reset() } },
+                onTestOwned = { scope.launch { app.progress.setTestOwned(it) } },
                 onBack = { go("home") },
             )
         }

@@ -22,6 +22,9 @@ android {
         targetSdk = 36
         versionCode = (System.getenv("VERSION_CODE") ?: "1").toInt()
         versionName = "1.0.${System.getenv("VERSION_CODE") ?: "0"}"
+        // AdMob ids come from GitHub secrets; without them Google's test ids are used, which show test ads.
+        manifestPlaceholders["admobAppId"] = env("ADMOB_APP_ID", "ca-app-pub-3940256099942544~3347511713")
+        buildConfigField("String", "ADMOB_INTERSTITIAL_ID", "\"${env("ADMOB_INTERSTITIAL_ID", "ca-app-pub-3940256099942544/1033173712")}\"")
         buildConfigField("String", "PRIVACY_URL", "\"${env("PRIVACY_URL", "https://example.com/skaitaupats/privatumas.html")}\"")
         // Test builds (signed with the sideload key) open every lesson, since Play Billing only works
         // in apps installed from Google Play. Play uploads are signed with the upload key and stay locked.
@@ -103,4 +106,7 @@ dependencies {
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
     implementation("com.android.billingclient:billing-ktx:7.1.1")
+    implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.0")
+    implementation("com.google.android.gms:play-services-ads:24.3.0")
+    implementation("com.google.android.ump:user-messaging-platform:3.2.0")
 }

@@ -27,6 +27,7 @@ import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.itemsIndexed
 import androidx.compose.foundation.lazy.rememberLazyListState
 import androidx.compose.foundation.shape.CircleShape
+import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -97,6 +98,7 @@ fun HomeScreen(
             }
             Pill("🔒 Tėvams", label = "Tėvams", onClick = onParents)
         }
+        if (!progress.withinLimit(current)) RestBanner(onClick = { speaker.say(Phrases.TOMORROW) }, onParents = onParents)
 
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val width = maxWidth
@@ -108,12 +110,12 @@ fun HomeScreen(
                         prevX = if (i == 0) null else nodeX(i - 1, width),
                         stars = progress.stars[lesson.id] ?: 0,
                         open = progress.canOpen(lesson.id),
-                        paid = progress.paidFor(lesson.id),
+                        resting = progress.inOrder(lesson.id) && !progress.withinLimit(lesson.id),
                         isCurrent = lesson.id == current,
                         onClick = {
                             when {
                                 progress.canOpen(lesson.id) -> onOpen(lesson.id)
-                                !progress.paidFor(lesson.id) -> { speaker.say(Phrases.LOCKED); onParents() }
+                                !progress.withinLimit(lesson.id) -> speaker.say(Phrases.TOMORROW)
                                 else -> speaker.say(Phrases.TRY_AGAIN)
                             }
                         },
@@ -136,7 +138,8 @@ private fun LessonNode(
     prevX: Dp?,
     stars: Int,
     open: Boolean,
-    paid: Boolean,
+    /** Ready to play, but the free version's lessons for today are used up. */
+    resting: Boolean,
     isCurrent: Boolean,
     onClick: () -> Unit,
 ) {
@@ -183,7 +186,7 @@ private fun LessonNode(
                         textAlign = TextAlign.Center,
                     )
                 }
-                if (!paid) Text("🔒", fontSize = 22.sp, modifier = Modifier.align(Alignment.TopEnd))
+                if (resting) Text("🌙", fontSize = 26.sp, modifier = Modifier.align(Alignment.TopEnd))
             }
             Spacer(Modifier.height(4.dp))
             when {
@@ -194,5 +197,25 @@ private fun LessonNode(
                 )
             }
         }
+    }
+}
+
+/** Shown in the free version once today's new lessons are done: rest, repeat, or ask a parent. */
+@Composable
+private fun RestBanner(onClick: () -> Unit, onParents: () -> Unit) {
+    Row(
+        Modifier.fillMaxWidth().padding(horizontal = 16.dp, vertical = 4.dp).clip(RoundedCornerShape(22.dp))
+            .background(Color(0xFF2E3A66)).clickable(onClick = onClick).padding(horizontal = 16.dp, vertical = 12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        Text("🌙", fontSize = 34.sp)
+        Column(Modifier.padding(start = 12.dp).weight(1f)) {
+            Text("Šiandien užteks!", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
+            Text("Naujos pamokos rytoj. Senas gali kartoti.", color = Color(0xFFD9DEF5), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+        }
+        Text(
+            "Be ribų →", color = Palette.Yellow, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold,
+            modifier = Modifier.clip(CircleShape).clickable(onClick = onParents).padding(8.dp),
+        )
     }
 }

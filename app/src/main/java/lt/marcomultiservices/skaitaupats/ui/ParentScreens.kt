@@ -47,6 +47,7 @@ import lt.marcomultiservices.skaitaupats.BuildConfig
 import lt.marcomultiservices.skaitaupats.R
 import lt.marcomultiservices.skaitaupats.billing.BillingManager
 import lt.marcomultiservices.skaitaupats.core.Course
+import lt.marcomultiservices.skaitaupats.core.FreePlan
 import lt.marcomultiservices.skaitaupats.data.Progress
 import kotlin.random.Random
 
@@ -86,6 +87,7 @@ fun ParentsScreen(
     progress: Progress,
     billing: BillingManager,
     onReset: () -> Unit,
+    onTestOwned: (Boolean) -> Unit,
     onBack: () -> Unit,
 ) {
     val context = LocalContext.current
@@ -119,16 +121,17 @@ fun ParentsScreen(
 
         Section(stringResource(R.string.buy_title)) {
             when {
-                progress.owned -> Body(stringResource(R.string.buy_owned))
+                progress.adFree -> Body(stringResource(R.string.buy_owned))
                 else -> {
-                    Body(stringResource(R.string.buy_text, lessons.size))
+                    Body(stringResource(R.string.buy_text, lessons.size, FreePlan.NEW_LESSONS_PER_DAY))
+                    Body(stringResource(R.string.buy_today, progress.newToday(), FreePlan.NEW_LESSONS_PER_DAY))
                     Spacer(Modifier.height(4.dp))
                     Button(
                         onClick = { unavailable = !billing.launch(context as Activity) },
                         colors = ButtonDefaults.buttonColors(containerColor = Palette.Green),
                         modifier = Modifier.fillMaxWidth().height(56.dp),
                     ) {
-                        Text(stringResource(R.string.buy_button, product?.oneTimePurchaseOfferDetails?.formattedPrice ?: "9,99 €"), fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                        Text(stringResource(R.string.buy_button, product?.oneTimePurchaseOfferDetails?.formattedPrice ?: "4,99 €"), fontSize = 18.sp, fontWeight = FontWeight.Bold)
                     }
                     OutlinedButton(onClick = { billing.connect() }, modifier = Modifier.fillMaxWidth()) {
                         Text(stringResource(R.string.buy_restore))
@@ -136,7 +139,12 @@ fun ParentsScreen(
                     if (unavailable) Body(stringResource(R.string.buy_unavailable))
                 }
             }
-            if (BuildConfig.TEST_UNLOCK) Body(stringResource(R.string.test_mode))
+            if (BuildConfig.TEST_UNLOCK) {
+                Body(stringResource(R.string.test_mode))
+                OutlinedButton(onClick = { onTestOwned(!progress.testOwned) }, modifier = Modifier.fillMaxWidth()) {
+                    Text(stringResource(if (progress.testOwned) R.string.test_free else R.string.test_bought))
+                }
+            }
         }
 
         Section(stringResource(R.string.tips_title)) {

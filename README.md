@@ -7,4 +7,6 @@ Android programėlė, mokanti 5–7 metų vaikus skaityti lietuviškai: raidės 
 - Garsai: GitHub Actions `voice` darbas įrašo kiekvieną naują tekstą Onos balsu (edge-tts, `lt-LT-OnaNeural`) į `app/src/main/assets/audio/`.
 - APK: kiekvienas push surenka `SkaitauPats.apk` ir įkelia į pre-release `apk-latest`.
 
-Testinės versijos (pasirašytos `sideload.keystore`) atrakina visas pamokas. Google Play versijai reikia `RELEASE_KEYSTORE_*` paslapčių; tada atrakinta tik 8 pamokos, o likusios – nupirkus `visas_kursas`.
+Modelis: nemokamai visas kursas, bet ne daugiau kaip 2 naujos pamokos per dieną ir vaikams skirta AdMob reklama po baigtos pamokos. Vienkartinis pirkimas `visas_kursas` (4,99 €) panaikina reklamas ir ribą. AdMob id nustatomi paslaptimis `ADMOB_APP_ID` ir `ADMOB_INTERSTITIAL_ID`; be jų rodomos Google bandomosios reklamos.
+
+Testinės versijos (pasirašytos `sideload.keystore`) leidžia atidaryti pamokas bet kuria tvarka, o tėvų skiltyje turi jungiklį „apsimesti, kad nupirkta“. Google Play versijai reikia `RELEASE_KEYSTORE_*` paslapčių.

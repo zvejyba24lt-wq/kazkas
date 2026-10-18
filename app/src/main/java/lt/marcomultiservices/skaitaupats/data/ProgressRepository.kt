@@ -4,9 +4,12 @@ import android.content.Context
 import androidx.datastore.preferences.core.booleanPreferencesKey
 import androidx.datastore.preferences.core.edit
 import androidx.datastore.preferences.core.intPreferencesKey
+import androidx.datastore.preferences.core.longPreferencesKey
 import androidx.datastore.preferences.preferencesDataStore
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.map
+import lt.marcomultiservices.skaitaupats.core.FreePlan
+import java.time.LocalDate
 
 private val Context.store by preferencesDataStore("progress")
 
@@ -16,9 +19,21 @@ data class Progress(
     /** How often the child picked a wrong answer for each letter. */
     val letterMistakes: Map<String, Int> = emptyMap(),
     val owned: Boolean = false,
+    /** Test builds only: pretend the purchase was made, to see the app without ads and limit. */
+    val testOwned: Boolean = false,
+    /** The day (epoch day) and number of lessons finished for the first time that day. */
+    val newDay: Long = 0,
+    val newCount: Int = 0,
 ) {
     fun finished(id: Int) = (stars[id] ?: 0) > 0
+
+    /** Bought: no ads and no daily limit. */
+    val adFree: Boolean get() = owned || testOwned
+
+    fun newToday(): Int = FreePlan.newToday(newDay, newCount, today())
 }
+
+fun today(): Long = LocalDate.now().toEpochDay()
 
 class ProgressRepository(private val context: Context) {
     val progress: Flow<Progress> = context.store.data.map { prefs ->
@@ -30,12 +45,17 @@ class ProgressRepository(private val context: Context) {
                 key.name.startsWith(MISTAKES) -> mistakes[key.name.removePrefix(MISTAKES)] = value as Int
             }
         }
-        Progress(stars, mistakes, prefs[OWNED] ?: false)
+        Progress(stars, mistakes, prefs[OWNED] ?: false, prefs[TEST_OWNED] ?: false, prefs[NEW_DAY] ?: 0L, prefs[NEW_COUNT] ?: 0)
     }
 
     suspend fun finishLesson(id: Int, stars: Int, mistakesByLetter: Map<String, Int>) {
         context.store.edit { prefs ->
             val key = intPreferencesKey("$STARS$id")
+            if ((prefs[key] ?: 0) == 0) {
+                val (day, count) = FreePlan.afterNewLesson(prefs[NEW_DAY] ?: 0L, prefs[NEW_COUNT] ?: 0, today())
+                prefs[NEW_DAY] = day
+                prefs[NEW_COUNT] = count
+            }
             prefs[key] = maxOf(prefs[key] ?: 0, stars)
             for ((letter, n) in mistakesByLetter) {
                 val mk = intPreferencesKey("$MISTAKES$letter")
@@ -48,11 +68,19 @@ class ProgressRepository(private val context: Context) {
         context.store.edit { it[OWNED] = owned }
     }
 
+    suspend fun setTestOwned(owned: Boolean) {
+        context.store.edit { it[TEST_OWNED] = owned }
+    }
+
+    /** Clears progress but keeps the purchase and today's count, so a reset does not lift the daily limit. */
     suspend fun reset() {
         context.store.edit { prefs ->
-            val owned = prefs[OWNED] ?: false
+            val kept = listOf(OWNED, TEST_OWNED).associateWith { prefs[it] ?: false }
+            val day = prefs[NEW_DAY]
+            val count = prefs[NEW_COUNT]
             prefs.clear()
-            prefs[OWNED] = owned
+            kept.forEach { (k, v) -> prefs[k] = v }
+            if (day != null && count != null) { prefs[NEW_DAY] = day; prefs[NEW_COUNT] = count }
         }
     }
 
@@ -60,5 +88,8 @@ class ProgressRepository(private val context: Context) {
         const val STARS = "stars_"
         const val MISTAKES = "mistakes_"
         val OWNED = booleanPreferencesKey("owned")
+        val TEST_OWNED = booleanPreferencesKey("test_owned")
+        val NEW_DAY = longPreferencesKey("new_day")
+        val NEW_COUNT = intPreferencesKey("new_count")
     }
 }

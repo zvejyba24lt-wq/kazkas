@@ -22,7 +22,7 @@ import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
 
-/** The one-time "full course" purchase through Google Play Billing. */
+/** The one-time purchase through Google Play Billing that removes ads and the daily limit. */
 class BillingManager(
     context: Context,
     private val scope: CoroutineScope,
@@ -98,6 +98,5 @@ class BillingManager(
     companion object {
         private const val TAG = "Billing"
         const val PRODUCT_FULL = "visas_kursas"
-        const val FREE_LESSONS = 8
     }
 }

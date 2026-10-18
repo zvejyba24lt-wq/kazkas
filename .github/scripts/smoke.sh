@@ -25,7 +25,9 @@ tap "Toliau"; shot 03_surask 2
 tap "o"; shot 04_klaida 1
 tap "a"; sleep 3
 tap "A"; sleep 3; shot 05_pabaiga 2
-tap "Į žemėlapį"; sleep 2
+# The free version shows a (test) ad here; restart the app to leave it.
+tap "Į žemėlapį"; shot 05b_reklama 6
+adb shell am force-stop "$PKG"; adb shell am start -W -n "$PKG/.MainActivity"; sleep 6
 
 # Lesson 2 (M): intro, find, then join a syllable.
 tap "Pamoka 2"; sleep 3
@@ -70,7 +72,7 @@ shot 12_tevams 3
 adb shell input swipe 540 1600 540 600 400; shot 13_tevams_apacia 2
 
 adb logcat -d > "$OUT/logcat_full.txt"
-grep -E "$PKG|AndroidRuntime|Fatal signal|DEBUG +:|ANR in|has died|Speaker|Billing" "$OUT/logcat_full.txt" | tail -n 400 > "$OUT/logcat.txt"
+grep -E "$PKG|AndroidRuntime|Fatal signal|DEBUG +:|ANR in|has died|Speaker|Billing|Ads" "$OUT/logcat_full.txt" | tail -n 400 > "$OUT/logcat.txt"
 awk -v pkg="$PKG" '
   /FATAL EXCEPTION/ { head=$0; want=1; next }
   want==1 { want=0; if (index($0, "Process: " pkg)) { print head; left=40 } }

@@ -72,6 +72,7 @@ object Phrases {
     const val LESSON_DONE = "Pamoka baigta! Puikiai padirbėjai!"
     const val WELCOME = "Labas! Skaitome kartu?"
     const val LOCKED = "Šią pamoką atrakins tėveliai."
+    const val TOMORROW = "Šiandien jau daug išmokai! Naujos pamokos bus rytoj. O senas gali kartoti."
     val PRAISE = listOf("Puiku!", "Šaunu!", "Teisingai!", "Labai gerai!")
 
     fun intro(l: LetterDef): String =
@@ -79,7 +80,7 @@ object Phrases {
 
     fun find(l: LetterDef) = "Surask raidę ${l.name}."
 
-    val fixed: List<String> get() = listOf(BUILD, HEAR, READ_WORD, WORD_PICTURE, PICTURE_WORD, READ_SENTENCE, TRY_AGAIN, LESSON_DONE, WELCOME, LOCKED) + PRAISE
+    val fixed: List<String> get() = listOf(BUILD, HEAR, READ_WORD, WORD_PICTURE, PICTURE_WORD, READ_SENTENCE, TRY_AGAIN, LESSON_DONE, WELCOME, LOCKED, TOMORROW) + PRAISE
 }
 
 class Course(val lessons: List<Lesson>) {

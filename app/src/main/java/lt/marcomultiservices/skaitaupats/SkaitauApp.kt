@@ -7,6 +7,7 @@ import androidx.emoji2.text.EmojiCompat
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
 import kotlinx.coroutines.SupervisorJob
+import lt.marcomultiservices.skaitaupats.ads.AdManager
 import lt.marcomultiservices.skaitaupats.audio.Speaker
 import lt.marcomultiservices.skaitaupats.billing.BillingManager
 import lt.marcomultiservices.skaitaupats.core.Course
@@ -21,6 +22,7 @@ class SkaitauApp : Application() {
     }
     val progress by lazy { ProgressRepository(this) }
     val speaker by lazy { Speaker(this) }
+    val ads by lazy { AdManager(this) }
     val billing by lazy { BillingManager(this, scope) { owned -> progress.setOwned(owned) } }
 
     override fun onCreate() {
