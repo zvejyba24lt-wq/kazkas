@@ -65,6 +65,7 @@ fun HomeScreen(
     speaker: Speaker,
     onOpen: (Int) -> Unit,
     onParents: () -> Unit,
+    onAlbum: () -> Unit,
 ) {
     val lessons = course.lessons
     val current = lessons.firstOrNull { !progress.finished(it.id) }?.id ?: lessons.last().id
@@ -96,6 +97,8 @@ fun HomeScreen(
                     )
                 }
             }
+            Pill("📒", label = "Lipdukai", onClick = onAlbum)
+            Spacer(Modifier.width(8.dp))
             Pill("🔒 Tėvams", label = "Tėvams", onClick = onParents)
         }
         if (!progress.withinLimit(current)) RestBanner(onClick = { speaker.say(Phrases.TOMORROW) }, onParents = onParents)

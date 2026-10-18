@@ -28,16 +28,22 @@ tap "Pamoka 1"; shot 02_raide_a 3
 tap "Toliau"; shot 03_surask 2
 tap "o"; shot 04_klaida 1
 tap "a"; sleep 3
-tap "A"; sleep 3; shot 05_pabaiga 2
+tap "A"; sleep 3
+# Write the letter with a finger: a few strokes for the screenshot, then "Toliau" appears after 12 s.
+adb shell input swipe 640 1150 440 1150 300; adb shell input swipe 440 1150 440 1450 300; adb shell input swipe 440 1450 640 1450 300
+shot 04b_rasymas 1
+sleep 12; tap "Toliau"; sleep 3; shot 05_pabaiga 2
 # The free version shows a (test) ad here; restart the app to leave it.
 tap "Į žemėlapį"; shot 05b_reklama 6
 adb shell am force-stop "$PKG"; adb shell am start -W -n "$PKG/.MainActivity"; sleep 6
+tap "Lipdukai"; shot 05c_lipdukai 2
+tap "Atgal"; sleep 2
 
 # Lesson 2 (M): intro, find, then join a syllable.
 tap "Pamoka 2"; sleep 3
 tap "Toliau"; sleep 2
 tap "m"; sleep 3
-tap "M"; sleep 3; shot 06_sujunk 1
+tap "M"; sleep 14; tap "Toliau"; sleep 3; shot 06_sujunk 1
 tap "m"; shot 07_sujungta 3
 tap "Uždaryti"; sleep 2
 

@@ -26,6 +26,7 @@ private sealed interface Screen {
     data class Lesson(val id: Int) : Screen
     data object Gate : Screen
     data object Parents : Screen
+    data object Album : Screen
 }
 
 /** The lesson before is finished. Test builds open lessons in any order so the whole course can be checked. */
@@ -47,6 +48,7 @@ fun AppRoot() {
             screenKey.startsWith("lesson:") -> Screen.Lesson(screenKey.removePrefix("lesson:").toInt())
             screenKey == "gate" -> Screen.Gate
             screenKey == "parents" -> Screen.Parents
+            screenKey == "album" -> Screen.Album
             else -> Screen.Home
         }
     }
@@ -66,10 +68,12 @@ fun AppRoot() {
                 speaker = app.speaker,
                 onOpen = { go("lesson:$it") },
                 onParents = { go("gate") },
+                onAlbum = { go("album") },
             )
             is Screen.Lesson -> LessonScreen(
                 lesson = app.course.lessons.first { it.id == s.id },
                 speaker = app.speaker,
+                firstTime = remember(s.id) { !p.finished(s.id) },
                 onClose = { go("home") },
                 onDone = {
                     if (p.adFree) go("home") else app.ads.showAfterLesson(context as Activity) { go("home") }
@@ -78,6 +82,7 @@ fun AppRoot() {
                     scope.launch { app.progress.finishLesson(s.id, stars, mistakes) }
                 },
             )
+            Screen.Album -> AlbumScreen(course = app.course, progress = p, speaker = app.speaker, onBack = { go("home") })
             Screen.Gate -> ParentGate(onPassed = { go("parents") }, onBack = { go("home") })
             Screen.Parents -> ParentsScreen(
                 course = app.course,

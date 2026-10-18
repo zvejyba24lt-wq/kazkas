@@ -60,6 +60,8 @@ class CourseTest {
         assertTrue(n in 90..130, "lesson count $n")
         assertEquals(20, course.lessons.count { it.kind == LessonKind.STORY })
         assertTrue(course.lessons.all { it.exercises.isNotEmpty() })
+        assertTrue(course.lessons.filter { it.kind == LessonKind.LETTER }.all { l -> l.exercises.any { it is Exercise.TraceLetter } })
+        assertTrue(course.lessons.all { it.sticker.isNotBlank() })
         assertEquals((1..n).toList(), course.lessons.map { it.id })
         println("Spoken texts: ${course.spokenTexts().size}")
     }

@@ -14,7 +14,13 @@ data class Lesson(
     /** Letters the child can read after this lesson. */
     val known: Set<Char>,
     val letter: LetterDef? = null,
-)
+) {
+    /** The picture the child collects in the sticker album for finishing this lesson. */
+    val sticker: String
+        get() = letter?.emoji
+            ?: if (kind == LessonKind.STORY) badge
+            else exercises.firstNotNullOfOrNull { (it as? Exercise.ReadWord)?.word?.emoji } ?: "📖"
+}
 
 sealed interface Exercise {
     /** What is said when the exercise appears. */
@@ -27,6 +33,11 @@ sealed interface Exercise {
     data class FindLetter(val letter: LetterDef, val upper: Boolean, val options: List<String>) : Exercise {
         val answer: String get() = if (upper) letter.letter.uppercase() else letter.letter
         override val prompt get() = listOf(Phrases.find(letter))
+    }
+
+    /** Trace the small letter with a finger over a pale guide. */
+    data class TraceLetter(val letter: LetterDef) : Exercise {
+        override val prompt get() = listOf(Phrases.TRACE)
     }
 
     data class BuildSyllable(val first: String, val second: String) : Exercise {
@@ -72,6 +83,8 @@ object Phrases {
     const val LESSON_DONE = "Pamoka baigta! Puikiai padirbėjai!"
     const val WELCOME = "Labas! Skaitome kartu?"
     const val LOCKED = "Šią pamoką atrakins tėveliai."
+    const val TRACE = "Parašyk raidę pirštu."
+    const val STICKER = "Gavai naują lipduką!"
     const val TOMORROW = "Šiandien jau daug išmokai! Naujos pamokos bus rytoj. O senas gali kartoti."
     val PRAISE = listOf("Puiku!", "Šaunu!", "Teisingai!", "Labai gerai!")
 
@@ -80,7 +93,7 @@ object Phrases {
 
     fun find(l: LetterDef) = "Surask raidę ${l.name}."
 
-    val fixed: List<String> get() = listOf(BUILD, HEAR, READ_WORD, WORD_PICTURE, PICTURE_WORD, READ_SENTENCE, TRY_AGAIN, LESSON_DONE, WELCOME, LOCKED, TOMORROW) + PRAISE
+    val fixed: List<String> get() = listOf(BUILD, HEAR, READ_WORD, WORD_PICTURE, PICTURE_WORD, READ_SENTENCE, TRY_AGAIN, LESSON_DONE, WELCOME, LOCKED, TOMORROW, TRACE, STICKER) + PRAISE
 }
 
 class Course(val lessons: List<Lesson>) {
@@ -93,6 +106,7 @@ class Course(val lessons: List<Lesson>) {
             when (e) {
                 is Exercise.LetterIntro -> Unit
                 is Exercise.FindLetter -> Unit
+                is Exercise.TraceLetter -> Unit
                 is Exercise.BuildSyllable -> out += e.syllable
                 is Exercise.HearSyllable -> out += e.options
                 is Exercise.ReadWord -> { out += e.word.syllables.map { it.lowercase() }; out += e.word.text }
@@ -170,6 +184,7 @@ object CourseBuilder {
             }
             ex += Exercise.FindLetter(def, upper = false, options = options(false))
             ex += Exercise.FindLetter(def, upper = true, options = options(true))
+            ex += Exercise.TraceLetter(def)
 
             val newSyllables = syllablesWith(ch, known).shuffled(rnd).take(3)
             newSyllables.forEach { ex += Exercise.BuildSyllable(it.first, it.second) }

@@ -8,6 +8,10 @@ import androidx.compose.animation.slideInHorizontally
 import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
+import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.border
+import androidx.compose.animation.core.spring
+import androidx.compose.animation.core.Spring
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.Column
@@ -64,6 +68,8 @@ class ExerciseHost(
 fun LessonScreen(
     lesson: Lesson,
     speaker: Speaker,
+    /** The lesson has not been finished before, so finishing it adds a sticker to the album. */
+    firstTime: Boolean,
     onClose: () -> Unit,
     /** The child tapped "back to the map" on the finished screen. */
     onDone: () -> Unit,
@@ -106,7 +112,7 @@ fun LessonScreen(
         if (finished) {
             onFinished(Stars.forMistakes(mistakes), byLetter.toMap())
             celebrate++
-            speaker.say(Phrases.LESSON_DONE)
+            speaker.say(if (firstTime) listOf(Phrases.LESSON_DONE, Phrases.STICKER) else listOf(Phrases.LESSON_DONE))
         }
     }
 
@@ -133,7 +139,7 @@ fun LessonScreen(
             ) { i ->
                 Box(Modifier.fillMaxSize().padding(horizontal = 20.dp), contentAlignment = Alignment.Center) {
                     if (i >= total) {
-                        Finished(Stars.forMistakes(mistakes), onDone)
+                        Finished(Stars.forMistakes(mistakes), if (firstTime) lesson.sticker else null, onDone)
                     } else {
                         val e = lesson.exercises[i]
                         LaunchedEffect(i) { if (e.prompt.isNotEmpty()) speaker.say(e.prompt) }
@@ -151,6 +157,7 @@ private fun ExerciseView(e: Exercise, host: ExerciseHost) {
     when (e) {
         is Exercise.LetterIntro -> LetterIntroView(e, host)
         is Exercise.FindLetter -> FindLetterView(e, host)
+        is Exercise.TraceLetter -> TraceLetterView(e, host)
         is Exercise.BuildSyllable -> BuildSyllableView(e, host)
         is Exercise.HearSyllable -> HearSyllableView(e, host)
         is Exercise.ReadWord -> ReadWordView(e, host)
@@ -162,13 +169,16 @@ private fun ExerciseView(e: Exercise, host: ExerciseHost) {
 }
 
 @Composable
-private fun Finished(stars: Int, onClose: () -> Unit) {
+private fun Finished(stars: Int, sticker: String?, onClose: () -> Unit) {
     var shown by remember { mutableIntStateOf(0) }
+    var stickerIn by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) {
         repeat(stars) { delay(350); shown++ }
+        delay(300)
+        stickerIn = true
     }
-    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(20.dp)) {
-        Text("🦉", fontSize = 96.sp)
+    Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(18.dp)) {
+        Text("🦉", fontSize = 84.sp)
         Text("Puiku!", fontSize = 44.sp, fontWeight = FontWeight.ExtraBold, color = Palette.Ink)
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
             for (i in 0 until 3) {
@@ -176,7 +186,18 @@ private fun Finished(stars: Int, onClose: () -> Unit) {
                 Box(Modifier.scale(s)) { BigStar(i < shown, 56.dp) }
             }
         }
-        Spacer(Modifier.height(12.dp))
+        if (sticker != null) {
+            val pop by animateFloatAsState(if (stickerIn) 1f else 0f, spring(Spring.DampingRatioMediumBouncy), label = "sticker")
+            Row(
+                Modifier.scale(pop).clip(RoundedCornerShape(24.dp)).background(Palette.Paper)
+                    .border(3.dp, Palette.Yellow, RoundedCornerShape(24.dp)).padding(horizontal = 18.dp, vertical = 8.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text(sticker, fontSize = 44.sp)
+                Text("  Naujas lipdukas!", fontSize = 20.sp, fontWeight = FontWeight.ExtraBold, color = Palette.Orange)
+            }
+        }
+        Spacer(Modifier.height(8.dp))
         Chunky(Palette.Orange, Palette.OrangeDark, Modifier.size(width = 240.dp, height = 80.dp), corner = 40.dp, label = "Į žemėlapį", onClick = onClose) {
             Text("Į žemėlapį", color = Color.White, fontSize = 28.sp, fontWeight = FontWeight.ExtraBold)
         }
