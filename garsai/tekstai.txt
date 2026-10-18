@@ -595,6 +595,7 @@ e19d31462dd7fdb2|įlipo
 4cb734cb2ff7ea5e|Šaunu!
 a4e3b15f322d0086|Šiandien
 1e1e278accfc6c2c|Šiandien Tomo gimtadienis.
+92c803c09064548e|Šiandien jau daug išmokai! Naujos pamokos bus rytoj. O senas gali kartoti.
 ef0b8976e4a12c64|Šią pamoką atrakins tėveliai.
 aa48914f51d5288e|Štai
 4e3fd7b8b4496fed|Štai graži gėlė!
