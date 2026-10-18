@@ -36,9 +36,12 @@ tap "m"; shot 07_sujungta 3
 tap "Uždaryti"; sleep 2
 
 # A reading lesson and a story are open in test builds.
+swipe() { adb shell input swipe 540 1700 540 700 500; sleep 1; }
+swipe
 tap "Pamoka 8"; sleep 3; shot 08_skaitome 1
+tap "Toliau"; sleep 2; shot 08b_zodis 1
 tap "Uždaryti"; sleep 2
-adb shell input swipe 540 1600 540 900 400; sleep 1
+swipe; swipe; swipe
 tap "Pamoka 18"; sleep 3; shot 09_pasakaite 2
 tap "Klausyk"; sleep 1; shot 10_skaitymas 1
 tap "Uždaryti"; sleep 2
@@ -52,13 +55,13 @@ xml = subprocess.run(["adb", "exec-out", "cat", "/sdcard/ui.xml"], capture_outpu
 m = re.search(r"(\d+) × (\d+)", xml)
 if m:
     ans = int(m.group(1)) * int(m.group(2))
-    subprocess.run(["python3", ".github/scripts/tap.py", "Atsakymas"])
+    subprocess.run(["python3", ".github/scripts/tap.py", "Atsakymas", "Answer"])
     time.sleep(1)
     subprocess.run(["adb", "shell", "input", "text", str(ans)])
     time.sleep(1)
     subprocess.run(["adb", "shell", "input", "keyevent", "KEYCODE_BACK"])
     time.sleep(1)
-    subprocess.run(["python3", ".github/scripts/tap.py", "Gerai"])
+    subprocess.run(["python3", ".github/scripts/tap.py", "Gerai", "OK"])
 else:
     print("gate question not found")
 PY

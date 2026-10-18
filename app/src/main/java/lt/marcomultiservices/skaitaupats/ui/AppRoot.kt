@@ -27,8 +27,12 @@ private sealed interface Screen {
     data object Parents : Screen
 }
 
-/** Whether a lesson may be opened: the course is unlocked for it, and the one before is finished. */
-fun Progress.canOpen(id: Int): Boolean = (id == 1 || finished(id - 1) || finished(id)) && paidFor(id)
+/**
+ * Whether a lesson may be opened: the course is unlocked for it, and the one before is finished.
+ * Test builds open every lesson so the whole course can be checked.
+ */
+fun Progress.canOpen(id: Int): Boolean =
+    BuildConfig.TEST_UNLOCK || ((id == 1 || finished(id - 1) || finished(id)) && paidFor(id))
 
 fun Progress.paidFor(id: Int): Boolean = id <= BillingManager.FREE_LESSONS || owned || BuildConfig.TEST_UNLOCK
 
