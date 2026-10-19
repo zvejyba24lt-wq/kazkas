@@ -5,6 +5,8 @@ d6825eeb1f4693a6|Ant medžio tupi paukštis.
 03146bcdb2a6422d|Ant žolės guli obuolys.
 2c0566810b1410c5|Antis
 3081b253f262ad69|Antis plaukia.
+a3822dea6db22f8c|Arbata
+2be85f3653ccefc2|Arbata karšta.
 f6df368af42a332f|Arklys
 b70bad1a282b36b7|Arklys bėga per lauką.
 4cb3c886dbaf6479|Atbėgo
@@ -74,10 +76,8 @@ d094522827526199|Gaidys
 2537322b314d4280|Grybauti
 eb2f0781fa43d663|Gėlės
 ab51e0d251cdca5e|Gėlės kvepia.
-4ddbf965a0a9c434|Herbata
-29a91465d446a644|Herbata karšta.
-586d74d63d72c065|Hokėjus
-f6eff496283eee5f|Hokėjus – žiemos sportas.
+9d77c534db651556|Hipopotamas
+f9047d239e2343ad|Hipopotamas didelis.
 96e58e54c681c01b|Ir
 d78a2e5dcbe072a7|Ir atbėgo kitas zuikis!
 2d7e8f262ce9bfe1|Ji
@@ -88,7 +88,7 @@ f0aa0e880043134c|Jie
 a4cd07c99a678150|Jie lipdo sniego senį.
 3122e3dcd300fce2|Jis
 66a43c600af82abd|Jis miegos iki pavasario.
-11d03afc4509aa5f|Jis susirado jaukų urvą.
+4ae97025d56f0f4a|Jis susirado jaukų guolį.
 71f87a3171de18ca|Jis turi karvę ir arklį.
 78f8c37c0d20bfe0|Jonas
 8fea7a059a61d3a1|Jonas eina namo.
@@ -114,7 +114,7 @@ bab2c91e65840472|Katė miega.
 9f4fb8af33c68eab|Kieme
 45bebbf410336437|Kieme vaikšto vištos ir gaidys.
 cbdc4d49dbbc471d|Kiškiai
-c29eded0e85faf3a|Kiškiai pasislėpė.
+8a1d18f703daf7ee|Kiškiai pasislepia.
 87e9c9c765bb53ff|Kiškiai šoka.
 fddb30d6e3268c64|Kiškis
 9a368a0cce2e561c|Kiškis valgo morką.
@@ -221,12 +221,12 @@ f6b3c8380d8d8550|Pelė tupi ant akmens.
 dba3ab799990c8b8|Perskaityk žodį.
 dbba932526f32ebd|Pingvinai
 d89adfc66ef7e7bc|Pingvinai gyvena ten, kur šalta.
-dc26af87f9b1378d|Pirma diena mokykloje
+558da3570e60d797|Pirmoji diena mokykloje
 7bc08d11cab67e19|Pliumpt
 2582798cd2cec278|Pliumpt! Vandenyje tik ratilai.
 b135c8568258082e|Popierinis laivelis
 95b1614510395a83|Pradeda
-5b98e681bf0d75ef|Pradeda lyti lietus.
+8c19e10dc8dc397d|Pradeda lyti.
 89d5c774f49bb07b|Prie jūros
 b3a74c9e8c9c2248|Puiku!
 76918a1660300369|Raidė a nosinė, kaip ąžuolas.
@@ -244,7 +244,7 @@ f5da1ead10d75d4c|Raidė em, kaip meška.
 6d7c593aad0fcfea|Raidė es, kaip saulė.
 cb3ac606f489a77b|Raidė eš, kaip šuo.
 2643d8c4988f9ede|Raidė gė, kaip gėlė.
-8cb1e6fc410205b0|Raidė ha, kaip hokėjus.
+5e784f863b15f25a|Raidė ha, kaip hipopotamas.
 ca6f4348b91f11bc|Raidė i ilgoji, kaip pyragas.
 26df200989c19edc|Raidė i nosinė, kaip įrankis.
 8072b275ffc34c65|Raidė i, kaip indai.
@@ -255,7 +255,7 @@ d5e0e16af25bf8d1|Raidė pė, kaip pelė.
 543f00d0c6417ddd|Raidė tė, kaip traukinys.
 eee2e945c9791b95|Raidė u ilgoji, kaip ūdra.
 1a74a392af93f797|Raidė u nosinė. Daug uogų.
-27b4aad05dbfcba5|Raidė u, kaip uoga.
+d9afea2ab1469abd|Raidė u, kaip ugnis.
 b81ee04514fed4fe|Raidė vė, kaip vilkas.
 331c0b41380de60f|Raidė zė, kaip zuikis.
 67ec9bc1b78655e7|Raidė čė, kaip česnakas.
@@ -386,7 +386,7 @@ f5747405004abd7d|Vilkas staugia.
 3c0852bf3676bd07|Visi
 6584e8ba5ba33f78|Visi valgome kartu.
 dc1265a45048c9d3|Voras
-3cea1f3c12d083e6|Voras mezga tinklą.
+a8ea5ff745585ba2|Voras rezga tinklą.
 46d08a2e1250c68d|Zebras
 4c9e49be942d04c0|Zebras dryžuotas.
 79c9b73da3433d0c|Zuikis
@@ -407,6 +407,7 @@ b035079502990775|antis
 d3d9cae6d0923fe4|antys
 cf9b3f96b4c125e3|apsiauna
 23d8e0156062165c|ar
+17477a92eef1b96e|arbata
 6f636128ff757bd7|arbūzas
 fce43787288be25c|arklys
 314330d2537d2c78|arklį
@@ -456,13 +457,13 @@ abe22d3fe06d063f|bul
 c1a54005a3e85ec8|bū
 ca8d6869ef255cc0|būg
 be2144d08849bd02|būgnas
-b452d6b23b3c28f8|ce
 5a4fe08359c7f973|ci
 38ea3b126b9ff8c6|cir
 00f5c1ca5287cdd6|cirkas
 3e88625d1df8a8dc|citrina
 87dda20416649f2a|co
 31ace4ad1831aae8|cy
+a601df4481028a4a|cū
 cdd4f874095045f4|da
 5da94e1089740ddd|dai
 2591e5f46f28d303|dan
@@ -516,6 +517,7 @@ eac7985c11c5a657|einame
 54d9dc6d1bc513ee|ežiukas
 479bb460f056a867|ežys
 215a956168f77421|fa
+ee3e4af9c48a69f5|fe
 6b163fa3bad47a62|fi
 a2f17ed1c6a8bc31|fla
 627a487f82b2df0c|flamingas
@@ -523,7 +525,6 @@ a2f17ed1c6a8bc31|fla
 e81a34531252d40c|fotoaparatas
 0b987d5b4d5455ed|fut
 0ad226265d04a785|futbolas
-898353c8bdf4d1da|fy
 5d3c3bc51049136b|fė
 9c4639b129fb9e8c|fėja
 4211d6db641a2c49|fėją
@@ -553,6 +554,7 @@ fc7794c8c4e6955e|gi
 4b131f9cecad9c1d|gulbė
 494b9f3a14afdf4f|guli
 50761cf1d17f1488|guminius
+d4d8d99a1d411103|guolį
 b5c9e9b5420917ad|gur
 1fd642f1bc120a76|gy
 0565ec831fb67e4c|gys
@@ -565,12 +567,11 @@ b2f4d6efe880c5c7|gėlės
 d1e902214b544054|gės
 ad99f0e4b102c42d|gū
 f9fc27b9374ad1e3|ha
-999400659233415a|her
-1b16c531f6934d01|herbata
+6d7c9f4ceb692b31|har
+00c68e39a464e3b3|harmonika
 c22b5f9178342609|hi
 ef12f608c3485d8e|hipopotamas
-9a76a857ad399b49|ho
-a271fa5c66383f00|hokėjus
+cf7e7191fb5b4cdc|hū
 fc63fcf2a90f12c1|ieško
 ef43e7c8a375c27e|ieškome
 6394210ce21ac27f|iki
@@ -591,7 +592,6 @@ a61e83ab56351db4|ištraukė
 ee86feb4ce419260|jie
 820ae7ecdd2a8333|jis
 bd73d35759d75cc2|jo
-bf353fa4999f2f14|jus
 31ad08da0ac889ea|jė
 01abd605866da52d|jį
 8be35b8a6c0ade0e|jū
@@ -809,7 +809,7 @@ f5e046d513a8037f|paklausė
 e79113f506e4480c|par
 dfca9bf783317b4b|parsinešti
 19c2a0dbd8e3a41b|pas
-61e79a0eb50b7b7f|pasislėpė
+1b800c68c0e0341a|pasislepia
 0cf44f76f81bd6d3|paskui
 76ed5e874f63f624|patinka
 4b355402b9a3eb7e|paukštis
@@ -870,6 +870,7 @@ fe54049aa9606004|ratus
 40ffd2385fe78547|raudona
 c387c982a132d05c|re
 ae17285a7f452344|renka
+03d71e27459bdfcc|rezga
 268013331b64ca4d|ri
 72d14d174b071664|ris
 fea1e0e38d887e37|ritulys
@@ -923,7 +924,6 @@ b5afa9e78c51ecc4|sninga
 cd1b646ebd1f6844|so
 216fbd8c5cb00d0b|sodą
 c7ad05fa280498e8|sparnus
-6a399a9ac562188e|sportas
 29820ba9752199bc|spyglių
 2fb18ccff73a3328|spyrė
 bb6131f7fb4bb2a9|srai
@@ -985,7 +985,6 @@ b6b5814a03710ddc|upe
 7a6756c8b60b642c|upelį
 1c01543cfc8ac40d|upė
 f754fe8205a5d2e7|upės
-b5adc78cedc5a4fa|urvą
 68ad3c1887d05249|už
 7e17c07ed396b400|užmigo
 5e42332d82e00d94|užsimeta
@@ -1029,8 +1028,8 @@ b970cd7256c9725c|vėžys
 5878f333bf37fcfb|zas
 2a30b5bdc3f31b44|ze
 665ab0d4dfbe309f|zebras
-1396bc8a5619af2d|zi
 aeda07913f53d1e0|zo
+e3abab127fc08e94|zu
 21565ff4b8b330b8|zui
 ff05cba9948d2462|zuikis
 8165af18aea4fd89|ą
@@ -1063,7 +1062,7 @@ e643ce70571597a8|Šalia plaukia antys.
 a4e3b15f322d0086|Šiandien
 16508963a7b49ac0|Šiandien Ema eina į mokyklą.
 1e1e278accfc6c2c|Šiandien Tomo gimtadienis.
-92c803c09064548e|Šiandien jau daug išmokai! Naujos pamokos bus rytoj. O senas gali kartoti.
+add5c313644c4297|Šiandien jau daug išmokai! Naujos pamokos bus rytoj. O baigtas pamokas gali kartoti.
 2300f1919280fe04|Šiandien šilta ir saulėta.
 ef0b8976e4a12c64|Šią pamoką atrakins tėveliai.
 aa48914f51d5288e|Štai
@@ -1077,7 +1076,7 @@ f7a22775b25c4d8b|ša
 a024261b2495b3cf|šalikas
 36b92bd7e50ba2ea|šaliką
 7cc8be7751b1da6c|šalta
-f00ff6c104c16f61|šauk
+912b1562018d9d84|šaukš
 7f7a2f39a9d7be47|šaukštas
 7a640c61b6beeaa6|še
 8d52e5873874832b|ši
@@ -1089,7 +1088,6 @@ da2b13c1a53943db|šiltą
 37c902817fd95e53|šoka
 d941fe154d58b5d4|šokinėja
 86ae85f0c56ff84e|šokoladas
-95609b9c927ad717|štas
 a35ace184d8b1d2c|šuniukas
 958f95517c7759ef|šunį
 929be57aba23501b|šuo
@@ -1097,7 +1095,6 @@ a35ace184d8b1d2c|šuniukas
 01bf8dc052778cdc|šė
 4164e229a8775154|Ūdra
 056cdf05a88e3080|Ūdra plaukia upe.
-5d9958a6ef487540|ū
 5c7f2533f9c86bd6|ūd
 87b2766e1bde34cc|ūdra
 a524352a30a62f39|Žiemą
@@ -1119,7 +1116,6 @@ e68b097da17a628b|žaidimas
 04056ce5d431237b|žemė
 38a295f279e73b0c|ži
 c3c15f0649ed65b3|žiema
-9748d654b9795d52|žiemos
 3d12bbf5f20de073|žirafa
 baed05bbf4571cc2|žolės
 5ea9f20a4c7beda1|žolę
