@@ -43,9 +43,14 @@ class AdManager(private val context: Context) {
         )
         val info = UserMessagingPlatform.getConsentInformation(activity)
         val params = ConsentRequestParameters.Builder().setTagForUnderAgeOfConsent(true).build()
-        info.requestConsentInfoUpdate(activity, params, { initialize() }, { error ->
+        info.requestConsentInfoUpdate(activity, params, {
+            UserMessagingPlatform.loadAndShowConsentFormIfRequired(activity) { error ->
+                if (error != null) Log.w(TAG, "Consent form: ${error.message}")
+                if (info.canRequestAds()) initialize()
+            }
+        }, { error ->
             Log.w(TAG, "Consent update failed: ${error.message}")
-            initialize()
+            if (info.canRequestAds()) initialize()
         })
     }
 

@@ -32,6 +32,8 @@ import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableLongStateOf
+import androidx.compose.runtime.setValue
 import androidx.compose.runtime.remember
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
@@ -54,6 +56,8 @@ import lt.marcomultiservices.skaitaupats.core.Lesson
 import lt.marcomultiservices.skaitaupats.core.LessonKind
 import lt.marcomultiservices.skaitaupats.core.Phrases
 import lt.marcomultiservices.skaitaupats.data.Progress
+import lt.marcomultiservices.skaitaupats.data.today
+import kotlinx.coroutines.delay
 import kotlin.math.sin
 
 private val ROW = 132.dp
@@ -68,6 +72,9 @@ fun HomeScreen(
     onAlbum: () -> Unit,
 ) {
     val lessons = course.lessons
+    // Re-read the date now and then, so tomorrow's lessons open without restarting the app.
+    var day by remember { mutableLongStateOf(today()) }
+    LaunchedEffect(Unit) { while (true) { delay(30_000); day = today() } }
     val current = lessons.firstOrNull { !progress.finished(it.id) }?.id ?: lessons.last().id
     val listState = rememberLazyListState()
     LaunchedEffect(Unit) { listState.scrollToItem((current - 2).coerceAtLeast(0)) }
@@ -101,7 +108,7 @@ fun HomeScreen(
             Spacer(Modifier.width(8.dp))
             Pill("🔒 Tėvams", label = "Tėvams", onClick = onParents)
         }
-        if (!progress.withinLimit(current)) RestBanner(onClick = { speaker.say(Phrases.TOMORROW) }, onParents = onParents)
+        if (!progress.withinLimit(current, day)) RestBanner(onClick = { speaker.say(Phrases.TOMORROW) }, onParents = onParents)
 
         BoxWithConstraints(Modifier.fillMaxSize()) {
             val width = maxWidth
@@ -112,13 +119,13 @@ fun HomeScreen(
                         x = nodeX(i, width),
                         prevX = if (i == 0) null else nodeX(i - 1, width),
                         stars = progress.stars[lesson.id] ?: 0,
-                        open = progress.canOpen(lesson.id),
-                        resting = progress.inOrder(lesson.id) && !progress.withinLimit(lesson.id),
+                        open = progress.canOpen(lesson.id, day),
+                        resting = progress.inOrder(lesson.id) && !progress.withinLimit(lesson.id, day),
                         isCurrent = lesson.id == current,
                         onClick = {
                             when {
-                                progress.canOpen(lesson.id) -> onOpen(lesson.id)
-                                !progress.withinLimit(lesson.id) -> speaker.say(Phrases.TOMORROW)
+                                progress.canOpen(lesson.id, today()) -> onOpen(lesson.id)
+                                !progress.withinLimit(lesson.id, today()) -> speaker.say(Phrases.TOMORROW)
                                 else -> speaker.say(Phrases.TRY_AGAIN)
                             }
                         },

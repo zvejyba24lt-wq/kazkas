@@ -30,7 +30,7 @@ data class Progress(
     /** Bought: no ads and no daily limit. */
     val adFree: Boolean get() = owned || testOwned
 
-    fun newToday(): Int = FreePlan.newToday(newDay, newCount, today())
+    fun newToday(day: Long = today()): Int = FreePlan.newToday(newDay, newCount, day)
 }
 
 fun today(): Long = LocalDate.now().toEpochDay()

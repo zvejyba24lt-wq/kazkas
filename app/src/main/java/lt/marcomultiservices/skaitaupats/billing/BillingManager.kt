@@ -15,12 +15,13 @@ import com.android.billingclient.api.PurchasesUpdatedListener
 import com.android.billingclient.api.QueryProductDetailsParams
 import com.android.billingclient.api.QueryPurchasesParams
 import com.android.billingclient.api.acknowledgePurchase
-import com.android.billingclient.api.queryProductDetails
 import com.android.billingclient.api.queryPurchasesAsync
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.flow.MutableStateFlow
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.launch
+import kotlinx.coroutines.suspendCancellableCoroutine
+import kotlin.coroutines.resume
 
 /** The one-time purchase through Google Play Billing that removes ads and the daily limit. */
 class BillingManager(
@@ -31,25 +32,35 @@ class BillingManager(
     private val client = BillingClient.newBuilder(context.applicationContext)
         .setListener(this)
         .enablePendingPurchases(PendingPurchasesParams.newBuilder().enableOneTimeProducts().build())
+        .enableAutoServiceReconnection()
         .build()
 
     private val _product = MutableStateFlow<ProductDetails?>(null)
     val product: StateFlow<ProductDetails?> = _product
+
+    private val _checked = MutableStateFlow(false)
+    /** True once Play has been asked about earlier purchases (or could not be reached). */
+    val checked: StateFlow<Boolean> = _checked
+    private var connecting = false
 
     fun connect() {
         if (client.isReady) {
             scope.launch { runCatching { queryProduct(); restore() } }
             return
         }
+        if (connecting) return
+        connecting = true
         client.startConnection(object : BillingClientStateListener {
             override fun onBillingSetupFinished(result: BillingResult) {
-                if (result.responseCode != BillingClient.BillingResponseCode.OK) return
+                connecting = false
+                if (result.responseCode != BillingClient.BillingResponseCode.OK) { _checked.value = true; return }
                 scope.launch {
                     runCatching { queryProduct(); restore() }.onFailure { Log.w(TAG, "Billing query failed", it) }
+                    _checked.value = true
                 }
             }
 
-            override fun onBillingServiceDisconnected() = Unit
+            override fun onBillingServiceDisconnected() { connecting = false }
         })
     }
 
@@ -62,7 +73,9 @@ class BillingManager(
                     .build(),
             ),
         ).build()
-        _product.value = client.queryProductDetails(params).productDetailsList?.firstOrNull()
+        _product.value = suspendCancellableCoroutine { cont ->
+            client.queryProductDetailsAsync(params) { _, result -> cont.resume(result.productDetailsList?.firstOrNull()) }
+        }
     }
 
     private suspend fun restore() {
@@ -74,6 +87,7 @@ class BillingManager(
 
     /** Returns false when the product is not available (e.g. app not installed from Play). */
     fun launch(activity: Activity): Boolean {
+        if (!client.isReady) { connect(); return false }
         val details = _product.value ?: return false
         val params = BillingFlowParams.newBuilder().setProductDetailsParamsList(
             listOf(BillingFlowParams.ProductDetailsParams.newBuilder().setProductDetails(details).build()),
@@ -82,8 +96,10 @@ class BillingManager(
     }
 
     override fun onPurchasesUpdated(result: BillingResult, purchases: MutableList<Purchase>?) {
-        if (result.responseCode == BillingClient.BillingResponseCode.OK && purchases != null) {
-            scope.launch { handle(purchases) }
+        when {
+            result.responseCode == BillingClient.BillingResponseCode.OK && purchases != null -> scope.launch { handle(purchases) }
+            // Bought before (e.g. on another phone or before a reinstall): restore instead of failing.
+            result.responseCode == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> scope.launch { runCatching { restore() } }
         }
     }
 

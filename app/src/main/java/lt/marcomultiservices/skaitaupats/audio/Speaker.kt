@@ -67,8 +67,7 @@ class Speaker(private val context: Context) {
                     AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_MEDIA)
                         .setContentType(AudioAttributes.CONTENT_TYPE_SPEECH).build(),
                 )
-                mp.setDataSource(afd.fileDescriptor, afd.startOffset, afd.length)
-                afd.close()
+                afd.use { mp.setDataSource(it.fileDescriptor, it.startOffset, it.length) }
                 mp.setOnPreparedListener { it.start() }
                 mp.setOnCompletionListener { if (cont.isActive) cont.resume(Unit) }
                 mp.setOnErrorListener { _, _, _ -> if (cont.isActive) cont.resume(Unit); true }

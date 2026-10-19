@@ -10,6 +10,13 @@ val releaseKeystore = System.getenv("RELEASE_KEYSTORE_PATH")?.takeIf { file(it).
 
 fun env(name: String, fallback: String) = System.getenv(name)?.takeIf { it.isNotBlank() } ?: fallback
 
+// A Google Play build (signed with the upload key) must not ship test ads or a placeholder privacy link.
+if (releaseKeystore != null) {
+    listOf("PRIVACY_URL", "ADMOB_APP_ID", "ADMOB_INTERSTITIAL_ID").filter { System.getenv(it).isNullOrBlank() }.let { missing ->
+        require(missing.isEmpty()) { "Play build needs these GitHub secrets: $missing" }
+    }
+}
+
 android {
     namespace = "lt.marcomultiservices.skaitaupats"
     compileSdk = 36
@@ -105,7 +112,7 @@ dependencies {
     implementation("androidx.emoji2:emoji2-bundled:1.5.0")
 
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
-    implementation("com.android.billingclient:billing-ktx:7.1.1")
+    implementation("com.android.billingclient:billing-ktx:8.0.0")
     implementation("androidx.lifecycle:lifecycle-runtime-ktx:2.9.0")
     implementation("com.google.android.gms:play-services-ads:24.3.0")
     implementation("com.google.android.ump:user-messaging-platform:3.2.0")

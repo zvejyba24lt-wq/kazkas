@@ -1,5 +1,6 @@
 package lt.marcomultiservices.skaitaupats.ui
 
+import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
 import androidx.compose.animation.core.animateFloatAsState
 import androidx.compose.animation.fadeIn
@@ -108,6 +109,8 @@ fun LessonScreen(
         )
     }
 
+    BackHandler(enabled = finished) { onDone() }
+
     LaunchedEffect(finished) {
         if (finished) {
             onFinished(Stars.forMistakes(mistakes), byLetter.toMap())
@@ -122,7 +125,8 @@ fun LessonScreen(
                 Modifier.fillMaxWidth().padding(horizontal = 14.dp, vertical = 10.dp),
                 verticalAlignment = Alignment.CenterVertically,
             ) {
-                Pill("✕", label = "Uždaryti", onClick = onClose)
+                // Leaving a finished lesson counts as "back to the map", so the free version's ad is not skipped.
+                Pill("✕", label = "Uždaryti", onClick = if (finished) onDone else onClose)
                 Spacer(Modifier.size(12.dp))
                 val fill by animateFloatAsState((index.coerceAtMost(total)).toFloat() / total, label = "progress")
                 Box(Modifier.weight(1f).height(18.dp).clip(CircleShape).background(Palette.Line)) {
@@ -143,7 +147,12 @@ fun LessonScreen(
                     } else {
                         val e = lesson.exercises[i]
                         LaunchedEffect(i) { if (e.prompt.isNotEmpty()) speaker.say(e.prompt) }
-                        ExerciseView(e, host)
+                        // The outgoing exercise stays tappable while it slides away; a second tap on its
+                        // "Toliau" must not skip the next exercise.
+                        val own = remember(i) {
+                            ExerciseHost(host.speaker, next = { if (index == i) index++ }, correct = host.correct, mistake = host.mistake)
+                        }
+                        ExerciseView(e, own)
                     }
                 }
             }

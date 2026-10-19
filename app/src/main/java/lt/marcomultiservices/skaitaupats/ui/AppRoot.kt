@@ -20,6 +20,7 @@ import lt.marcomultiservices.skaitaupats.BuildConfig
 import lt.marcomultiservices.skaitaupats.app
 import lt.marcomultiservices.skaitaupats.core.FreePlan
 import lt.marcomultiservices.skaitaupats.data.Progress
+import lt.marcomultiservices.skaitaupats.data.today
 
 private sealed interface Screen {
     data object Home : Screen
@@ -33,9 +34,9 @@ private sealed interface Screen {
 fun Progress.inOrder(id: Int): Boolean = BuildConfig.TEST_UNLOCK || id == 1 || finished(id - 1) || finished(id)
 
 /** The free version's daily limit allows it: a repeat, or not too many new lessons today. */
-fun Progress.withinLimit(id: Int): Boolean = adFree || FreePlan.mayOpen(finished(id), newToday())
+fun Progress.withinLimit(id: Int, day: Long = today()): Boolean = adFree || FreePlan.mayOpen(finished(id), newToday(day))
 
-fun Progress.canOpen(id: Int): Boolean = inOrder(id) && withinLimit(id)
+fun Progress.canOpen(id: Int, day: Long = today()): Boolean = inOrder(id) && withinLimit(id, day)
 
 @Composable
 fun AppRoot() {
