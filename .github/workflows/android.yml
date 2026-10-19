@@ -68,19 +68,26 @@ jobs:
             echo "RELEASE_KEYSTORE_PATH=$RUNNER_TEMP/upload.jks" >> "$GITHUB_ENV"
           fi
 
-      - name: Build release APK
+      # The APK for phones and the smoke test is always the test build: sideload key, lessons in any
+      # order, Google test ads. Only the Play bundle below is signed with the upload key and locked.
+      - name: Build test APK
+        env:
+          RELEASE_KEYSTORE_PATH: ""
+        run: |
+          echo "Sounds bundled: $(ls app/src/main/assets/audio | wc -l)"
+          ./gradlew --no-daemon :app:assembleRelease
+          mkdir -p dist
+          cp app/build/outputs/apk/release/app-release.apk dist/SkaitauPats.apk
+
+      - name: Build Google Play bundle (only with the upload key)
+        if: env.RELEASE_KEYSTORE_PATH != ''
         env:
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
         run: |
-          echo "Sounds bundled: $(ls app/src/main/assets/audio | wc -l)"
-          tasks=":app:assembleRelease"
-          if [ -n "${RELEASE_KEYSTORE_PATH:-}" ]; then tasks="$tasks :app:bundleRelease"; fi
-          ./gradlew --no-daemon $tasks
-          mkdir -p dist
-          cp app/build/outputs/apk/release/app-release.apk dist/SkaitauPats.apk
-          if [ -d app/build/outputs/bundle/release ]; then cp app/build/outputs/bundle/release/*.aab dist/SkaitauPats.aab; fi
+          ./gradlew --no-daemon :app:bundleRelease
+          cp app/build/outputs/bundle/release/*.aab dist/SkaitauPats-GooglePlay.aab
           ls -la dist
 
       - uses: actions/upload-artifact@v4

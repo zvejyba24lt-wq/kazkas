@@ -94,12 +94,13 @@ fun TraceLetterView(e: Exercise.TraceLetter, host: ExerciseHost) {
     var solved by remember { mutableStateOf(false) }
     var waited by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { delay(12_000); waited = true }
-    // A new square size (split screen, foldables) moves the letter, so old strokes no longer fit.
-    LaunchedEffect(glyph) { strokes.clear(); current = emptyList() }
 
     fun clear() {
         strokes.clear(); current = emptyList(); covered.fill(false); inside = 0; outside = 0
     }
+
+    // A new square size (split screen, foldables) moves the letter, so old strokes no longer fit.
+    LaunchedEffect(glyph) { clear(); tries = 0 }
 
     fun touch(p: Offset) {
         val g = glyph ?: return
@@ -129,7 +130,8 @@ fun TraceLetterView(e: Exercise.TraceLetter, host: ExerciseHost) {
             Text("Parašyk pirštu", fontSize = 22.sp, fontWeight = FontWeight.Bold, color = Palette.Soft)
         }
         Box(
-            Modifier.fillMaxWidth(0.86f).aspectRatio(1f).clip(RoundedCornerShape(36.dp)).background(Palette.Paper)
+            // On a landscape tablet the square gives way, so the buttons below always fit.
+            Modifier.weight(1f, fill = false).fillMaxWidth(0.86f).aspectRatio(1f).clip(RoundedCornerShape(36.dp)).background(Palette.Paper)
                 .border(4.dp, Palette.Line, RoundedCornerShape(36.dp))
                 .onSizeChanged { size = it }
                 .pointerInput(glyph, solved) {

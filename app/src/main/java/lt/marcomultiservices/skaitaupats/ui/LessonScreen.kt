@@ -101,7 +101,7 @@ fun LessonScreen(
                     speaker.say(say + Phrases.PRAISE.random()) { spoken.complete(Unit) }
                     scope.launch {
                         delay(900)
-                        withTimeoutOrNull(4_000) { spoken.await() }
+                        withTimeoutOrNull(2_500) { spoken.await() }
                         advancing = false
                         index++
                     }

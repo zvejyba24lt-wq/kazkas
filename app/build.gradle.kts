@@ -6,7 +6,7 @@ plugins {
 
 // Release signing comes from environment variables (GitHub secrets). Without them the
 // committed sideload key is used, so test builds install over each other.
-val releaseKeystore = System.getenv("RELEASE_KEYSTORE_PATH")?.takeIf { file(it).exists() }
+val releaseKeystore = System.getenv("RELEASE_KEYSTORE_PATH")?.takeIf { it.isNotBlank() && file(it).isFile }
 
 fun env(name: String, fallback: String) = System.getenv(name)?.takeIf { it.isNotBlank() } ?: fallback
 

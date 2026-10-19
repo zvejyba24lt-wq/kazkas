@@ -87,7 +87,8 @@ fun AppRoot() {
                             if (p.adFree) go("home") else app.ads.showAfterLesson(context as Activity) { go("home") }
                         },
                         onFinished = { stars, mistakes ->
-                            scope.launch { app.progress.finishLesson(s.id, stars, mistakes) }
+                            // The app scope, so the result is saved even if this screen goes away mid-write.
+                            app.scope.launch { app.progress.finishLesson(s.id, stars, mistakes) }
                         },
                     )
                 }

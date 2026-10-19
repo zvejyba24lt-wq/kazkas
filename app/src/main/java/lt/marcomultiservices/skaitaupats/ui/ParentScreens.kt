@@ -17,7 +17,10 @@ import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.KeyboardActions
 import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.foundation.layout.imePadding
+import androidx.compose.ui.text.input.ImeAction
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.AlertDialog
 import androidx.compose.material3.Button
@@ -59,7 +62,7 @@ fun ParentGate(onPassed: () -> Unit, onBack: () -> Unit) {
     var answer by rememberSaveable { mutableStateOf("") }
     var wrong by remember { mutableStateOf(false) }
     Column(
-        Modifier.fillMaxSize().background(Palette.Cream).statusBarsPadding().navigationBarsPadding().padding(24.dp),
+        Modifier.fillMaxSize().background(Palette.Cream).statusBarsPadding().navigationBarsPadding().imePadding().padding(24.dp),
         horizontalAlignment = Alignment.CenterHorizontally,
         verticalArrangement = Arrangement.spacedBy(18.dp, Alignment.CenterVertically),
     ) {
@@ -71,7 +74,8 @@ fun ParentGate(onPassed: () -> Unit, onBack: () -> Unit) {
             onValueChange = { answer = it.filter(Char::isDigit).take(3); wrong = false },
             label = { Text(stringResource(R.string.gate_hint)) },
             singleLine = true,
-            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number),
+            keyboardOptions = KeyboardOptions(keyboardType = KeyboardType.Number, imeAction = ImeAction.Done),
+            keyboardActions = KeyboardActions(onDone = { if (answer.toIntOrNull() == a * b) onPassed() else wrong = true }),
         )
         if (wrong) Text(stringResource(R.string.gate_wrong), color = Palette.Red)
         Button(onClick = { if (answer.toIntOrNull() == a * b) onPassed() else wrong = true }) {

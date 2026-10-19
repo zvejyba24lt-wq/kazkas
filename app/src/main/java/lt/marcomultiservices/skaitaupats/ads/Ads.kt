@@ -3,6 +3,7 @@ package lt.marcomultiservices.skaitaupats.ads
 import android.app.Activity
 import android.content.Context
 import android.os.SystemClock
+import android.provider.Settings
 import android.util.Log
 import com.google.android.gms.ads.AdError
 import com.google.android.gms.ads.AdRequest
@@ -33,6 +34,8 @@ class AdManager(private val context: Context) {
 
     /** Settles consent (no form is shown for children) and starts AdMob. Call once from the activity. */
     fun start(activity: Activity) {
+        // Google Play's automatic pre-launch testing must not click real ads.
+        if (Settings.System.getString(activity.contentResolver, "firebase.test.lab") == "true") return
         if (started.getAndSet(true)) return
         MobileAds.setRequestConfiguration(
             RequestConfiguration.Builder()
