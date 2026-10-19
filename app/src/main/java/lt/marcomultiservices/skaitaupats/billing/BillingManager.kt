@@ -73,9 +73,10 @@ class BillingManager(
                     .build(),
             ),
         ).build()
-        _product.value = suspendCancellableCoroutine { cont ->
+        // A failed or offline query keeps the product loaded earlier.
+        suspendCancellableCoroutine { cont ->
             client.queryProductDetailsAsync(params) { _, result -> cont.resume(result.productDetailsList?.firstOrNull()) }
-        }
+        }?.let { _product.value = it }
     }
 
     private suspend fun restore() {
@@ -87,7 +88,8 @@ class BillingManager(
 
     /** Returns false when the product is not available (e.g. app not installed from Play). */
     fun launch(activity: Activity): Boolean {
-        if (!client.isReady) { connect(); return false }
+        // The client reconnects by itself when launching, so only make sure a connection is under way.
+        if (!client.isReady) connect()
         val details = _product.value ?: return false
         val params = BillingFlowParams.newBuilder().setProductDetailsParamsList(
             listOf(BillingFlowParams.ProductDetailsParams.newBuilder().setProductDetails(details).build()),
@@ -97,7 +99,7 @@ class BillingManager(
 
     override fun onPurchasesUpdated(result: BillingResult, purchases: MutableList<Purchase>?) {
         when {
-            result.responseCode == BillingClient.BillingResponseCode.OK && purchases != null -> scope.launch { handle(purchases) }
+            result.responseCode == BillingClient.BillingResponseCode.OK && purchases != null -> scope.launch { runCatching { handle(purchases) }.onFailure { Log.w(TAG, "Purchase handling failed", it) } }
             // Bought before (e.g. on another phone or before a reinstall): restore instead of failing.
             result.responseCode == BillingClient.BillingResponseCode.ITEM_ALREADY_OWNED -> scope.launch { runCatching { restore() } }
         }

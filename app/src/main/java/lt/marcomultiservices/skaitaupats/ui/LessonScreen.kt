@@ -32,7 +32,6 @@ import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
-import androidx.compose.runtime.mutableStateMapOf
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.rememberCoroutineScope
@@ -46,7 +45,9 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
+import kotlinx.coroutines.CompletableDeferred
 import kotlinx.coroutines.delay
+import kotlinx.coroutines.withTimeoutOrNull
 import kotlinx.coroutines.launch
 import lt.marcomultiservices.skaitaupats.audio.Speaker
 import lt.marcomultiservices.skaitaupats.core.Exercise
@@ -78,7 +79,9 @@ fun LessonScreen(
 ) {
     var index by rememberSaveable(lesson.id) { mutableIntStateOf(0) }
     var mistakes by rememberSaveable(lesson.id) { mutableIntStateOf(0) }
-    val byLetter = remember(lesson.id) { mutableStateMapOf<String, Int>() }
+    // Saved with the lesson, so a recreated screen keeps the mistakes for the parents' overview.
+    var byLetter by rememberSaveable(lesson.id) { mutableStateOf(mapOf<String, Int>()) }
+    var reported by rememberSaveable(lesson.id) { mutableStateOf(false) }
     var celebrate by remember { mutableIntStateOf(0) }
     var advancing by remember { mutableStateOf(false) }
     val scope = rememberCoroutineScope()
@@ -93,9 +96,12 @@ fun LessonScreen(
                 if (!advancing) {
                     advancing = true
                     celebrate++
-                    speaker.say(say + Phrases.PRAISE.random())
+                    // Move on once the praise has been said, so the next prompt does not cut it off.
+                    val spoken = CompletableDeferred<Unit>()
+                    speaker.say(say + Phrases.PRAISE.random()) { spoken.complete(Unit) }
                     scope.launch {
-                        delay(1500)
+                        delay(900)
+                        withTimeoutOrNull(4_000) { spoken.await() }
                         advancing = false
                         index++
                     }
@@ -103,7 +109,7 @@ fun LessonScreen(
             },
             mistake = { letter ->
                 mistakes++
-                if (letter != null) byLetter[letter] = (byLetter[letter] ?: 0) + 1
+                if (letter != null) byLetter = byLetter + (letter to (byLetter[letter] ?: 0) + 1)
                 speaker.say(Phrases.TRY_AGAIN)
             },
         )
@@ -112,8 +118,9 @@ fun LessonScreen(
     BackHandler(enabled = finished) { onDone() }
 
     LaunchedEffect(finished) {
-        if (finished) {
-            onFinished(Stars.forMistakes(mistakes), byLetter.toMap())
+        if (finished && !reported) {
+            reported = true
+            onFinished(Stars.forMistakes(mistakes), byLetter)
             celebrate++
             speaker.say(if (firstTime) listOf(Phrases.LESSON_DONE, Phrases.STICKER) else listOf(Phrases.LESSON_DONE))
         }

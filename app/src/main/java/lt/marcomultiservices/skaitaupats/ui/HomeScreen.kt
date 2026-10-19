@@ -221,7 +221,7 @@ private fun RestBanner(onClick: () -> Unit, onParents: () -> Unit) {
         Text("🌙", fontSize = 34.sp)
         Column(Modifier.padding(start = 12.dp).weight(1f)) {
             Text("Šiandien užteks!", color = Color.White, fontSize = 20.sp, fontWeight = FontWeight.ExtraBold)
-            Text("Naujos pamokos rytoj. Senas gali kartoti.", color = Color(0xFFD9DEF5), fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text("Naujos pamokos rytoj. Baigtas gali kartoti.", color = Color(0xFFD9DEF5), fontSize = 14.sp, fontWeight = FontWeight.Bold)
         }
         Text(
             "Be ribų →", color = Palette.Yellow, fontSize = 14.sp, fontWeight = FontWeight.ExtraBold,

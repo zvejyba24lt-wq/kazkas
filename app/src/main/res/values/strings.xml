@@ -13,7 +13,7 @@
     <string name="progress_none">Dar nebaigta nė viena pamoka.</string>
     <string name="progress_hard">Sunkiau sekasi: %1$s</string>
     <string name="buy_title">Be reklamų ir be ribų</string>
-    <string name="buy_text">Nemokamai galima išmokti visą kursą: %1$d pamokos, visos 32 raidės ir 20 pasakaičių. Tik ne daugiau kaip %2$d naujos pamokos per dieną, o po pamokos rodoma trumpa vaikams skirta reklama. Baigtas pamokas kartoti galima be ribų. Vienas pirkimas visam laikui panaikina reklamas ir dienos ribą, be prenumeratos.</string>
+    <string name="buy_text">Nemokamai galima išmokti visą kursą: visas 32 raides ir 20 pasakaičių (iš viso pamokų – %1$d). Tik ne daugiau kaip %2$d naujos pamokos per dieną, o po pamokos rodoma trumpa vaikams skirta reklama. Baigtas pamokas kartoti galima be ribų. Vienas pirkimas visam laikui panaikina reklamas ir dienos ribą, be prenumeratos.</string>
     <string name="buy_button">Atrakinti už %1$s</string>
     <string name="buy_today">Šiandien naujų pamokų: %1$d iš %2$d.</string>
     <string name="buy_restore">Atkurti pirkimą</string>
@@ -25,7 +25,7 @@
     <string name="tips_title">Kaip mokytis</string>
     <string name="tip_1">Užtenka vienos pamokos per dieną, 5–10 minučių.</string>
     <string name="tip_2">Sėdėkite šalia ir girkite vaiką už kiekvieną bandymą, ne tik už teisingą atsakymą.</string>
-    <string name="tip_3">Paspaudus skiemenį ar žodį, jis ištariamas. Paprašykite vaiką pakartoti garsiai.</string>
+    <string name="tip_3">Paspaudus skiemenį ar žodį, jis ištariamas. Paprašykite vaiko pakartoti garsiai.</string>
     <string name="tip_4">Pamoką galima kartoti, kiek norisi. Daugiau žvaigždučių gaunama, kai klaidų mažiau.</string>
     <string name="tip_5">Programėlė pati ištaria kiekvieną raidę, skiemenį ir žodį, todėl vaikas gali mokytis ir tada, kai jūsų nėra šalia.</string>
     <string name="privacy">Privatumo politika</string>

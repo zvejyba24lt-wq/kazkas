@@ -6,6 +6,7 @@ import androidx.compose.animation.fadeIn
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.collectAsState
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
@@ -71,18 +72,26 @@ fun AppRoot() {
                 onParents = { go("gate") },
                 onAlbum = { go("album") },
             )
-            is Screen.Lesson -> LessonScreen(
-                lesson = app.course.lessons.first { it.id == s.id },
-                speaker = app.speaker,
-                firstTime = remember(s.id) { !p.finished(s.id) },
-                onClose = { go("home") },
-                onDone = {
-                    if (p.adFree) go("home") else app.ads.showAfterLesson(context as Activity) { go("home") }
-                },
-                onFinished = { stars, mistakes ->
-                    scope.launch { app.progress.finishLesson(s.id, stars, mistakes) }
-                },
-            )
+            is Screen.Lesson -> {
+                // A saved screen can name a lesson that no longer exists after a course update.
+                val lesson = app.course.lessons.firstOrNull { it.id == s.id }
+                if (lesson == null) {
+                    LaunchedEffect(Unit) { go("home") }
+                } else {
+                    LessonScreen(
+                        lesson = lesson,
+                        speaker = app.speaker,
+                        firstTime = rememberSaveable(s.id) { !p.finished(s.id) },
+                        onClose = { go("home") },
+                        onDone = {
+                            if (p.adFree) go("home") else app.ads.showAfterLesson(context as Activity) { go("home") }
+                        },
+                        onFinished = { stars, mistakes ->
+                            scope.launch { app.progress.finishLesson(s.id, stars, mistakes) }
+                        },
+                    )
+                }
+            }
             Screen.Album -> AlbumScreen(course = app.course, progress = p, speaker = app.speaker, onBack = { go("home") })
             Screen.Gate -> ParentGate(onPassed = { go("parents") }, onBack = { go("home") })
             Screen.Parents -> ParentsScreen(

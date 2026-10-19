@@ -85,7 +85,7 @@ object Phrases {
     const val LOCKED = "Šią pamoką atrakins tėveliai."
     const val TRACE = "Parašyk raidę pirštu."
     const val STICKER = "Gavai naują lipduką!"
-    const val TOMORROW = "Šiandien jau daug išmokai! Naujos pamokos bus rytoj. O senas gali kartoti."
+    const val TOMORROW = "Šiandien jau daug išmokai! Naujos pamokos bus rytoj. O baigtas pamokas gali kartoti."
     val PRAISE = listOf("Puiku!", "Šaunu!", "Teisingai!", "Labai gerai!")
 
     fun intro(l: LetterDef): String =

@@ -94,6 +94,8 @@ fun TraceLetterView(e: Exercise.TraceLetter, host: ExerciseHost) {
     var solved by remember { mutableStateOf(false) }
     var waited by remember { mutableStateOf(false) }
     LaunchedEffect(Unit) { delay(12_000); waited = true }
+    // A new square size (split screen, foldables) moves the letter, so old strokes no longer fit.
+    LaunchedEffect(glyph) { strokes.clear(); current = emptyList() }
 
     fun clear() {
         strokes.clear(); current = emptyList(); covered.fill(false); inside = 0; outside = 0

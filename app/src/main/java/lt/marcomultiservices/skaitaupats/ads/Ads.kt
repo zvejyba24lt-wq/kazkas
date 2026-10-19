@@ -76,7 +76,7 @@ class AdManager(private val context: Context) {
     fun showAfterLesson(activity: Activity, then: () -> Unit) {
         val ad = interstitial
         val now = SystemClock.elapsedRealtime()
-        if (ad == null || activity.isFinishing || (lastShown != 0L && now - lastShown < MIN_GAP_MS)) { preload(); then(); return }
+        if (ad == null || activity.isFinishing || activity.isDestroyed || (lastShown != 0L && now - lastShown < MIN_GAP_MS)) { preload(); then(); return }
         interstitial = null
         lastShown = now
         ad.fullScreenContentCallback = object : FullScreenContentCallback() {
