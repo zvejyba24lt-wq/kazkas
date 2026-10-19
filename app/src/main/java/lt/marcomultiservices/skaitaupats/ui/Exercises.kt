@@ -12,6 +12,7 @@ import androidx.compose.foundation.clickable
 import androidx.compose.foundation.gestures.detectDragGestures
 import androidx.compose.foundation.layout.Arrangement
 import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.BoxWithConstraints
 import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.ExperimentalLayoutApi
 import androidx.compose.foundation.layout.FlowRow
@@ -25,6 +26,8 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.RoundedCornerShape
+import androidx.compose.foundation.text.BasicText
+import androidx.compose.foundation.text.TextAutoSize
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.LaunchedEffect
@@ -46,6 +49,7 @@ import androidx.compose.ui.platform.LocalDensity
 import androidx.compose.ui.semantics.contentDescription
 import androidx.compose.ui.semantics.semantics
 import androidx.compose.ui.text.SpanStyle
+import androidx.compose.ui.text.TextStyle
 import androidx.compose.ui.text.buildAnnotatedString
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -76,15 +80,19 @@ private fun Instruction(text: String, onSound: (() -> Unit)? = null) {
 
 /** A word drawn with its syllables in alternating colours. */
 @Composable
-private fun SyllableWord(word: WordDef, fontSize: Int) {
-    Text(
+private fun SyllableWord(word: WordDef, fontSize: Int, modifier: Modifier = Modifier) {
+    // Shrinks to fit when the word is too long for its place (kup-ra-nu-ga-ris), never wraps.
+    BasicText(
         buildAnnotatedString {
             word.syllables.forEachIndexed { i, s ->
                 withStyle(SpanStyle(color = Palette.Syllables[i % 2])) { append(s) }
             }
         },
-        fontSize = fontSize.sp,
-        fontWeight = FontWeight.ExtraBold,
+        modifier = modifier,
+        style = TextStyle(fontSize = fontSize.sp, fontWeight = FontWeight.ExtraBold),
+        maxLines = 1,
+        softWrap = false,
+        autoSize = TextAutoSize.StepBased(minFontSize = 20.sp, maxFontSize = fontSize.sp, stepSize = 2.sp),
     )
 }
 
@@ -196,7 +204,7 @@ fun BuildSyllableView(e: Exercise.BuildSyllable, host: ExerciseHost) {
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(36.dp)) {
         Instruction("Sujunk raides") { host.speaker.say(e.prompt) }
         Box(Modifier.fillMaxWidth().height(170.dp), contentAlignment = Alignment.Center) {
-            val spread = 70f * gap.value
+            val spread = 50f * gap.value
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Chunky(
                     Palette.Paper, Palette.Line,
@@ -255,15 +263,20 @@ fun ReadWordView(e: Exercise.ReadWord, host: ExerciseHost) {
     val speaking by host.speaker.speaking.collectAsState()
     Column(horizontalAlignment = Alignment.CenterHorizontally, verticalArrangement = Arrangement.spacedBy(26.dp)) {
         Instruction("Spausk skiemenis ir skaityk") { host.speaker.say(e.prompt) }
-        Row(horizontalArrangement = Arrangement.spacedBy(10.dp)) {
-            w.syllables.forEachIndexed { i, s ->
-                val color = Palette.Syllables[i % 2]
-                val active = speaking == s.lowercase()
-                Chunky(
-                    if (active) color else Palette.Paper, if (active) color.copy(alpha = 0.7f) else Palette.Line,
-                    Modifier.height(110.dp).width((48 + s.length * 34).dp), corner = 24.dp, label = s,
-                    onClick = { heard = true; host.speaker.say(s.lowercase()) },
-                ) { Text(s, fontSize = 52.sp, fontWeight = FontWeight.ExtraBold, color = if (active) Color.White else color) }
+        BoxWithConstraints(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+            // Long words (fo-to-a-pa-ra-tas) shrink their tiles so all syllables stay on one line on screen.
+            val natural = w.syllables.sumOf { 40 + it.length * 32 } + 10 * (w.syllables.size - 1)
+            val k = minOf(1f, maxWidth.value / natural)
+            Row(horizontalArrangement = Arrangement.spacedBy((10 * k).dp)) {
+                w.syllables.forEachIndexed { i, s ->
+                    val color = Palette.Syllables[i % 2]
+                    val active = speaking == s.lowercase()
+                    Chunky(
+                        if (active) color else Palette.Paper, if (active) color.copy(alpha = 0.7f) else Palette.Line,
+                        Modifier.height((110 * k).coerceAtLeast(64f).dp).width(((40 + s.length * 32) * k).dp), corner = (24 * k).dp, label = s,
+                        onClick = { heard = true; host.speaker.say(s.lowercase()) },
+                    ) { Text(s, fontSize = (52 * k).sp, fontWeight = FontWeight.ExtraBold, color = if (active) Color.White else color, maxLines = 1, softWrap = false) }
+                }
             }
         }
         Text("⬇", fontSize = 30.sp, color = Palette.Line)
@@ -271,8 +284,8 @@ fun ReadWordView(e: Exercise.ReadWord, host: ExerciseHost) {
             Palette.Paper, Palette.Line, Modifier.fillMaxWidth(0.9f).height(120.dp), corner = 28.dp, label = w.text,
             onClick = { heard = true; host.speaker.say(w.text) },
         ) {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                SyllableWord(w, 54)
+            Row(Modifier.padding(horizontal = 16.dp), verticalAlignment = Alignment.CenterVertically) {
+                SyllableWord(w, 54, Modifier.weight(1f, fill = false))
                 AnimatedVisibility(heard && w.emoji != null, enter = scaleIn() + fadeIn()) {
                     Text("  ${w.emoji}", fontSize = 54.sp)
                 }

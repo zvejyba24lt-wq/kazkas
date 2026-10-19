@@ -83,6 +83,25 @@ PY
 shot 12_tevams 3
 adb shell input swipe 540 1600 540 600 400; shot 13_tevams_apacia 2
 
+# A small phone (360 × 640 dp) with the largest long words: everything has to fit on screen.
+adb shell wm size 720x1280; adb shell wm density 320
+adb shell am force-stop "$PKG"; adb shell am start -W -n "$PKG/.MainActivity"; sleep 6
+shot 14_mazas_zemelapis 1
+tap "Pamoka 1"; shot 15_mazas_raide 3
+tap "Uždaryti"; sleep 2
+for i in $(seq 40); do
+  adb shell uiautomator dump /sdcard/ui.xml >/dev/null 2>&1
+  adb exec-out cat /sdcard/ui.xml | grep -q '"Pamoka 59"' && break
+  adb shell input swipe 360 1000 360 450 400; sleep 1
+done
+tap "Pamoka 59"; sleep 3
+tap "banginis"; sleep 2; tap "Toliau"; sleep 2
+TAP_LAST=1 python3 .github/scripts/tap.py "banginis"; sleep 5; shot 16_mazas_ilgas_zodis 1
+tap "kupranugaris"; shot 16b_mazas_ilgas_zodis 3
+tap "Toliau"; shot 17_mazas_pasirink 2
+tap "Uždaryti"; sleep 2
+adb shell wm size reset; adb shell wm density reset
+
 adb logcat -d > "$OUT/logcat_full.txt"
 grep -E "$PKG|AndroidRuntime|Fatal signal|DEBUG +:|ANR in|has died|Speaker|Billing|Ads" "$OUT/logcat_full.txt" | tail -n 400 > "$OUT/logcat.txt"
 awk -v pkg="$PKG" '

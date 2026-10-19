@@ -1,4 +1,6 @@
-"""Taps the first UI node whose text or content description matches argv[1] (uiautomator)."""
+"""Taps the first UI node whose text or content description matches argv[1] (uiautomator).
+With TAP_LAST=1 it taps the last match instead (e.g. the answer tile below the same word shown as a question)."""
+import os
 import re
 import subprocess
 import sys
@@ -40,11 +42,12 @@ def main(targets):
             continue
         if not targets:
             return 0
-        for node in root.iter("node"):
-            if node.get("text") in targets or node.get("content-desc") in targets:
-                tap_node(node)
-                print("tapped", node.get("text") or node.get("content-desc"))
-                return 0
+        found = [n for n in root.iter("node") if n.get("text") in targets or n.get("content-desc") in targets]
+        if found:
+            node = found[-1] if os.environ.get("TAP_LAST") == "1" else found[0]
+            tap_node(node)
+            print("tapped", node.get("text") or node.get("content-desc"))
+            return 0
         time.sleep(1.5)
     print("not found:", targets)
     return 0
