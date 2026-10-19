@@ -12,6 +12,8 @@ tap() { python3 .github/scripts/tap.py "$@"; }
 
 sleep 45; python3 .github/scripts/tap.py
 adb install -r "$APK" || exit 1
+# The CI emulator's launcher often stops responding and covers the app with a dialog; the app does not need it.
+adb shell pm disable-user --user 0 com.google.android.apps.nexuslauncher || true
 adb logcat -c
 adb shell am start -W -n "$PKG/.MainActivity"
 FAIL=0
