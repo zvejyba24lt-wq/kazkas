@@ -119,7 +119,7 @@ jobs:
           GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
         run: |
           mkdir -p screens && cd screens && (zip -q ../dist/screenshots.zip *.png *.txt *.gz || true); cd ..
-          gh release delete apk-latest --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
-          gh release create apk-latest dist/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
+          gh release delete kimba-apk-latest --repo "$GITHUB_REPOSITORY" --cleanup-tag --yes || true
+          gh release create kimba-apk-latest dist/* --repo "$GITHUB_REPOSITORY" --target "$GITHUB_SHA" --prerelease \
             --title "Kimba! – naujausias build #${{ github.run_number }} (Test: ${{ needs.smoke-test.result }})" \
             --notes "Automatiškai sukurta iš ${GITHUB_REF_NAME} (${GITHUB_SHA::7}). Atsisiųsk Kimba.apk telefone ir įdiek."
