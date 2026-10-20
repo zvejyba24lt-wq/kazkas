@@ -12,10 +12,10 @@ object Windows {
      * Upcoming golden windows from [fromMillis] over the forecast (hourly steps). Moon
      * conditions are known far ahead; weather ones only as far as the forecast reaches.
      */
-    fun golden(forecast: Forecast, fromMillis: Long, lat: Double, lon: Double, zone: ZoneId, hours: Int = 60): List<GoldenWindow> {
+    fun golden(forecast: Forecast, fromMillis: Long, lat: Double, lon: Double, zone: ZoneId, hours: Int = 60, goldens: List<Golden> = Fish.goldens): List<GoldenWindow> {
         val start = fromMillis - fromMillis % HOUR
         val result = mutableListOf<GoldenWindow>()
-        for (g in Fish.goldens) {
+        for (g in goldens) {
             var open: Long? = null
             for (i in 0..hours) {
                 val t = start + i * HOUR

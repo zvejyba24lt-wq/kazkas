@@ -173,9 +173,93 @@ class CoreTest {
     fun luresChangeTheCatch() {
         val rng = Random(3)
         val c = cond(at(2026, 7, 1, 5), Sky.CLOUDY, temp = 20.0, cloud = 0.9)
-        val corn = List(2000) { BiteEngine.roll(c, 0.4, rng, Lure.CORN).species.id }
-        val spin = List(2000) { BiteEngine.roll(c, 0.8, rng, Lure.SPINNER).species.id }
+        val corn = List(2000) { BiteEngine.roll(c, 0.4, rng, gear = Gear(lure = Lure.CORN)).species.id }
+        val spin = List(2000) { BiteEngine.roll(c, 0.8, rng, gear = Gear(lure = Lure.SPINNER)).species.id }
         assertTrue(corn.count { it == "carp" } > spin.count { it == "carp" } * 5)
         assertTrue(spin.count { it == "pike" } > corn.count { it == "pike" } * 5)
+    }
+
+    @Test
+    fun eachWaterHasItsOwnFish() {
+        val c = cond(at(2026, 9, 10, 19), Sky.CLOUDY, cloud = 0.8)
+        val rng = Random(5)
+        val sea = List(1500) { BiteEngine.roll(c, 0.6, rng, Spot(Water.SEA)).species }.toSet()
+        val lake = List(1500) { BiteEngine.roll(c, 0.6, rng, Spot.HOME_LAKE).species }.toSet()
+        assertTrue(Fish.cod in sea && Fish.cod !in lake)
+        assertTrue(Fish.tench in lake && Fish.tench !in sea)
+        assertTrue(Fish.whitefish !in lake)
+        val bodensee = List(1500) { BiteEngine.roll(c, 0.8, rng, Destinations.byId("bodensee")!!.spot).species }.toSet()
+        assertTrue(Fish.whitefish in bodensee)
+        for (w in Water.entries) println("$w: ${Fish.all.count { it.livesAt(Spot(w)) }} species, index ${Fish.biteIndex(c, Spot(w))}")
+        // Every golden fish lives somewhere the player can fish.
+        assertTrue(Fish.goldens.all { g -> Water.entries.any { g.base.livesAt(Spot(it)) } })
+    }
+
+    @Test
+    fun strongerGearHoldsBigFish() {
+        val pull = Fish.catfish.power * 1.4
+        fun landed(strength: Double): Int = (1..40).count { seed ->
+            val f = Fight(pull, Random(seed), strength)
+            var t = 0.0
+            while (f.result == null && t < 120) {
+                // Careful player: reels unless the line is close to the limit.
+                f.step(0.016, f.tension < 0.85)
+                t += 0.016
+            }
+            f.result == FightResult.LANDED
+        }
+        val basic = landed(Rod.BASIC.strength)
+        val legend = landed(Rod.LEGEND.strength + Line.THICK.strength)
+        println("big catfish landed: basic $basic/40, legend $legend/40")
+        assertTrue(legend >= basic)
+    }
+
+    @Test
+    fun levelsCoinsAndShop() {
+        assertEquals(1, Levels.levelOf(0))
+        assertEquals(2, Levels.levelOf(100))
+        assertEquals(10, Levels.levelOf(Levels.xpFor(10)))
+        var p = Progress()
+        assertEquals(null, p.buy(Lure.SPINNER)) // level 2 needed
+        p = p.copy(xp = Levels.xpFor(2), coins = 1000)
+        p = p.buy(Lure.SPINNER)!!
+        assertEquals(Lure.SPINNER, p.lure)
+        assertEquals(600, p.coins)
+        assertEquals(null, p.buy(Lure.SPINNER))
+        assertTrue(Economy.coins(Fish.pike, null, 4000) > Economy.coins(Fish.roach, null, 200) * 10)
+        val nemunas = Destinations.byId("nemunas")!!
+        assertEquals(null, p.travel(nemunas))
+        p = p.copy(xp = Levels.xpFor(3), coins = 2000)
+        p = p.travel(nemunas)!!
+        assertEquals(500, p.coins)
+        assertEquals(Water.RIVER, p.spot.water)
+        p = p.goHome(Water.SEA) // level 6 needed for the sea at home
+        assertEquals(Spot(Water.LAKE), p.spot)
+        assertEquals(nemunas.id, p.travel(nemunas)!!.trip) // second visit is free
+        assertEquals(500, p.travel(nemunas)!!.coins)
+    }
+
+    @Test
+    fun questsAndStreak() {
+        val q = Quests.generate(20000)
+        assertEquals(q, Quests.generate(20000))
+        assertEquals(3, q.list.size)
+        var p = Progress()
+        var day = 20000L
+        var done = 0
+        repeat(12) {
+            val c = Catch("roach", null, 30.0, 1500, 0, Sky.CLEAR, 10.0, "Vilnius", Water.LAKE)
+            val (next, reward) = Economy.land(p, c, false, day)
+            p = next
+            done += reward.quests.size
+        }
+        assertTrue(done >= 1)
+        assertTrue(p.coins > 150)
+        val (p1, b1) = Streak.visit(p, day)
+        assertEquals(1, b1!!.day)
+        assertEquals(null, Streak.visit(p1, day).second)
+        val (p2, b2) = Streak.visit(p1, day + 1)
+        assertEquals(2, b2!!.day)
+        assertEquals(1, Streak.visit(p2, day + 5).second!!.day)
     }
 }

@@ -26,33 +26,18 @@ class Bite(
     }
 }
 
-/** What hangs on the hook. Each lure draws different fish. */
-enum class Lure(val label: L, private val likes: Map<String, Double>) {
-    WORM(L("Slieka", "Wurm", "Worm"), mapOf("eel" to 1.6, "perch" to 1.3, "tench" to 1.3, "burbot" to 1.4, "catfish" to 1.2)),
-    CORN(
-        L("Kukurūzas", "Mais", "Sweetcorn"),
-        mapOf("carp" to 3.0, "crucian" to 2.0, "tench" to 1.8, "bream" to 1.8, "roach" to 1.3, "rudd" to 1.3,
-            "pike" to 0.05, "zander" to 0.05, "perch" to 0.1, "eel" to 0.1, "catfish" to 0.1, "burbot" to 0.1),
-    ),
-    SPINNER(
-        L("Blizgė", "Blinker", "Spinner"),
-        mapOf("pike" to 3.0, "perch" to 2.2, "zander" to 2.2, "catfish" to 1.2,
-            "roach" to 0.05, "bleak" to 0.05, "rudd" to 0.05, "crucian" to 0.03, "tench" to 0.03, "bream" to 0.05, "carp" to 0.03, "eel" to 0.1, "burbot" to 0.2),
-    );
-
-    fun affinity(s: Species): Double = likes[s.id] ?: 1.0
-}
-
 object BiteEngine {
     /** Chance that a bite of a species whose golden form is active is the golden one. */
     const val GOLDEN_CHANCE = 0.3
 
     /** [cast] is the cast distance 0..1: near casts reach reed fish, far casts the deep-water predators. */
-    fun roll(c: Conditions, cast: Double, rng: Random, lure: Lure = Lure.WORM): Bite {
-        val act = Fish.activities(c)
+    fun roll(c: Conditions, cast: Double, rng: Random, spot: Spot = Spot.HOME_LAKE, gear: Gear = Gear()): Bite {
+        val act = Fish.activities(c, spot)
+        // A boat takes the bait further out, where the deep-water fish are.
+        val reach = if (gear.boat) (cast + 0.2).coerceAtMost(1.1) else cast
         val weights = act.mapValues { (s, a) ->
-            val d = (s.depth - cast) / 0.35
-            a * lure.affinity(s) * (exp(-d * d) + 0.04)
+            val d = (s.depth - reach) / 0.35
+            a * gear.lure.affinity(s) * (exp(-d * d) + 0.04) * (if (s.shy) gear.line.shyFactor else 1.0)
         }
         var r = rng.nextDouble() * weights.values.sum()
         var species = weights.keys.last()
@@ -60,13 +45,14 @@ object BiteEngine {
             r -= w
             if (r <= 0) { species = s; break }
         }
+        val lure = gear.lure
         val golden = Fish.goldens.firstOrNull { it.base == species && it.active(c) }
             ?.takeIf { rng.nextDouble() < GOLDEN_CHANCE }
         // Most fish are small; trophies are rare.
-        val size = rng.nextDouble().pow(if (golden != null) 1.2 else 2.2)
+        val size = rng.nextDouble().pow((if (golden != null) 1.2 else 2.2) * lure.sizeBias)
         val cm = species.minCm + (species.maxCm - species.minCm) * size
-        val index = (Fish.biteIndex(c) / 100.0) * (weights.values.sum() / act.values.sum()).coerceIn(0.5, 1.3)
-        val wait = (16.0 - 11.0 * index) * (0.6 + 0.8 * rng.nextDouble())
+        val index = (Fish.biteIndex(c, spot) / 100.0) * (weights.values.sum() / act.values.sum()).coerceIn(0.5, 1.3)
+        val wait = (16.0 - 11.0 * index) * (0.6 + 0.8 * rng.nextDouble()) * (if (gear.boat) 0.75 else 1.0)
         val nibbles = buildList {
             var t = 1.2 + rng.nextDouble() * 1.5
             while (t < wait - 1.0) {
@@ -85,7 +71,14 @@ enum class FightResult { LANDED, SNAPPED, ESCAPED }
  * seconds makes a run. Reeling during a run overloads the line; giving no line tension for
  * too long lets the hook fall out.
  */
-class Fight(private val pull: Double, private val rng: Random) {
+class Fight(
+    private val pull: Double,
+    private val rng: Random,
+    /** Rod and line strength: tension is measured against it. */
+    private val strength: Double = 1.0,
+    /** Reel speed multiplier. */
+    private val reelSpeed: Double = 1.0,
+) {
     /** Remaining distance to the landing net, 1 = where it was hooked. */
     var distance = 1.0; private set
     /** Line tension 0..1+, snaps when held above ~1. */
@@ -114,9 +107,9 @@ class Fight(private val pull: Double, private val rng: Random) {
             if (calmLeft <= 0) { running = true; runStarted = true; runLeft = 0.5 + rng.nextDouble() * 0.8 }
         }
         val p = currentPull
-        val target = if (reeling) 0.28 + p * 0.42 else 0.04 + p * 0.18
+        val target = (if (reeling) 0.28 + p * 0.42 else 0.04 + p * 0.18) / strength
         tension += (target - tension) * min(1.0, dt * 4)
-        distance += if (reeling) -dt * 0.16 * (1 - min(0.85, p * 0.45)) else dt * 0.05 * p
+        distance += if (reeling) -dt * 0.16 * reelSpeed * (1 - min(0.85, p * 0.45)) else dt * 0.05 * p
         distance = distance.coerceAtMost(1.0)
         stamina = (stamina - dt * (if (running) 0.06 else 0.025) * (if (reeling) 1.4 else 0.8)).coerceAtLeast(0.0)
         overload = if (tension > 0.97) overload + dt else 0.0
@@ -130,32 +123,32 @@ class Fight(private val pull: Double, private val rng: Random) {
     }
 }
 
-/** Baits refill one every [REFILL_MS] up to [MAX]. */
+/** Baits refill one every [REFILL_MS] up to the bait box size [max]. Bonus baits may go above it. */
 @Serializable
 data class Baits(val count: Int, val sinceMillis: Long) {
-    fun now(nowMillis: Long): Baits {
-        if (count >= MAX) return Baits(MAX, nowMillis)
+    fun now(nowMillis: Long, max: Int = MAX): Baits {
+        if (count >= max) return Baits(count, nowMillis)
         val gained = ((nowMillis - sinceMillis) / REFILL_MS).toInt()
         if (gained <= 0) return this
-        val n = min(MAX, count + gained)
-        return Baits(n, if (n >= MAX) nowMillis else sinceMillis + gained * REFILL_MS)
+        val n = min(max, count + gained)
+        return Baits(n, if (n >= max) nowMillis else sinceMillis + gained * REFILL_MS)
     }
 
-    fun use(nowMillis: Long): Baits? {
-        val b = now(nowMillis)
+    fun use(nowMillis: Long, max: Int = MAX): Baits? {
+        val b = now(nowMillis, max)
         if (b.count <= 0) return null
-        return Baits(b.count - 1, if (b.count >= MAX) nowMillis else b.sinceMillis)
+        return Baits(b.count - 1, if (b.count >= max) nowMillis else b.sinceMillis)
     }
 
-    fun add(n: Int, nowMillis: Long): Baits {
-        val b = now(nowMillis)
+    fun add(n: Int, nowMillis: Long, max: Int = MAX): Baits {
+        val b = now(nowMillis, max)
         return Baits(b.count + n, b.sinceMillis)
     }
 
     /** Milliseconds until the next bait, or null when full. */
-    fun nextIn(nowMillis: Long): Long? {
-        val b = now(nowMillis)
-        return if (b.count >= MAX) null else b.sinceMillis + REFILL_MS - nowMillis
+    fun nextIn(nowMillis: Long, max: Int = MAX): Long? {
+        val b = now(nowMillis, max)
+        return if (b.count >= max) null else b.sinceMillis + REFILL_MS - nowMillis
     }
 
     companion object {
@@ -174,4 +167,6 @@ data class Catch(
     val sky: Sky,
     val tempC: Double,
     val place: String,
+    val water: Water = Water.LAKE,
+    val coins: Int = 0,
 )
