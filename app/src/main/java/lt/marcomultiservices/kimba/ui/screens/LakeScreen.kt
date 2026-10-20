@@ -325,7 +325,7 @@ private fun LureRow(current: Lure, enabled: Boolean, onPick: (Lure) -> Unit) {
                     .clickable(enabled = enabled) { onPick(l) }
                     .padding(horizontal = 12.dp, vertical = 7.dp),
             ) {
-                Text(t(l.name), color = if (sel) Color(0xFF2A1A06) else K.Text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+                Text(t(l.label), color = if (sel) Color(0xFF2A1A06) else K.Text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }

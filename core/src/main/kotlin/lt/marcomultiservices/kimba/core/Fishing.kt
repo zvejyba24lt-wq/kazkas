@@ -26,7 +26,7 @@ class Bite(
 }
 
 /** What hangs on the hook. Each lure draws different fish. */
-enum class Lure(val name: L, private val likes: Map<String, Double>) {
+enum class Lure(val label: L, private val likes: Map<String, Double>) {
     WORM(L("Slieka", "Wurm", "Worm"), mapOf("eel" to 1.6, "perch" to 1.3, "tench" to 1.3, "burbot" to 1.4, "catfish" to 1.2)),
     CORN(
         L("Kukurūzas", "Mais", "Sweetcorn"),
