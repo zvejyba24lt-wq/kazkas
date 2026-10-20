@@ -388,8 +388,7 @@ private fun CastButton(charging: Boolean, chargeStart: Long, onPress: () -> Unit
 private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, onNext: () -> Unit) {
     val species = Fish.byId(c.species) ?: return
     val golden = c.golden?.let { Fish.goldenById(it) }
-    val time = remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(Unit) { val s = withFrameNanos { it }; while (true) withFrameNanos { time.floatValue = (it - s) / 1e9f } }
+    val time = lt.marcomultiservices.kimba.ui.scene.rememberSceneTime()
     Glass(Modifier.padding(20.dp).fillMaxWidth(), radius = 26.dp, padding = 20.dp) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
             val header = when {

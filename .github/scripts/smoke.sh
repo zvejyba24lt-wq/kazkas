@@ -10,18 +10,18 @@ mkdir -p "$OUT"
 
 # The lake animates every frame, so uiautomator never sees an idle UI: no node lookups here,
 # only intents and screen coordinates.
-shot() { sleep "${2:-2}"; adb exec-out screencap -p > "$OUT/$1.png"; echo "shot $1 (top: $(adb shell dumpsys activity activities | grep -m1 topResumedActivity | tr -s ' '))"; }
-demo() { adb shell am start -n "$ACT" "$@" > /dev/null; }
+shot() { sleep "${2:-2}"; timeout 30 adb exec-out screencap -p > "$OUT/$1.png"; echo "shot $1 (top: $(adb shell dumpsys activity activities | grep -m1 topResumedActivity | tr -s ' '))"; }
+demo() { timeout 30 adb shell am start -n "$ACT" "$@" > /dev/null; }
 
 sleep 45
 adb install -r "$APK" || exit 1
 adb shell pm grant "$PKG" android.permission.POST_NOTIFICATIONS || true
 adb logcat -c
 # AppCompat syncs its stored app locale once on the first start, so start once, then switch to Lithuanian.
-adb shell am start -W -n "$ACT"; sleep 12
+timeout 60 adb shell am start -W -n "$ACT"; sleep 12
 adb shell am force-stop "$PKG"
 adb shell cmd locale set-app-locales "$PKG" --locales lt || true
-adb shell am start -W -n "$ACT"
+timeout 60 adb shell am start -W -n "$ACT"
 for i in 1 2 3; do sleep 3; adb shell dumpsys activity activities | grep -m1 topResumedActivity; done
 FAIL=0
 adb shell dumpsys activity activities | grep -m1 topResumedActivity | grep -q "$PKG" || { echo "App is not in the foreground after start"; FAIL=1; }
@@ -31,7 +31,7 @@ echo "screen $W x $H"
 shot 01_sveiki 4
 demo -e place Vilnius; shot 02_ezeras_tikras_oras 10
 # Hold the cast button (bottom centre) for ~1 s, then watch the float.
-adb shell input swipe $((W/2)) $((H*84/100)) $((W/2)) $((H*84/100)) 1000; shot 03_uzmesta 3
+timeout 30 adb shell input swipe $((W/2)) $((H*84/100)) $((W/2)) $((H*84/100)) 1000; shot 03_uzmesta 3
 shot 04_laukiam 4
 demo -e fight pike; shot 05_kova 1.5
 
@@ -54,12 +54,12 @@ demo -e screen lake; sleep 2
 
 adb shell am force-stop "$PKG"
 adb shell cmd locale set-app-locales "$PKG" --locales de; sleep 2
-adb shell am start -W -n "$ACT"; shot 21_deutsch 10
+timeout 60 adb shell am start -W -n "$ACT"; shot 21_deutsch 10
 adb shell am force-stop "$PKG"
 adb shell cmd locale set-app-locales "$PKG" --locales en; sleep 2
-adb shell am start -W -n "$ACT"; shot 22_english 10
+timeout 60 adb shell am start -W -n "$ACT"; shot 22_english 10
 
-adb logcat -d > "$OUT/logcat_full.txt"
+timeout 60 adb logcat -d > "$OUT/logcat_full.txt"
 grep -E "$PKG|AndroidRuntime|Fatal signal|DEBUG +:|ANR in|has died|RuntimeShader|WM-" "$OUT/logcat_full.txt" | tail -n 400 > "$OUT/logcat.txt"
 awk -v pkg="$PKG" '
   /FATAL EXCEPTION/ { head=$0; want=1; next }

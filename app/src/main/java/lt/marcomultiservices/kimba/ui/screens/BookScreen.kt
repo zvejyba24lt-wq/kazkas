@@ -73,8 +73,7 @@ fun ScreenFrame(title: String, onBack: () -> Unit, content: @Composable () -> Un
 fun BookScreen(vm: GameViewModel, onBack: () -> Unit) {
     val saved by vm.saved.collectAsStateWithLifecycle()
     val catches = saved?.catches ?: emptyList()
-    val time = remember { mutableFloatStateOf(0f) }
-    LaunchedEffect(Unit) { val s = withFrameNanos { it }; while (true) withFrameNanos { time.floatValue = (it - s) / 1e9f } }
+    val time = lt.marcomultiservices.kimba.ui.scene.rememberSceneTime()
     val caughtKinds = catches.map { it.golden ?: it.species }.toSet()
     val total = Fish.all.size + Fish.goldens.size
 

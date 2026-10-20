@@ -56,11 +56,7 @@ fun LakeScene(conditions: Conditions, lake: State<LakeState>, modifier: Modifier
         val colors = remember(conditions) { SceneColors(conditions) }
         val water = remember { if (Build.VERSION.SDK_INT >= 33) runCatching { WaterShader() }.getOrNull() else null }
 
-        val time = remember { mutableFloatStateOf(0f) }
-        LaunchedEffect(Unit) {
-            val start = withFrameNanos { it }
-            while (true) withFrameNanos { time.floatValue = (it - start) / 1e9f }
-        }
+        val time = rememberSceneTime()
 
         val castId by remember { derivedStateOf { lake.value.castId } }
         val dipTarget by remember { derivedStateOf { lake.value.dip } }
