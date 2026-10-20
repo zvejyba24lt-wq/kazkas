@@ -2,6 +2,7 @@ package lt.marcomultiservices.kimba.core
 
 import kotlinx.serialization.Serializable
 import kotlin.math.abs
+import kotlin.math.exp
 import kotlin.math.min
 import kotlin.math.pow
 import kotlin.random.Random
@@ -49,7 +50,10 @@ object BiteEngine {
     /** [cast] is the cast distance 0..1: near casts reach reed fish, far casts the deep-water predators. */
     fun roll(c: Conditions, cast: Double, rng: Random, lure: Lure = Lure.WORM): Bite {
         val act = Fish.activities(c)
-        val weights = act.mapValues { (s, a) -> a * lure.affinity(s) * (1 - 0.75 * abs(s.depth - cast)) }
+        val weights = act.mapValues { (s, a) ->
+            val d = (s.depth - cast) / 0.35
+            a * lure.affinity(s) * (exp(-d * d) + 0.04)
+        }
         var r = rng.nextDouble() * weights.values.sum()
         var species = weights.keys.last()
         for ((s, w) in weights) {
