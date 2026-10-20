@@ -1,0 +1,12 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Rings spreading from a float that is just being pulled under. -->
+    <path android:strokeColor="#55FFE2B8" android:strokeWidth="1.6" android:pathData="M54,66 m-26,0 a26,7 0,1 0,52 0 a26,7 0,1 0,-52 0" />
+    <path android:strokeColor="#99FFE2B8" android:strokeWidth="2" android:pathData="M54,66 m-16,0 a16,4.4 0,1 0,32 0 a16,4.4 0,1 0,-32 0" />
+    <path android:fillColor="#FFF4F0E8" android:pathData="M51.5,54 Q54,49 56.5,54 L55.5,64 Q54,66 52.5,64 Z" />
+    <path android:fillColor="#FFE5483B" android:pathData="M51.5,54 Q54,49 56.5,54 L56.2,57.5 L51.8,57.5 Z" />
+    <path android:strokeColor="#FFE5483B" android:strokeWidth="1.6" android:strokeLineCap="round" android:pathData="M54,51 L54,38" />
+    <path android:strokeColor="#CCF4F0E8" android:strokeWidth="0.8" android:pathData="M54,38 Q66,30 84,24" />
+</vector>

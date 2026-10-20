@@ -1,0 +1,19 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vector xmlns:android="http://schemas.android.com/apk/res/android"
+    android:width="108dp" android:height="108dp"
+    android:viewportWidth="108" android:viewportHeight="108">
+    <!-- Dusk over a lake: warm sky fading into dark water. -->
+    <path android:pathData="M0,0 H108 V60 H0 Z">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:fillColor">
+            <gradient android:type="linear" android:startX="0" android:startY="0" android:endX="0" android:endY="60"
+                android:startColor="#FF1E2F5C" android:centerColor="#FF7A4E7E" android:endColor="#FFF2A65A" />
+        </aapt:attr>
+    </path>
+    <path android:fillColor="#FF16233A" android:pathData="M0,60 L0,52 Q8,46 14,50 L18,44 L22,50 Q30,47 36,51 L40,45 L44,51 Q56,48 64,52 L68,46 L72,52 Q84,47 92,51 L96,45 L100,51 Q104,49 108,51 L108,60 Z" />
+    <path android:pathData="M0,60 H108 V108 H0 Z">
+        <aapt:attr xmlns:aapt="http://schemas.android.com/aapt" name="android:fillColor">
+            <gradient android:type="linear" android:startX="0" android:startY="60" android:endX="0" android:endY="108"
+                android:startColor="#FF8C5A5E" android:endColor="#FF0E1A2B" />
+        </aapt:attr>
+    </path>
+</vector>

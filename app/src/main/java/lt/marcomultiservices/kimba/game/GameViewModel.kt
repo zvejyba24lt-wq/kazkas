@@ -1,0 +1,348 @@
+package lt.marcomultiservices.kimba.game
+
+import android.app.Application
+import android.os.Build
+import android.os.VibrationEffect
+import android.os.Vibrator
+import android.os.VibratorManager
+import androidx.lifecycle.AndroidViewModel
+import androidx.lifecycle.viewModelScope
+import kotlinx.coroutines.Job
+import kotlinx.coroutines.delay
+import kotlinx.coroutines.flow.MutableStateFlow
+import kotlinx.coroutines.flow.StateFlow
+import kotlinx.coroutines.flow.asStateFlow
+import kotlinx.coroutines.flow.update
+import kotlinx.coroutines.isActive
+import kotlinx.coroutines.launch
+import lt.marcomultiservices.kimba.app
+import lt.marcomultiservices.kimba.core.Astro
+import lt.marcomultiservices.kimba.core.Baits
+import lt.marcomultiservices.kimba.core.Bite
+import lt.marcomultiservices.kimba.core.BiteEngine
+import lt.marcomultiservices.kimba.core.Catch
+import lt.marcomultiservices.kimba.core.Conditions
+import lt.marcomultiservices.kimba.core.DayPhase
+import lt.marcomultiservices.kimba.core.Fight
+import lt.marcomultiservices.kimba.core.FightResult
+import lt.marcomultiservices.kimba.core.Fish
+import lt.marcomultiservices.kimba.core.Forecast
+import lt.marcomultiservices.kimba.core.GoldenWindow
+import lt.marcomultiservices.kimba.core.Lure
+import lt.marcomultiservices.kimba.core.Sky
+import lt.marcomultiservices.kimba.core.Weather
+import lt.marcomultiservices.kimba.core.Windows
+import lt.marcomultiservices.kimba.data.Place
+import lt.marcomultiservices.kimba.data.Places
+import lt.marcomultiservices.kimba.data.Saved
+import lt.marcomultiservices.kimba.data.WeatherRepo
+import java.time.LocalDate
+import java.time.ZoneId
+import kotlin.math.abs
+import kotlin.random.Random
+
+enum class Stage { IDLE, CHARGING, FLYING, WAITING, BITE, FIGHT, CAUGHT, LOST }
+
+enum class LostReason { EARLY, MISSED, SNAPPED, ESCAPED }
+
+data class LakeState(
+    val stage: Stage = Stage.IDLE,
+    /** Uptime millis when charging began (the power meter runs from it). */
+    val chargeStart: Long = 0,
+    /** Cast distance 0..1 of the current cast. */
+    val castDist: Double = 0.5,
+    /** Increments with every cast, so the float flight animation restarts. */
+    val castId: Int = 0,
+    /** How deep the float is pulled: 0 resting, ~0.35 nibble, 1 bite. */
+    val dip: Float = 0f,
+    val tension: Float = 0f,
+    val fightDistance: Float = 1f,
+    val running: Boolean = false,
+    val bite: Bite? = null,
+    val lost: LostReason? = null,
+    val caught: Catch? = null,
+    val newSpecies: Boolean = false,
+    val record: Boolean = false,
+    val hint: Boolean = false,
+)
+
+class GameViewModel(application: Application) : AndroidViewModel(application) {
+    private val store = application.app.store
+    private val repo = application.app.weather
+    private val rng = Random(System.nanoTime())
+    private val zone: ZoneId = ZoneId.systemDefault()
+
+    private val _saved = MutableStateFlow<Saved?>(null)
+    val saved: StateFlow<Saved?> = _saved.asStateFlow()
+
+    private val _forecast = MutableStateFlow<Forecast?>(null)
+    val forecast: StateFlow<Forecast?> = _forecast.asStateFlow()
+
+    private val _conditions = MutableStateFlow<Conditions?>(null)
+    val conditions: StateFlow<Conditions?> = _conditions.asStateFlow()
+
+    private val _offline = MutableStateFlow(false)
+    val offline: StateFlow<Boolean> = _offline.asStateFlow()
+
+    private val _lake = MutableStateFlow(LakeState())
+    val lake: StateFlow<LakeState> = _lake.asStateFlow()
+
+    /** A fixed scene for screenshots and demos ("storm", "dawnfog", ...), set from the launch intent. */
+    var demoScene: String? = null
+        private set
+
+    private var job: Job? = null
+    private var reeling = false
+
+    init {
+        viewModelScope.launch { store.flow.collect { _saved.value = it } }
+        viewModelScope.launch {
+            // Re-evaluate the conditions every minute; refetch the forecast when it is due.
+            while (isActive) {
+                refresh(force = false)
+                delay(60_000)
+            }
+        }
+    }
+
+    fun setDemo(scene: String?) {
+        if (scene == demoScene) return
+        demoScene = scene
+        viewModelScope.launch { refresh(force = false) }
+    }
+
+    suspend fun refresh(force: Boolean) {
+        val place = store.current().place ?: return
+        demoScene?.let { _conditions.value = demoConditions(it, place); return }
+        repo.cached(place)?.let { if (_forecast.value == null) { _forecast.value = it; recompute(place) } }
+        val f = repo.forecast(place, force)
+        _offline.value = f == null || f.weatherAt(System.currentTimeMillis()) == null
+        if (f != null) _forecast.value = f
+        recompute(place)
+    }
+
+    private fun recompute(place: Place) {
+        val now = System.currentTimeMillis()
+        val w = _forecast.value?.weatherAt(now) ?: WeatherRepo.seasonal()
+        _conditions.value = Conditions(w, now, place.lat, place.lon, zone)
+    }
+
+    fun goldenWindows(): List<GoldenWindow> {
+        val place = _saved.value?.place ?: return emptyList()
+        val f = _forecast.value ?: return emptyList()
+        return Windows.golden(f, System.currentTimeMillis(), place.lat, place.lon, zone)
+    }
+
+    fun choosePlace(place: Place) {
+        viewModelScope.launch {
+            store.update { it.copy(place = place, onboarded = true) }
+            _forecast.value = null
+            refresh(force = true)
+        }
+    }
+
+    fun setLure(lure: Lure) = viewModelScope.launch { store.update { it.copy(lure = lure) } }
+    fun setNotify(on: Boolean) = viewModelScope.launch { store.update { it.copy(notify = on) } }
+
+    /** Placeholder for the rewarded ad of the real game. */
+    fun bonusCasts() = viewModelScope.launch {
+        store.update { it.copy(baits = it.baits.add(3, System.currentTimeMillis())) }
+    }
+
+    // ---- Fishing -------------------------------------------------------------------------
+
+    fun pressCast(uptime: Long) {
+        if (_lake.value.stage !in setOf(Stage.IDLE, Stage.CAUGHT, Stage.LOST)) return
+        val baits = _saved.value?.baits?.now(System.currentTimeMillis()) ?: return
+        if (baits.count <= 0) return
+        _lake.value = LakeState(stage = Stage.CHARGING, chargeStart = uptime, castId = _lake.value.castId)
+    }
+
+    fun releaseCast(uptime: Long) {
+        val s = _lake.value
+        if (s.stage != Stage.CHARGING) return
+        val power = castPower(uptime - s.chargeStart).toDouble()
+        val c = _conditions.value ?: return
+        job?.cancel()
+        job = viewModelScope.launch {
+            var ok = false
+            store.update { saved ->
+                val used = saved.baits.use(System.currentTimeMillis())
+                ok = used != null
+                if (used != null) saved.copy(baits = used) else saved
+            }
+            if (!ok) { _lake.value = LakeState(castId = s.castId); return@launch }
+            val bite = BiteEngine.roll(c, power, rng, _saved.value?.lure ?: Lure.WORM)
+            _lake.value = LakeState(stage = Stage.FLYING, castDist = power, castId = s.castId + 1, bite = bite)
+            delay(FLIGHT_MS)
+            waitForBite(bite)
+        }
+    }
+
+    private suspend fun waitForBite(bite: Bite) {
+        _lake.update { it.copy(stage = Stage.WAITING, dip = 0f) }
+        val start = System.currentTimeMillis()
+        val nibbles = ArrayDeque(bite.nibbles)
+        while (true) {
+            val t = (System.currentTimeMillis() - start) / 1000.0
+            if (t >= bite.waitSeconds) break
+            val next = nibbles.firstOrNull()
+            if (next != null && t >= next) {
+                nibbles.removeFirst()
+                buzz(18)
+                _lake.update { it.copy(dip = 0.3f + rng.nextFloat() * 0.15f) }
+                delay(220)
+                _lake.update { it.copy(dip = 0f) }
+            }
+            delay(30)
+        }
+        _lake.update { it.copy(stage = Stage.BITE, dip = 1f) }
+        buzz(longArrayOf(0, 60, 50, 90))
+        delay(if (bite.golden != null || bite.pull > 0.8) 750 else 950)
+        if (_lake.value.stage == Stage.BITE) {
+            _lake.update { it.copy(stage = Stage.LOST, lost = LostReason.MISSED, dip = 0f) }
+        }
+    }
+
+    /** A tap on the lake: strikes during a bite, scares the fish while waiting. */
+    fun strike() {
+        val s = _lake.value
+        when (s.stage) {
+            Stage.BITE -> startFight(s.bite ?: return)
+            Stage.WAITING -> {
+                // Striking at a nibble scares the fish: the wait starts over, a little longer.
+                val bite = s.bite ?: return
+                job?.cancel()
+                _lake.update { it.copy(hint = true, dip = 0f) }
+                job = viewModelScope.launch {
+                    val again = Bite(bite.species, bite.golden, bite.cm, bite.waitSeconds * 0.6 + 3, bite.nibbles.map { it * 0.6 + 2 })
+                    _lake.update { it.copy(bite = again) }
+                    launch { delay(2500); _lake.update { it.copy(hint = false) } }
+                    waitForBite(again)
+                }
+            }
+            else -> Unit
+        }
+    }
+
+    private fun startFight(bite: Bite) {
+        job?.cancel()
+        reeling = false
+        val fight = Fight(bite.pull, rng)
+        _lake.update { it.copy(stage = Stage.FIGHT, dip = 0f, tension = 0.3f, fightDistance = 1f) }
+        buzz(40)
+        job = viewModelScope.launch {
+            var last = System.nanoTime()
+            while (fight.result == null) {
+                delay(16)
+                val now = System.nanoTime()
+                fight.step(((now - last) / 1e9).coerceAtMost(0.05), reeling)
+                last = now
+                if (fight.runStarted) buzz(longArrayOf(0, 30, 40, 30, 40, 30))
+                _lake.update { it.copy(tension = fight.tension.toFloat(), fightDistance = fight.distance.toFloat(), running = fight.running) }
+            }
+            when (fight.result!!) {
+                FightResult.LANDED -> landed(bite)
+                FightResult.SNAPPED -> { buzz(120); _lake.update { it.copy(stage = Stage.LOST, lost = LostReason.SNAPPED) } }
+                FightResult.ESCAPED -> _lake.update { it.copy(stage = Stage.LOST, lost = LostReason.ESCAPED) }
+            }
+        }
+    }
+
+    fun setReeling(on: Boolean) { reeling = on }
+
+    private suspend fun landed(bite: Bite) {
+        val c = _conditions.value ?: return
+        val saved = store.current()
+        val catch = Catch(
+            species = bite.species.id,
+            golden = bite.golden?.id,
+            cm = bite.cm,
+            grams = bite.grams,
+            epochMillis = System.currentTimeMillis(),
+            sky = c.weather.sky,
+            tempC = c.weather.tempC,
+            place = saved.place?.name ?: "",
+        )
+        val key = catch.golden ?: catch.species
+        val previous = saved.catches.filter { (it.golden ?: it.species) == key }
+        val isNew = previous.isEmpty()
+        val record = !isNew && previous.all { it.cm < catch.cm }
+        store.update { it.copy(catches = it.catches + catch) }
+        buzz(longArrayOf(0, 40, 60, 40))
+        _lake.update { it.copy(stage = Stage.CAUGHT, caught = catch, newSpecies = isNew, record = record) }
+    }
+
+    /** Starts a fight with a mid-sized fish directly (for screenshots). */
+    fun demoFight(id: String) {
+        val species = Fish.byId(id) ?: return
+        val bite = Bite(species, null, (species.minCm + species.maxCm) / 2.0, 1.0, emptyList())
+        _lake.value = LakeState(castDist = 0.7, castId = _lake.value.castId, bite = bite)
+        startFight(bite)
+    }
+
+    /** Shows a catch card directly (for screenshots of the fish art). */
+    fun showDemoCatch(id: String) {
+        val golden = Fish.goldenById(id)
+        val species = golden?.base ?: Fish.byId(id) ?: return
+        val cm = species.minCm + (species.maxCm - species.minCm) * 0.7
+        _lake.value = LakeState(
+            stage = Stage.CAUGHT, castDist = 0.6,
+            caught = Catch(species.id, golden?.id, (cm * 10).toInt() / 10.0, species.grams(cm), System.currentTimeMillis(), Sky.CLEAR, 12.0, ""),
+            newSpecies = true,
+        )
+    }
+
+    fun dismissResult() {
+        if (_lake.value.stage == Stage.CAUGHT || _lake.value.stage == Stage.LOST) _lake.update { LakeState(castId = it.castId, castDist = it.castDist) }
+    }
+
+    private fun buzz(ms: Long) = buzz(longArrayOf(0, ms))
+
+    private fun buzz(pattern: LongArray) {
+        val ctx = getApplication<Application>()
+        val vib: Vibrator? = if (Build.VERSION.SDK_INT >= 31) {
+            ctx.getSystemService(VibratorManager::class.java)?.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            ctx.getSystemService(Vibrator::class.java)
+        }
+        runCatching { vib?.vibrate(VibrationEffect.createWaveform(pattern, -1)) }
+    }
+
+    /** Demo weather and a time of today at which the sun stands right for the scene. */
+    private fun demoConditions(scene: String, place: Place): Conditions {
+        val (w, phase) = when (scene) {
+            "storm" -> Weather(23.0, 1004.0, -4.0, 1.0, 9.0, 4.0, Sky.THUNDER) to DayPhase.DUSK
+            "dawnfog" -> Weather(14.0, 1016.0, 0.0, 0.6, 0.5, 0.0, Sky.FOG) to DayPhase.DAWN
+            "night" -> Weather(17.0, 1015.0, 0.0, 0.05, 1.0, 0.0, Sky.CLEAR) to DayPhase.NIGHT
+            "snow" -> Weather(-3.0, 1020.0, 0.5, 0.9, 3.0, 0.6, Sky.SNOW) to DayPhase.DAY
+            "rain" -> Weather(11.0, 1006.0, -3.0, 1.0, 5.0, 2.5, Sky.RAIN) to DayPhase.DAY
+            "dusk" -> Weather(19.0, 1012.0, -1.0, 0.25, 2.0, 0.0, Sky.PARTLY) to DayPhase.DUSK
+            else -> Weather(22.0, 1018.0, 0.0, 0.15, 2.5, 0.0, Sky.CLEAR) to DayPhase.DAY
+        }
+        val dayStart = LocalDate.now(zone).atStartOfDay(zone).toInstant().toEpochMilli()
+        val targetElev = when (phase) { DayPhase.NIGHT -> -25.0; DayPhase.DAWN -> -2.0; DayPhase.DUSK -> -1.0; DayPhase.DAY -> 40.0 }
+        val candidates = (0 until 24 * 12).map { dayStart + it * 5 * 60_000L }.filter { t ->
+            val ha = Astro.sunHourAngle(t, place.lon)
+            when (phase) { DayPhase.DAWN -> ha < 0; DayPhase.DUSK -> ha > 0; else -> true }
+        }
+        val t = candidates.minBy { abs(Astro.sunElevation(it, place.lat, place.lon) - targetElev) }
+        return Conditions(w, t, place.lat, place.lon, zone)
+    }
+
+    companion object {
+        const val FLIGHT_MS = 750L
+
+        /** Power meter: rises and falls every 1.4 s while the button is held. */
+        fun castPower(heldMs: Long): Float {
+            val p = (heldMs % 1400L) / 700f
+            return (if (p <= 1f) p else 2f - p).coerceIn(0.05f, 1f)
+        }
+
+        val defaultPlace: Place get() = Places.cities.first()
+    }
+}
+
+/** Baits now, for display. */
+fun Saved.baitsNow(): Baits = baits.now(System.currentTimeMillis())
