@@ -302,4 +302,36 @@ class CoreTest {
         assertEquals(FightResult.ESCAPED, f.result)
         assertTrue(t <= IDLE_LIMIT + 0.1)
     }
+
+    @Test
+    fun fishOnlyBiteWhereTheyLive() {
+        val seaOnly = setOf(Fish.cod, Fish.flounder, Fish.herring, Fish.seaTrout, Fish.garfish, Fish.turbot)
+        val spots = Water.entries.map { Spot(it) } + Destinations.all.map { it.spot }
+        val skies = listOf(Sky.CLEAR, Sky.RAIN, Sky.THUNDER, Sky.SNOW, Sky.FOG)
+        val rng = Random(11)
+        for (spot in spots) for ((i, sky) in skies.withIndex()) {
+            val c = cond(at(2026, 1 + i * 2, 15, 4 + i * 4), sky, temp = -2.0 + i * 7, cloud = 0.2 * i)
+            for (lure in Lure.entries) repeat(150) {
+                val b = BiteEngine.roll(c, rng.nextDouble(), rng, spot, Gear(lure = lure, boat = rng.nextBoolean()))
+                assertTrue(b.species.livesAt(spot), "${b.species.id} bit at $spot")
+                assertTrue(b.golden == null || b.golden!!.base == b.species)
+                if (spot.water != Water.SEA) assertTrue(b.species !in seaOnly, "${b.species.id} at $spot")
+                if (spot.water == Water.SEA) assertTrue(b.species in seaOnly, "${b.species.id} at sea")
+            }
+        }
+    }
+
+    @Test
+    fun questsCanBeDoneWithOpenWaters() {
+        for (level in 1..20) for (day in 20000L..20060L) {
+            val open = Quests.watersFor(level)
+            for (q in Quests.generate(day, level).list) {
+                q.water?.let { assertTrue(it in open, "level $level quest in $it") }
+                q.species?.let { id ->
+                    val s = Fish.byId(id)!!
+                    assertTrue(open.any { s.livesAt(Spot(it)) }, "level $level quest for $id")
+                }
+            }
+        }
+    }
 }

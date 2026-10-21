@@ -10,3 +10,7 @@ Prototipas: vienas ežeras, 13 rūšių, 6 auksinės žuvys, užmetimas, kirtima
 
 Demonstracinės komandos (ekrano nuotraukoms):
 `adb shell am start -n lt.marcomultiservices.kimba/.MainActivity -e scene storm|dawnfog|night|snow|rain|dusk|day|live -e catch moon_pike -e fight pike -e screen book|forecast|settings|lake`
+
+## Grafika
+
+Kaip sudaryta scena ir kaip ją pakeisti paveikslėliais ar kodu: [docs/GRAFIKA.md](docs/GRAFIKA.md).

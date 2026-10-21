@@ -56,7 +56,9 @@ import lt.marcomultiservices.kimba.ui.K
 import lt.marcomultiservices.kimba.ui.S
 import lt.marcomultiservices.kimba.ui.SectionTitle
 import lt.marcomultiservices.kimba.ui.amberButtonColors
-import lt.marcomultiservices.kimba.ui.scene.drawFloat
+import lt.marcomultiservices.kimba.ui.scene.ArtPack
+import lt.marcomultiservices.kimba.ui.scene.drawArt
+import lt.marcomultiservices.kimba.ui.scene.layers.drawFloat
 import lt.marcomultiservices.kimba.ui.t
 import kotlin.math.roundToInt
 
@@ -153,6 +155,11 @@ private fun DrawScope.drawItemIcon(item: Item, dim: Boolean) {
     val a = if (dim) 0.35f else 1f
     val w = size.width
     val h = size.height
+    // A picture in assets/art/item_<kind>_<name>.webp (e.g. item_lure_worm) replaces the drawing.
+    ArtPack["item_" + item.key.replace(':', '_').lowercase()]?.let { img ->
+        drawArt(img, androidx.compose.ui.geometry.Rect(0f, 0f, w, h), alpha = a)
+        return
+    }
     when (item) {
         is Lure -> when (item) {
             Lure.WORM, Lure.MAGGOT -> {

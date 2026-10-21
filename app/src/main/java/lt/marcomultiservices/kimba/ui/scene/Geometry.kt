@@ -132,27 +132,37 @@ class SceneGeometry(val w: Float, val h: Float) {
     val flakes: List<Drop> = List(160) { Drop(rnd.nextFloat(), rnd.nextFloat(), 0.05f + rnd.nextFloat() * 0.07f, 1.2f + rnd.nextFloat() * 2.4f) }
     val flies: List<Fly> = List(16) { Fly(w * (0.05f + rnd.nextFloat() * 0.9f), hy + h * (0.02f + rnd.nextFloat() * 0.25f), w * (0.02f + rnd.nextFloat() * 0.05f), h * (0.01f + rnd.nextFloat() * 0.03f), rnd.nextFloat() * 6.28f) }
 
-    // The jetty, in perspective from the bottom left corner out onto the lake.
-    val pierNearY = h * 1.0f
-    val pierFarY = h * 0.80f
-    val pierNear = -w * 0.06f to w * 0.44f
-    val pierFar = w * 0.03f to w * 0.25f
-    val pier: Path = Path().apply {
-        moveTo(pierNear.first, pierNearY + 4)
-        lineTo(pierNear.second, pierNearY + 4)
-        lineTo(pierFar.second, pierFarY)
-        lineTo(pierFar.first, pierFarY)
-        close()
+    /**
+     * A jetty in perspective, from the bottom left corner out onto the water: its near and far
+     * ends are horizontal edges at [nearY] and [farY], spanning the given x ranges.
+     */
+    class PierShape(val nearY: Float, val farY: Float, val near: Pair<Float, Float>, val far: Pair<Float, Float>) {
+        val path: Path = Path().apply {
+            moveTo(near.first, nearY + 4)
+            lineTo(near.second, nearY + 4)
+            lineTo(far.second, farY)
+            lineTo(far.first, farY)
+            close()
+        }
+
+        /** Where seam [i] of [n] lies, far (0) to near (n): boards look shorter far away. */
+        fun depth(i: Int, n: Int): Float = (i.toFloat() / n).pow(1.7f)
+
+        /** Left and right edge points at depth [t] (0 far, 1 near). */
+        fun edges(t: Float): Pair<Offset, Offset> {
+            val y = farY + (nearY - farY) * t
+            return Offset(far.first + (near.first - far.first) * t, y) to Offset(far.second + (near.second - far.second) * t, y)
+        }
+
+        /** Edge points of plank seam i of n, far to near. */
+        fun plank(i: Int, n: Int): Pair<Offset, Offset> = edges(depth(i, n))
     }
 
-    /** Edge points of plank seam i of n, far to near. */
-    fun plank(i: Int, n: Int): Pair<Offset, Offset> {
-        val t = (i.toFloat() / n).pow(1.7f)
-        val y = pierFarY + (pierNearY - pierFarY) * t
-        val x1 = pierFar.first + (pierNear.first - pierFar.first) * t
-        val x2 = pierFar.second + (pierNear.second - pierFar.second) * t
-        return Offset(x1, y) to Offset(x2, y)
-    }
+    /** The small wooden jetty at a lake, pond or river. */
+    val pier = PierShape(h * 1.0f, h * 0.80f, -w * 0.06f to w * 0.44f, w * 0.03f to w * 0.25f)
+
+    /** The long sea pier (like Palanga's): wider and reaching much further out. */
+    val seaPier = PierShape(h * 1.0f, h * 0.66f, -w * 0.12f to w * 0.5f, w * 0.06f to w * 0.2f)
 
     val rodBase = Offset(w * 1.03f, h * 1.02f)
     val rodTip = Offset(w * 0.66f, h * 0.575f)

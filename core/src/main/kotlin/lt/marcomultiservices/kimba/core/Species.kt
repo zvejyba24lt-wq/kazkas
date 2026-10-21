@@ -69,7 +69,7 @@ object Fish {
     val perch = Species(
         "perch", L("Ešerys", "Barsch", "Perch"),
         L("Šviesi diena, giedras dangus.", "Heller Tag, klarer Himmel.", "Bright day, clear sky."),
-        12, 45, 0.0125, 0.35, 0.5, setOf(Water.LAKE, Water.RIVER, Water.POND, Water.SEA), 0.8, 90,
+        12, 45, 0.0125, 0.35, 0.5, L_R_P, 0.8, 90,
     ) { c -> c.bell(c.waterTempC, 15.0, 8.0) * c.byPhase(0.05, 0.9, 1.0, 0.8) * (0.6 + 0.4 * (1 - c.weather.cloud)) }
 
     val rudd = Species(
@@ -117,7 +117,7 @@ object Fish {
     val eel = Species(
         "eel", L("Ungurys", "Aal", "Eel"),
         L("Tamsios, šiltos naktys, ypač per jaunatį.", "Dunkle, warme Nächte, besonders bei Neumond.", "Dark, warm nights, especially at new moon."),
-        45, 110, 0.0018, 0.6, 0.6, setOf(Water.LAKE, Water.RIVER, Water.SEA), 0.2, 150,
+        45, 110, 0.0018, 0.6, 0.6, L_R, 0.2, 150,
     ) { c -> c.bell(c.waterTempC, 19.0, 5.0) * c.byPhase(1.0, 0.2, 0.0, 0.5) * (1 + 0.8 * c.rain) * (1.6 - c.moonIllumination) }
 
     val catfish = Species(

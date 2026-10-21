@@ -56,6 +56,7 @@ demo -e catch grayling; shot 21_kirslys 3
 demo -e catch flounder; shot 22_pleksne 3
 demo -e catch cod; shot 23_menke 3
 demo -e catch huchen; shot 24_dunojaus_lasisa 3
+demo -e water lake; sleep 3
 demo -e scene live -e screen book; shot 25_zuvu_knyga 4
 adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/5)) 400; shot 26_knyga_toliau 2
 demo -e screen shop; shot 27_parduotuve 4

@@ -51,7 +51,7 @@ import java.time.LocalDate
 fun QuestsScreen(vm: GameViewModel, onBack: () -> Unit) {
     val saved by vm.saved.collectAsStateWithLifecycle()
     val p = saved?.progress ?: Progress()
-    val quests = Quests.today(p.quests, LocalDate.now().toEpochDay())
+    val quests = Quests.today(p.quests, LocalDate.now().toEpochDay(), p.level)
     ScreenFrame(t(S.questsTitle), onBack) {
         Column(Modifier.verticalScroll(rememberScrollState()).navigationBarsPadding().padding(16.dp, 4.dp, 16.dp, 24.dp)) {
             Row(verticalAlignment = Alignment.CenterVertically) {

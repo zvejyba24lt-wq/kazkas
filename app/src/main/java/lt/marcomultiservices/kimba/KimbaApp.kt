@@ -16,6 +16,7 @@ import lt.marcomultiservices.kimba.ads.BillingManager
 import lt.marcomultiservices.kimba.data.Store
 import lt.marcomultiservices.kimba.data.WeatherRepo
 import lt.marcomultiservices.kimba.notify.BiteWorker
+import lt.marcomultiservices.kimba.ui.scene.ArtPack
 import java.util.concurrent.TimeUnit
 
 class KimbaApp : Application() {
@@ -32,6 +33,7 @@ class KimbaApp : Application() {
 
     override fun onCreate() {
         super.onCreate()
+        ArtPack.init(this)
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
             NotificationChannel(BiteWorker.CHANNEL, getString(R.string.channel_bites), NotificationManager.IMPORTANCE_DEFAULT),

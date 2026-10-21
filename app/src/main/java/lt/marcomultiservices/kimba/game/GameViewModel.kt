@@ -163,7 +163,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             store.update { s ->
                 val (p, b) = Streak.visit(s.progress, day)
                 bonus = b
-                if (b == null) s else s.copy(progress = p.copy(quests = Quests.today(p.quests, day)), baits = s.baits.add(b.casts, System.currentTimeMillis(), p.boxSize))
+                if (b == null) s else s.copy(progress = p.copy(quests = Quests.today(p.quests, day, p.level)), baits = s.baits.add(b.casts, System.currentTimeMillis(), p.boxSize))
             }
             bonus?.let { b -> _events.update { it + GameEvent.StreakBonus(b.day, b.coins, b.casts) } }
         }
@@ -438,10 +438,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun showDemoCatch(id: String) {
         val golden = Fish.goldenById(id)
         val species = golden?.base ?: Fish.byId(id) ?: return
+        // Show the fish over its own water, never a sea fish over the lake.
+        val here = _saved.value?.progress?.spot
+        if (here == null || !species.livesAt(here)) {
+            val trip = species.onlyAt?.firstOrNull()
+            val water = Destinations.byId(trip)?.water ?: species.waters.first()
+            updateProgress { it.copy(trip = trip, trips = it.trips + listOfNotNull(trip), water = water) }
+            viewModelScope.launch { refresh(force = false) }
+        }
         val cm = species.minCm + (species.maxCm - species.minCm) * 0.7
         _lake.value = LakeState(
             stage = Stage.CAUGHT, castDist = 0.6,
-            caught = Catch(species.id, golden?.id, kotlin.math.round(cm), species.grams(kotlin.math.round(cm)), System.currentTimeMillis(), Sky.CLEAR, 12.0, ""),
+            caught = Catch(species.id, golden?.id, kotlin.math.round(cm), species.grams(kotlin.math.round(cm)), System.currentTimeMillis(), Sky.CLEAR, 12.0, "", species.waters.first()),
             newSpecies = true,
         )
     }
