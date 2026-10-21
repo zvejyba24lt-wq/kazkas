@@ -562,7 +562,7 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?
 private fun EventDialog(event: GameEvent, onClose: () -> Unit) {
     val lang = LocalLang.current
     val (title, body) = when (event) {
-        is GameEvent.StreakBonus -> t(S.streakTitle, event.day) to t(S.streakBody, event.coins, event.casts)
+        is GameEvent.StreakBonus -> (if (event.day <= 1) t(S.firstDayTitle) else t(S.streakTitle, event.day)) to t(S.streakBody, event.coins, event.casts)
         is GameEvent.LevelUp -> t(S.levelUp) to t(S.levelUpBody, event.level)
         is GameEvent.QuestsDone -> t(S.questsDone) to (
             event.quests.joinToString("\n") { "✓ " + it.text(lang) + "  +" + it.coins } +

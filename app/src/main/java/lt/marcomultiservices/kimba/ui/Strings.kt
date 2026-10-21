@@ -121,6 +121,7 @@ object S {
     val levelUp = L("Naujas lygis!", "Neues Level!", "Level up!")
     val levelUpBody = L("Pasiekei %d lygį. Parduotuvėje ir žemėlapyje atsirado naujų dalykų.", "Du hast Level %d erreicht. Im Shop und auf der Karte gibt es Neues.", "You reached level %d. New things are waiting in the shop and on the map.")
     val streakTitle = L("Jau %d-a diena iš eilės!", "Tag %d in Folge!", "Day %d in a row!")
+    val firstDayTitle = L("Dienos dovana!", "Tagesgeschenk!", "Daily gift!")
     val streakBody = L("Grįžimo dovana: +%d monetų ir +%d užmetimai. Ateik ir rytoj – dovana augs iki 7 dienos.", "Willkommensgeschenk: +%d Münzen und +%d Würfe. Komm morgen wieder – es wächst bis Tag 7.", "Welcome back gift: +%d coins and +%d casts. Come back tomorrow – it grows until day 7.")
     val questsDone = L("Užduotis įvykdyta!", "Aufgabe erledigt!", "Quest complete!")
     val allQuestsDone = L("Visos dienos užduotys įvykdytos: +%d monetų ir +%d užmetimai!", "Alle Tagesaufgaben erledigt: +%d Münzen und +%d Würfe!", "All daily quests done: +%d coins and +%d casts!")
