@@ -127,7 +127,7 @@ private fun FishCard(species: String, golden: Boolean, name: String, note: Strin
             if (known) {
                 val best = mine.maxBy { it.cm }
                 val weight = if (best.grams >= 1000) "%.2f kg".format(best.grams / 1000.0) else "${best.grams} g"
-                Text("${t(S.best)}: %.1f cm · %s".format(best.cm, weight), color = K.Amber, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+                Text("${t(S.best)}: %.0f cm · %s".format(best.cm, weight), color = K.Amber, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 Text(t(S.count, mine.size), color = K.Muted, fontSize = 11.sp)
             } else {
                 Text(t(S.unknown), color = Color(0x88B4BCC6), fontSize = 11.sp)

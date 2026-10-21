@@ -175,7 +175,7 @@ object S {
 
     fun sky(s: Sky) = when (s) {
         Sky.CLEAR -> L("Giedra", "Klar", "Clear")
-        Sky.PARTLY -> L("Debesuota su pragiedruliais", "Wolkig", "Partly cloudy")
+        Sky.PARTLY -> L("Mažai debesuota", "Wolkig", "Partly cloudy")
         Sky.CLOUDY -> L("Apsiniaukę", "Bedeckt", "Overcast")
         Sky.FOG -> L("Rūkas", "Nebel", "Fog")
         Sky.DRIZZLE -> L("Dulksna", "Nieselregen", "Drizzle")

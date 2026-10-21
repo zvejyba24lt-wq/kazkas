@@ -134,6 +134,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** Back to the idle lake, ending any cast or fight (demo hooks). */
+    fun resetLake() {
+        job?.cancel()
+        _lake.value = LakeState(castId = _lake.value.castId)
+    }
+
     fun setDemo(scene: String?) {
         if (scene == demoScene) return
         demoScene = scene
@@ -316,7 +322,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 job?.cancel()
                 _lake.update { it.copy(hint = true, dip = 0f) }
                 job = viewModelScope.launch {
-                    val again = Bite(bite.species, bite.golden, bite.cm, bite.waitSeconds * 0.6 + 3, bite.nibbles.map { it * 0.6 + 2 })
+                    val again = Bite(bite.species, bite.golden, bite.cm, bite.waitSeconds * 0.6 + 3, bite.nibbles.map { it * 0.6 + 2 }, bite.condition)
                     _lake.update { it.copy(bite = again) }
                     launch { delay(2500); _lake.update { it.copy(hint = false) } }
                     waitForBite(again)
@@ -414,7 +420,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val cm = species.minCm + (species.maxCm - species.minCm) * 0.7
         _lake.value = LakeState(
             stage = Stage.CAUGHT, castDist = 0.6,
-            caught = Catch(species.id, golden?.id, (cm * 10).toInt() / 10.0, species.grams(cm), System.currentTimeMillis(), Sky.CLEAR, 12.0, ""),
+            caught = Catch(species.id, golden?.id, kotlin.math.round(cm), species.grams(kotlin.math.round(cm)), System.currentTimeMillis(), Sky.CLEAR, 12.0, ""),
             newSpecies = true,
         )
     }

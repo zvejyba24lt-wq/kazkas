@@ -69,7 +69,7 @@ object Fish {
     val perch = Species(
         "perch", L("Ešerys", "Barsch", "Perch"),
         L("Šviesi diena, giedras dangus.", "Heller Tag, klarer Himmel.", "Bright day, clear sky."),
-        12, 48, 0.0125, 0.35, 0.5, setOf(Water.LAKE, Water.RIVER, Water.POND, Water.SEA), 0.8, 90,
+        12, 45, 0.0125, 0.35, 0.5, setOf(Water.LAKE, Water.RIVER, Water.POND, Water.SEA), 0.8, 90,
     ) { c -> c.bell(c.waterTempC, 15.0, 8.0) * c.byPhase(0.05, 0.9, 1.0, 0.8) * (0.6 + 0.4 * (1 - c.weather.cloud)) }
 
     val rudd = Species(
@@ -81,7 +81,7 @@ object Fish {
     val crucian = Species(
         "crucian", L("Karosas", "Karausche", "Crucian carp"),
         L("Ramus, šiltas vanduo be vėjo.", "Ruhiges, warmes Wasser ohne Wind.", "Calm, warm water without wind."),
-        10, 35, 0.02, 0.3, 0.15, L_P, 0.5, 70,
+        10, 35, 0.026, 0.3, 0.15, L_P, 0.5, 70,
     ) { c -> c.bell(c.waterTempC, 20.0, 5.0) * c.byPhase(0.4, 1.0, 0.5, 0.9) * (1 - c.weather.windMs / 14).coerceIn(0.2, 1.0) }
 
     val tench = Species(
@@ -99,50 +99,50 @@ object Fish {
     val carp = Species(
         "carp", L("Karpis", "Karpfen", "Carp"),
         L("Vasaros naktis ir aušra, šiltas vanduo.", "Sommernacht und Morgengrauen, warmes Wasser.", "Summer night and dawn, warm water."),
-        30, 95, 0.016, 0.8, 0.4, L_P, 0.4, 70, shy = true,
+        30, 95, 0.018, 0.8, 0.4, L_P, 0.4, 70, shy = true,
     ) { c -> c.bell(c.waterTempC, 21.0, 5.0) * c.byPhase(0.9, 1.0, 0.4, 0.8) }
 
     val pike = Species(
         "pike", L("Lydeka", "Hecht", "Pike"),
         L("Apsiniaukę, krentantis slėgis, vėjas raibina vandenį.", "Trüb, fallender Luftdruck, Wind kräuselt das Wasser.", "Overcast, falling pressure, wind rippling the water."),
-        40, 120, 0.0065, 0.8, 0.7, L_R_P, 0.5, 80,
+        40, 120, 0.0075, 0.8, 0.7, L_R_P, 0.5, 80,
     ) { c -> c.bell(c.waterTempC, 10.0, 9.0) * c.byPhase(0.1, 1.0, 0.6, 1.0) * (0.5 + 0.5 * c.weather.cloud) * (1 + 1.2 * c.falling) * (0.8 + 0.3 * (c.weather.windMs / 8).coerceAtMost(1.0)) }
 
     val zander = Species(
         "zander", L("Sterkas", "Zander", "Zander"),
         L("Sutemos ir naktis, lietus, krentantis slėgis.", "Dämmerung und Nacht, Regen, fallender Luftdruck.", "Dusk and night, rain, falling pressure."),
-        35, 95, 0.0085, 0.6, 0.85, L_R, 0.4, 130, shy = true,
+        35, 95, 0.009, 0.6, 0.85, L_R, 0.4, 130, shy = true,
     ) { c -> c.bell(c.waterTempC, 14.0, 8.0) * c.byPhase(1.0, 0.9, 0.15, 1.0) * (0.6 + 0.4 * c.weather.cloud) * (1 + 0.8 * c.rain + 0.8 * c.falling) }
 
     val eel = Species(
         "eel", L("Ungurys", "Aal", "Eel"),
         L("Tamsios, šiltos naktys, ypač per jaunatį.", "Dunkle, warme Nächte, besonders bei Neumond.", "Dark, warm nights, especially at new moon."),
-        45, 110, 0.0016, 0.6, 0.6, setOf(Water.LAKE, Water.RIVER, Water.SEA), 0.2, 150,
+        45, 110, 0.0018, 0.6, 0.6, setOf(Water.LAKE, Water.RIVER, Water.SEA), 0.2, 150,
     ) { c -> c.bell(c.waterTempC, 19.0, 5.0) * c.byPhase(1.0, 0.2, 0.0, 0.5) * (1 + 0.8 * c.rain) * (1.6 - c.moonIllumination) }
 
     val catfish = Species(
         "catfish", L("Šamas", "Wels", "Wels catfish"),
         L("Karštos naktys prieš perkūniją.", "Heiße Nächte vor dem Gewitter.", "Hot nights before a thunderstorm."),
-        60, 200, 0.006, 1.0, 0.95, L_R, 0.12, 40,
+        60, 200, 0.0075, 1.0, 0.95, L_R, 0.12, 40,
     ) { c -> c.bell(c.waterTempC, 22.0, 5.0) * c.byPhase(1.0, 0.4, 0.05, 0.7) * (1 + c.falling) * (if (c.weather.sky == Sky.THUNDER) 4.0 else 1.0) }
 
     val burbot = Species(
         "burbot", L("Vėgėlė", "Quappe", "Burbot"),
         L("Šaltos žiemos naktys.", "Kalte Winternächte.", "Cold winter nights."),
-        30, 80, 0.0065, 0.5, 0.9, L_R, 0.25, 120,
+        30, 80, 0.0075, 0.5, 0.9, L_R, 0.25, 120,
     ) { c -> c.bell(c.waterTempC, 3.0, 4.0) * c.byPhase(1.0, 0.5, 0.05, 0.8) }
 
     // River
     val chub = Species(
         "chub", L("Šapalas", "Döbel", "Chub"),
         L("Vasarą ties srove, kai krenta vabzdžiai.", "Im Sommer an der Strömung, wenn Insekten fallen.", "In summer by the current when insects fall."),
-        20, 60, 0.012, 0.45, 0.35, RIVER, 0.7, 60,
+        20, 60, 0.0135, 0.45, 0.35, RIVER, 0.7, 60,
     ) { c -> c.bell(c.waterTempC, 16.0, 8.0) * c.byPhase(0.4, 0.9, 0.8, 1.0) }
 
     val asp = Species(
         "asp", L("Salatis", "Rapfen", "Asp"),
         L("Saulėtą dieną medžioja paviršiuje.", "Jagt an sonnigen Tagen an der Oberfläche.", "Hunts at the surface on sunny days."),
-        40, 85, 0.009, 0.7, 0.45, RIVER, 0.35, 70,
+        40, 85, 0.0105, 0.7, 0.45, RIVER, 0.35, 70,
     ) { c -> c.bell(c.waterTempC, 17.0, 6.0) * c.byPhase(0.05, 1.0, 0.7, 0.9) * (1 - 0.3 * c.weather.cloud) }
 
     val barbel = Species(
@@ -154,7 +154,7 @@ object Fish {
     val trout = Species(
         "trout", L("Upėtakis", "Bachforelle", "Brown trout"),
         L("Vėsus vanduo, apsiniaukę, aušra.", "Kühles Wasser, bedeckt, Morgengrauen.", "Cool water, overcast, dawn."),
-        20, 65, 0.0115, 0.6, 0.4, RIVER, 0.35, 160, shy = true,
+        20, 60, 0.0115, 0.6, 0.4, RIVER, 0.35, 160, shy = true,
     ) { c -> c.bell(c.waterTempC, 10.0, 5.0) * c.byPhase(0.3, 1.0, 0.5, 1.0) * (0.6 + 0.4 * c.weather.cloud) * (1 + 0.5 * c.rain) }
 
     val grayling = Species(
@@ -167,7 +167,7 @@ object Fish {
     val grassCarp = Species(
         "grass_carp", L("Baltasis amūras", "Graskarpfen", "Grass carp"),
         L("Karšta, saulėta diena.", "Heißer, sonniger Tag.", "Hot, sunny day."),
-        40, 110, 0.011, 0.85, 0.3, setOf(Water.POND), 0.3, 60, shy = true,
+        40, 110, 0.012, 0.85, 0.3, setOf(Water.POND), 0.3, 60, shy = true,
     ) { c -> c.bell(c.waterTempC, 23.0, 4.0) * c.byPhase(0.3, 0.9, 1.0, 0.8) * (0.5 + 0.5 * (1 - c.weather.cloud)) }
 
     // Baltic Sea
@@ -186,7 +186,7 @@ object Fish {
     val herring = Species(
         "herring", L("Strimėlė", "Hering", "Herring"),
         L("Pavasarį ir rudenį plaukia būriais prie kranto.", "Zieht im Frühjahr und Herbst in Schwärmen an die Küste.", "Runs in shoals to the shore in spring and autumn."),
-        15, 35, 0.007, 0.25, 0.4, SEA, 0.9, 40,
+        15, 35, 0.008, 0.25, 0.4, SEA, 0.9, 40,
     ) { c -> c.bell(c.waterTempC, 8.0, 6.0) * c.byPhase(0.2, 1.0, 0.6, 1.0) * season(c, 3..5, 1.6) * season(c, 9..11, 1.6) }
 
     val seaTrout = Species(
@@ -217,7 +217,7 @@ object Fish {
     val huchen = Species(
         "huchen", L("Dunojaus lašiša", "Huchen", "Danube salmon"),
         L("Šaltas metų laikas, apsiniaukę, sutemos.", "Kalte Jahreszeit, bedeckt, Dämmerung.", "Cold season, overcast, dusk."),
-        60, 130, 0.0085, 0.95, 0.85, RIVER, 0.15, 200, onlyAt = setOf("wachau"),
+        60, 130, 0.0095, 0.95, 0.85, RIVER, 0.15, 200, onlyAt = setOf("wachau"),
     ) { c -> c.bell(c.waterTempC, 6.0, 5.0) * c.byPhase(0.3, 1.0, 0.3, 1.0) * (0.6 + 0.4 * c.weather.cloud) }
 
     val vimba = Species(

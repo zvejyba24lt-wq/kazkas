@@ -18,13 +18,13 @@ enum class Lure(
     private val likes: Map<String, Double>,
 ) : Item {
     WORM(
-        L("Slieka", "Wurm", "Worm"), 0, 1,
+        L("Sliekas", "Wurm", "Worm"), 0, 1,
         L("Viskam po truputį", "Ein bisschen für alles", "A bit of everything"), 1.0,
         mapOf("eel" to 1.6, "perch" to 1.3, "tench" to 1.3, "burbot" to 1.4, "catfish" to 1.2, "flounder" to 2.0, "barbel" to 1.4,
             "garfish" to 0.3, "herring" to 0.5, "asp" to 0.1, "huchen" to 0.1, "grass_carp" to 0.3, "turbot" to 0.6),
     ),
     MAGGOT(
-        L("Musės lerva", "Made", "Maggot"), 120, 1,
+        L("Musių lervos", "Maden", "Maggots"), 120, 1,
         L("Kuojos, aukšlės, kiršliai", "Rotaugen, Ukelei, Äschen", "Roach, bleak, grayling"), 0.8,
         mapOf("roach" to 2.0, "bleak" to 2.5, "rudd" to 1.8, "bream" to 1.4, "chub" to 1.5, "grayling" to 2.2, "vimba" to 1.8, "herring" to 1.4,
             "whitefish" to 1.8, "pike" to 0.03, "zander" to 0.05, "catfish" to 0.05, "cod" to 0.2, "turbot" to 0.2, "asp" to 0.1, "huchen" to 0.02, "carp" to 0.4, "garfish" to 0.3),
@@ -41,7 +41,7 @@ enum class Lure(
             "garfish" to 2.2, "herring" to 0.8, "huchen" to 1.5, "cod" to 0.6, "eel" to 0.1, "burbot" to 0.2),
     ),
     BOILIE(
-        L("Boilis", "Boilie", "Boilie"), 900, 5,
+        L("Boiliai", "Boilies", "Boilies"), 900, 5,
         L("Tik dideli karpiai ir amūrai", "Nur große Karpfen und Graskarpfen", "Only big carp and grass carp"), 0.03,
         mapOf("carp" to 5.0, "grass_carp" to 3.0, "tench" to 1.5, "bream" to 1.2, "barbel" to 2.0, "catfish" to 0.6, "crucian" to 0.3),
     ),

@@ -288,7 +288,8 @@ private fun TopHud(c: Conditions, place: String, progress: Progress, baits: Bait
                         Row(verticalAlignment = Alignment.CenterVertically) {
                             Icon(Icons.Rounded.Phishing, null, tint = K.Amber, modifier = Modifier.size(18.dp))
                             Spacer(Modifier.width(4.dp))
-                            Text("${baits.count}/${progress.boxSize}", color = K.Text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            // Bonus casts can go above the box size; then only the count is shown.
+                            Text(if (baits.count > progress.boxSize) "${baits.count}" else "${baits.count}/${progress.boxSize}", color = K.Text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                             Spacer(Modifier.width(4.dp))
                             Text(t(S.casts), color = K.Muted, fontSize = 10.sp)
                         }
@@ -524,7 +525,7 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?
             }
             Spacer(Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(28.dp)) {
-                Stat(t(S.length), "%.1f cm".format(c.cm))
+                Stat(t(S.length), "%.0f cm".format(c.cm))
                 Stat(t(S.weight), if (c.grams >= 1000) "%.2f kg".format(c.grams / 1000.0) else "${c.grams} g")
             }
             if (golden != null) {

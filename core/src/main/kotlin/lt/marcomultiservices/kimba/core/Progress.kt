@@ -120,19 +120,22 @@ data class Quest(val kind: QuestKind, val target: Int, val species: String? = nu
     fun text(lang: Lang): String {
         val name = species?.let { Fish.byId(it)?.name?.get(lang) } ?: ""
         return when (kind) {
-            QuestKind.COUNT -> L("Sugauk $target žuvų", "Fange $target Fische", "Catch $target fish")[lang]
+            QuestKind.COUNT -> L("Sugauk ${Plural.fishLt(target)}", "Fange $target Fische", "Catch $target fish")[lang]
             QuestKind.SPECIES -> L("Sugauk: $name ×$target", "Fange: $name ×$target", "Catch: $name ×$target")[lang]
-            QuestKind.BIG -> L("Sugauk žuvį, sveriančią ${target / 1000.0} kg ar daugiau", "Fange einen Fisch ab ${target / 1000.0} kg", "Catch a fish of ${target / 1000.0} kg or more")[lang]
+            QuestKind.BIG -> {
+                val kg = Plural.kg(target, lang)
+                L("Sugauk žuvį, sveriančią bent $kg", "Fange einen Fisch ab $kg", "Catch a fish of $kg or more")[lang]
+            }
             QuestKind.TOTAL_KG -> L("Sugauk iš viso ${target / 1000} kg žuvies", "Fange insgesamt ${target / 1000} kg Fisch", "Catch ${target / 1000} kg of fish in total")[lang]
-            QuestKind.GOLDEN_OR_RARE -> L("Sugauk retą žuvį (plėšrūną ar auksinę)", "Fange einen seltenen Fisch (Räuber oder golden)", "Catch a rare fish (predator or golden)")[lang]
-            QuestKind.WATER -> L("Sugauk $target žuvis: ${water?.label?.get(Lang.LT)?.lowercase()}", "Fange $target Fische: ${water?.label?.get(Lang.DE)}", "Catch $target fish: ${water?.label?.get(Lang.EN)?.lowercase()}")[lang]
+            QuestKind.GOLDEN_OR_RARE -> L("Sugauk retą žuvį (pvz. lyną, sterką ar auksinę)", "Fange einen seltenen Fisch (z. B. Schleie, Zander oder golden)", "Catch a rare fish (e.g. tench, zander or golden)")[lang]
+            QuestKind.WATER -> L("Sugauk ${Plural.fishLt(target)} ${Plural.inWaterLt(water)}", "Fange $target Fische ${Plural.inWaterDe(water)}", "Catch $target fish in ${Plural.inWaterEn(water)}")[lang]
         }
     }
 
     /** Progress shown to the player, e.g. "3/5" or "1.2/3 kg". */
     fun progressText(): String = when (kind) {
         QuestKind.BIG -> if (done) "✓" else "0/1"
-        QuestKind.TOTAL_KG -> "%.1f/%d kg".format(progress.coerceAtMost(target) / 1000.0, target / 1000)
+        QuestKind.TOTAL_KG -> "%.1f/%d kg".format(java.util.Locale.GERMANY, progress.coerceAtMost(target) / 1000.0, target / 1000)
         else -> "${progress.coerceAtMost(target)}/$target"
     }
 
@@ -196,5 +199,28 @@ object Streak {
         val streak = if (p.lastDay == epochDay - 1) p.streak + 1 else 1
         val bonus = Bonus(streak, 50 * minOf(streak, 7), if (streak >= 7) 3 else 2)
         return p.copy(streak = streak, lastDay = epochDay, coins = p.coins + bonus.coins) to bonus
+    }
+}
+
+/** Number words: Lithuanian nouns change with the count. */
+object Plural {
+    /** "1 žuvį", "2 žuvis", "10 žuvų", "21 žuvį". */
+    fun fishLt(n: Int): String {
+        val word = when {
+            n % 10 == 1 && n % 100 != 11 -> "žuvį"
+            n % 10 == 0 || n % 100 in 11..19 -> "žuvų"
+            else -> "žuvis"
+        }
+        return "$n $word"
+    }
+
+    fun inWaterLt(w: Water?) = when (w) { Water.POND -> "tvenkinyje"; Water.RIVER -> "upėje"; Water.SEA -> "jūroje"; else -> "ežere" }
+    fun inWaterDe(w: Water?) = when (w) { Water.POND -> "im Teich"; Water.RIVER -> "im Fluss"; Water.SEA -> "im Meer"; else -> "im See" }
+    fun inWaterEn(w: Water?) = when (w) { Water.POND -> "a pond"; Water.RIVER -> "a river"; Water.SEA -> "the sea"; else -> "a lake" }
+
+    /** "0,8 kg" in Lithuanian and German, "0.8 kg" in English. */
+    fun kg(grams: Int, lang: Lang): String {
+        val v = "%.1f".format(java.util.Locale.US, grams / 1000.0).removeSuffix(".0")
+        return (if (lang == Lang.EN) v else v.replace('.', ',')) + " kg"
     }
 }

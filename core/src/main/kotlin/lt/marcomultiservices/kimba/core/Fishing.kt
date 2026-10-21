@@ -16,8 +16,10 @@ class Bite(
     val waitSeconds: Double,
     /** Seconds (from landing) of small nibbles before the bite, which must not be struck. */
     val nibbles: List<Double>,
+    /** Body condition: fish of the same length differ in weight by about ±10 %. */
+    val condition: Double = 1.0,
 ) {
-    val grams: Int get() = species.grams(cm)
+    val grams: Int get() = (species.grams(cm) * condition).toInt()
 
     /** Fight strength: species power scaled by size. */
     val pull: Double get() {
@@ -60,11 +62,15 @@ object BiteEngine {
                 t += 1.0 + rng.nextDouble() * 2.5
             }
         }
-        return Bite(species, golden, (cm * 10).toInt() / 10.0, wait, nibbles)
+        // Anglers measure to the whole centimetre.
+        return Bite(species, golden, kotlin.math.round(cm), wait, nibbles, 0.9 + rng.nextDouble() * 0.2)
     }
 }
 
 enum class FightResult { LANDED, SNAPPED, ESCAPED }
+
+/** Seconds a hooked fish may be left without reeling before it gets off. */
+const val IDLE_LIMIT = 8.0
 
 /**
  * The drill after the strike. The player holds to reel in; the fish pulls, and every few
@@ -93,6 +99,8 @@ class Fight(
     private var calmLeft = 1.0 + rng.nextDouble() * 1.5
     private var overload = 0.0
     private var slack = 0.0
+    /** Seconds without reeling: a fish left alone swims into the weeds and gets off. */
+    private var idle = 0.0
 
     val currentPull: Double get() = pull * (0.35 + 0.65 * stamina) * (if (running) 2.0 else 1.0)
 
@@ -114,9 +122,10 @@ class Fight(
         stamina = (stamina - dt * (if (running) 0.06 else 0.025) * (if (reeling) 1.4 else 0.8)).coerceAtLeast(0.0)
         overload = if (tension > 0.97) overload + dt else 0.0
         slack = if (tension < 0.12) slack + dt else (slack - dt * 2).coerceAtLeast(0.0)
+        idle = if (reeling) 0.0 else idle + dt
         result = when {
             overload > 0.35 -> FightResult.SNAPPED
-            slack > 2.2 -> FightResult.ESCAPED
+            slack > 2.2 || idle > IDLE_LIMIT -> FightResult.ESCAPED
             distance <= 0 -> FightResult.LANDED
             else -> null
         }

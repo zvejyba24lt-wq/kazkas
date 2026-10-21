@@ -51,6 +51,7 @@ class MainActivity : AppCompatActivity() {
     private fun handleDemo(intent: Intent?) {
         if (!BuildConfig.DEMO_HOOKS) return
         val extras = intent?.extras ?: return
+        if (extras.keySet().any { it in setOf("scene", "water", "trip", "screen") }) vm.resetLake()
         extras.getString("place")?.let { name -> Places.cities.firstOrNull { it.name == name }?.let { vm.choosePlace(it) } }
         if (extras.containsKey("coins") || extras.containsKey("xp")) vm.demoProgress(extras.getInt("coins", -1), extras.getInt("xp", -1))
         extras.getString("water")?.let { w -> lt.marcomultiservices.kimba.core.Water.entries.firstOrNull { it.name.equals(w, true) }?.let { vm.goHome(it) } }

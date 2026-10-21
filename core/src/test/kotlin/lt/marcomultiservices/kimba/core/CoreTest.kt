@@ -262,4 +262,26 @@ class CoreTest {
         assertEquals(2, b2!!.day)
         assertEquals(1, Streak.visit(p2, day + 5).second!!.day)
     }
+
+    @Test
+    fun weightsMatchRealFish() {
+        // Typical weights at a given length from angling length-weight tables (grams).
+        val table = listOf(
+            Triple(Fish.roach, 25.0, 160..260), Triple(Fish.perch, 30.0, 300..460), Triple(Fish.pike, 80.0, 3400..4600),
+            Triple(Fish.pike, 100.0, 7000..9000), Triple(Fish.bream, 50.0, 1500..2200), Triple(Fish.carp, 70.0, 5000..7200),
+            Triple(Fish.catfish, 150.0, 21000..30000), Triple(Fish.zander, 70.0, 2700..3700), Triple(Fish.tench, 40.0, 850..1250),
+            Triple(Fish.eel, 80.0, 750..1150), Triple(Fish.cod, 60.0, 1900..2700), Triple(Fish.trout, 40.0, 620..880),
+            Triple(Fish.crucian, 25.0, 330..480), Triple(Fish.burbot, 50.0, 800..1100), Triple(Fish.herring, 25.0, 100..160),
+        )
+        for ((s, cm, range) in table) assertTrue(s.grams(cm) in range, "${s.id} ${cm} cm = ${s.grams(cm)} g, expected $range")
+    }
+
+    @Test
+    fun fishLeftAloneGetsOff() {
+        val f = Fight(Fish.pike.power * 1.2, Random(3))
+        var t = 0.0
+        while (f.result == null && t < 60) { f.step(1 / 60.0, false); t += 1 / 60.0 }
+        assertEquals(FightResult.ESCAPED, f.result)
+        assertTrue(t <= IDLE_LIMIT + 0.1)
+    }
 }
