@@ -50,6 +50,7 @@ import lt.marcomultiservices.kimba.core.Fish
 import lt.marcomultiservices.kimba.core.Water
 import lt.marcomultiservices.kimba.game.GameViewModel
 import lt.marcomultiservices.kimba.ui.K
+import lt.marcomultiservices.kimba.ui.LocalLang
 import lt.marcomultiservices.kimba.ui.S
 import lt.marcomultiservices.kimba.ui.SectionTitle
 import lt.marcomultiservices.kimba.ui.t
@@ -87,8 +88,9 @@ fun BookScreen(vm: GameViewModel, onBack: () -> Unit) {
             }
             items(Fish.all, key = { it.id }) { s ->
                 val mine = catches.filter { it.species == s.id && it.golden == null }
-                val where = s.onlyAt?.mapNotNull { Destinations.byId(it) }?.joinToString { t(it.name) }
-                    ?: Water.entries.filter { it in s.waters }.joinToString { t(it.label) }
+                val lang = LocalLang.current
+                val where = s.onlyAt?.mapNotNull { Destinations.byId(it) }?.joinToString { it.name[lang] }
+                    ?: Water.entries.filter { it in s.waters }.joinToString { it.label[lang] }
                 FishCard(s.id, false, t(s.name), t(s.habit), mine, time, where)
             }
             item {

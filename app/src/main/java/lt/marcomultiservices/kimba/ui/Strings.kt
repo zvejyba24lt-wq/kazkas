@@ -12,9 +12,9 @@ object S {
     // Welcome
     val welcomeTitle = L("Žuvys kimba pagal tikrą orą", "Die Fische beißen nach echtem Wetter", "Fish bite by the real weather")
     val welcomeBody = L(
-        "Lyja pas tave – lyja ir ant ežero. Sterkai mėgsta lietų, lydekos – krentantį slėgį, o auksinės žuvys pasirodo tik per pilnatį, perkūniją ar šalną. Tikrą.",
-        "Regnet es bei dir, regnet es auch am See. Zander lieben Regen, Hechte fallenden Luftdruck, und goldene Fische zeigen sich nur bei Vollmond, Gewitter oder Frost. Echtem.",
-        "If it rains where you are, it rains on the lake. Zander love rain, pike love falling pressure, and golden fish only show up at full moon, in thunder or frost. Real ones.",
+        "Lyja pas tave – lyja ir ant ežero. Sterkai mėgsta lietų, lydekos – krentantį slėgį, o auksinės žuvys pasirodo tik per tikrą pilnatį, perkūniją ar šalną.",
+        "Regnet es bei dir, regnet es auch am See. Zander lieben Regen, Hechte fallenden Luftdruck, und goldene Fische zeigen sich nur bei echtem Vollmond, Gewitter oder Frost.",
+        "If it rains where you are, it rains on the lake. Zander love rain, pike love falling pressure, and golden fish only show up at a real full moon, in real thunder or frost.",
     )
     val useMyPlace = L("Naudoti mano vietovę", "Meinen Ort verwenden", "Use my location")
     val chooseCity = L("Pasirinkti miestą", "Stadt wählen", "Choose a city")

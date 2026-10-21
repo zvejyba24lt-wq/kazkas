@@ -202,6 +202,7 @@ private fun flag(country: String) = when (country) { "LT" -> "🇱🇹"; "DE" ->
 @Composable
 private fun DestinationCard(d: Destination, p: Progress, onGo: () -> Unit) {
     val specials = d.specials
+    val lang = lt.marcomultiservices.kimba.ui.LocalLang.current
     val count = Fish.all.count { it.livesAt(d.spot) }
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Brush.verticalGradient(listOf(Color(0x33FFFFFF), Color(0x14FFFFFF)))).border(1.dp, K.Line, RoundedCornerShape(18.dp)).padding(14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -213,7 +214,7 @@ private fun DestinationCard(d: Destination, p: Progress, onGo: () -> Unit) {
         Text(t(d.story), color = K.Muted, fontSize = 13.sp, lineHeight = 18.sp)
         Spacer(Modifier.height(6.dp))
         Text("${t(d.water.label)} · ${t(S.fishHere, count)}", color = K.Text, fontSize = 13.sp)
-        if (specials.isNotEmpty()) Text(t(S.onlyHere, specials.joinToString { t(it.name) }), color = K.Gold, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
+        if (specials.isNotEmpty()) Text(t(S.onlyHere, specials.joinToString { it.name[lang] }), color = K.Gold, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(10.dp))
         when {
             d.id == p.trip -> Text(t(S.here), color = K.Amber, fontWeight = FontWeight.Bold)
