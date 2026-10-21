@@ -421,7 +421,7 @@ private fun DrawScope.drawFloatOnWater(geo: SceneGeometry, pos: Offset, dip: Flo
 /** A ring on the water where the cast will land, with a dotted line out to it. */
 private fun DrawScope.drawAim(geo: SceneGeometry, at: Offset, t: Float) {
     val s = geo.scaleAt(at.y)
-    val r = geo.w * 0.045f * s * (1f + 0.08f * sin(t * 6f))
+    val r = geo.w * 0.07f * s * (1f + 0.08f * sin(t * 6f))
     val amber = Color(0xFFFFC56B)
     drawOval(amber.copy(alpha = 0.18f), Offset(at.x - r, at.y - r * 0.32f), Size(r * 2, r * 0.64f))
     drawOval(amber.copy(alpha = 0.9f), Offset(at.x - r, at.y - r * 0.32f), Size(r * 2, r * 0.64f), style = Stroke(2.5f))

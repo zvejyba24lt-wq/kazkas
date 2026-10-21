@@ -35,7 +35,7 @@ tap $((W/2)) $((H/2)); shot 03_ezeras_tikras_oras 3
 # Hold the cast button (bottom centre) for ~1 s, then watch the float.
 timeout 30 adb shell input swipe $((W/2)) $((H*84/100)) $((W/2)) $((H*84/100)) 1000; shot 04_uzmesta 3
 shot 05_laukiam 4
-demo -e fight pike; shot 06_kova 1.5
+demo -e fight pike; shot 06_kova 3
 
 demo --ei coins 25000 --ei xp 11000 -e scene storm; shot 07_perkunija 4
 demo -e scene dawnfog; shot 08_rukas_ausra 4
@@ -49,7 +49,7 @@ demo -e scene dusk -e water sea; shot 15_jura_sutemos 5
 demo -e scene day; shot 16_jura_diena 4
 demo -e scene night -e trip ruegen; shot 17_riugenas_naktis 5
 demo -e scene day -e trip bodensee; shot 18_bodensee 5
-demo -e water lake; sleep 2
+demo -e water lake; sleep 5
 demo -e catch moon_pike; shot 19_auksine_lydeka 3
 demo -e catch trout; shot 20_upetakis 3
 demo -e catch grayling; shot 21_kirslys 3
