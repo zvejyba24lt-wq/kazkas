@@ -202,7 +202,7 @@ internal fun DrawScope.drawReeds(geo: SceneGeometry, colors: SceneColors, t: Flo
         if (back) return
         val r = Rect(geo.w * 0.62f, geo.h * 0.66f, geo.w * 1.04f, geo.h * 1.01f)
         val lean = sin(t * 1.1f) * (1.2f + colors.wind * 0.4f)
-        androidx.compose.ui.graphics.drawscope.rotate(lean, pivot = Offset(r.center.x, r.bottom)) {
+        rotate(lean, pivot = Offset(r.center.x, r.bottom)) {
             drawArt(img, r, light = colors.lit(Color.White))
         }
         return
