@@ -264,6 +264,13 @@ class CoreTest {
     }
 
     @Test
+    fun everySpeciesHasQuestPlural() {
+        for (sp in Fish.all) assertTrue(Fish.plural(sp.id) != null, sp.id)
+        val q = Quest(QuestKind.SPECIES, 3, species = "rudd", coins = 150)
+        assertEquals("Sugauk 3 raudes", q.text(Lang.LT))
+    }
+
+    @Test
     fun trophiesAreRare() {
         val rng = Random(7)
         val sizes = List(20000) { BiteEngine.sizeFraction(rng.nextDouble(), 5.5) }

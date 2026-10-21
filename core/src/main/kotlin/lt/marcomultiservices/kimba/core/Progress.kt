@@ -121,7 +121,10 @@ data class Quest(val kind: QuestKind, val target: Int, val species: String? = nu
         val name = species?.let { Fish.byId(it)?.name?.get(lang) } ?: ""
         return when (kind) {
             QuestKind.COUNT -> L("Sugauk ${Plural.fishLt(target)}", "Fange $target Fische", "Catch $target fish")[lang]
-            QuestKind.SPECIES -> L("Sugauk: $name ×$target", "Fange: $name ×$target", "Catch: $name ×$target")[lang]
+            QuestKind.SPECIES -> {
+                val many = species?.let { Fish.plural(it)?.get(lang) } ?: name
+                L("Sugauk $target $many", "Fange $target $many", "Catch $target $many")[lang]
+            }
             QuestKind.BIG -> {
                 val kg = Plural.kg(target, lang)
                 L("Sugauk žuvį, sveriančią bent $kg", "Fange einen Fisch ab $kg", "Catch a fish of $kg or more")[lang]

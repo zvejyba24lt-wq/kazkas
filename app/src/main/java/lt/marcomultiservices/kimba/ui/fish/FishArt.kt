@@ -315,10 +315,10 @@ object FishArt {
                     drawCircle(Color(0xFFF2E6D0).copy(alpha = 0.8f), 0.0085f, Offset(x, y))
                     drawCircle(Color(0xFFC8341E), 0.0055f, Offset(x, y))
                 } else if (y < l.depth * 0.15f) drawCircle(l.spotColor.copy(alpha = 0.8f), 0.0045f + r.nextFloat() * 0.003f, Offset(x, y))
+                // Salmonids: small, irregular dark spots on the upper flank.
                 Spots.CROSS -> if (y < l.depth * 0.1f) {
-                    val s2 = 0.006f
-                    drawLine(l.spotColor.copy(alpha = 0.75f), Offset(x - s2, y - s2), Offset(x + s2, y + s2), strokeWidth = 0.004f, cap = StrokeCap.Round)
-                    drawLine(l.spotColor.copy(alpha = 0.75f), Offset(x - s2, y + s2), Offset(x + s2, y - s2), strokeWidth = 0.004f, cap = StrokeCap.Round)
+                    val sw = 0.007f + r.nextFloat() * 0.006f
+                    drawOval(l.spotColor.copy(alpha = 0.6f + r.nextFloat() * 0.25f), Offset(x - sw / 2, y - sw * 0.35f), Size(sw, sw * (0.6f + r.nextFloat() * 0.3f)))
                 }
                 else -> Unit
             }
@@ -326,14 +326,29 @@ object FishArt {
     }
 
     private fun DrawScope.fin(points: List<Offset>, color: Color, rays: Boolean, rayFrom: Offset? = null) {
+        // Soft, rounded fin edges: the outer points act as curve handles, the two base points
+        // sit on the body.
         val p = Path().apply {
             moveTo(points[0].x, points[0].y)
-            for (i in 1 until points.size) lineTo(points[i].x, points[i].y)
+            if (points.size <= 3) {
+                for (i in 1 until points.size) lineTo(points[i].x, points[i].y)
+            } else {
+                val first = points[1]
+                lineTo((points[0].x + first.x) / 2, (points[0].y + first.y) / 2)
+                for (i in 1 until points.size - 1) {
+                    val a = points[i]
+                    val b = points[i + 1]
+                    val end = if (i == points.size - 2) b else Offset((a.x + b.x) / 2, (a.y + b.y) / 2)
+                    quadraticTo(a.x, a.y, end.x, end.y)
+                }
+            }
             close()
         }
         drawPath(p, Brush.linearGradient(listOf(color, color.copy(alpha = color.alpha * 0.55f)), points.first(), points[points.size / 2]))
         if (rays && rayFrom != null) {
-            for (pt in points.drop(1).dropLast(1)) drawLine(Color.Black.copy(alpha = 0.18f), rayFrom, pt, strokeWidth = 0.0025f)
+            clipPath(p) {
+                for (pt in points.drop(1).dropLast(1)) drawLine(Color.Black.copy(alpha = 0.18f), rayFrom, pt, strokeWidth = 0.0025f)
+            }
         }
         drawPath(p, Color.Black.copy(alpha = 0.12f), style = Stroke(0.002f))
     }

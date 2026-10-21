@@ -187,22 +187,43 @@ private fun DrawScope.drawSky(geo: SceneGeometry, colors: SceneColors, c: Condit
         }
     }
 
-    // Clouds: soft clusters drifting with the wind.
+    // Clouds: cumulus billows lit from above with flat, shaded bases, drifting with the wind.
+    // A heavy sky also gets a grey overcast layer behind them.
+    val base = lerp(Color(0xFF262B36), Color(0xFFF4F6F8), colors.daylight)
+    val shade = lerp(lerp(base, Color(0xFF8A93A0), 0.35f + colors.rain * 0.3f), Color(0xFF5A6370), colors.cloud * 0.5f)
+    val warm = lerp(base, Color(0xFFF6B080), colors.warmth * 0.55f * (1f - colors.cloud * 0.5f))
+    if (colors.cloud > 0.55f) {
+        val o = ((colors.cloud - 0.55f) / 0.45f).coerceIn(0f, 1f)
+        drawRect(
+            Brush.verticalGradient(listOf(shade.copy(alpha = 0.85f * o), shade.copy(alpha = 0.35f * o), shade.copy(alpha = 0f)), 0f, geo.hy * 0.95f),
+            size = Size(geo.w, geo.hy),
+        )
+    }
     val count = (colors.cloud * geo.puffs.size).toInt()
-    if (count > 0) {
-        val base = lerp(Color(0xFF262B36), Color(0xFFF4F6F8), colors.daylight)
-        val shade = lerp(base, Color(0xFF707985), colors.cloud * 0.6f + colors.rain * 0.3f)
-        val warm = lerp(shade, Color(0xFFF2A070), colors.warmth * 0.5f * (1f - colors.cloud * 0.5f))
-        for (i in 0 until count) {
-            val p = geo.puffs[i]
-            val x = ((p.x0 + t * 0.003f * (1f + colors.wind * 0.25f)) % 1.4f - 0.2f) * geo.w
-            val size = geo.w * 0.12f * p.scale
-            for ((dx, dy, r) in p.parts) {
-                val center = Offset(x + dx * size * 0.5f, p.y + dy * size * 0.5f)
-                val rad = size * r
-                val col = lerp(warm, shade, ((dy + 0.25f) * 2f).coerceIn(0f, 1f))
-                drawCircle(Brush.radialGradient(listOf(col.copy(alpha = 0.75f), col.copy(alpha = 0f)), center, rad), rad, center)
-            }
+    for (i in 0 until count) {
+        val p = geo.puffs[i]
+        val x = ((p.x0 + t * 0.003f * (1f + colors.wind * 0.25f)) % 1.4f - 0.2f) * geo.w
+        // Far clouds near the horizon are smaller and fainter.
+        val far = (p.y / geo.hy).coerceIn(0f, 1f)
+        val size = geo.w * 0.13f * p.scale * (1.1f - far * 0.5f)
+        val haze = 1f - far * 0.35f
+        // Shadowed underside first, then the billows from the bottom up so the lit tops stay on top.
+        drawOval(
+            Brush.radialGradient(listOf(shade.copy(alpha = 0.7f * haze), shade.copy(alpha = 0f)), Offset(x, p.y), size * 1.2f),
+            Offset(x - size * 1.2f, p.y - size * 0.28f), Size(size * 2.4f, size * 0.56f),
+        )
+        for ((dx, dy, r) in p.parts) {
+            val center = Offset(x + dx * size, p.y + dy * size)
+            val rad = size * r
+            val lit = ((-dy) / 0.6f).coerceIn(0f, 1f)
+            val col = lerp(shade, warm, 0.35f + 0.65f * lit)
+            drawCircle(
+                Brush.radialGradient(
+                    0f to col.copy(alpha = 0.95f * haze), 0.6f to col.copy(alpha = 0.85f * haze), 1f to col.copy(alpha = 0f),
+                    center = Offset(center.x - rad * 0.15f, center.y - rad * 0.2f), radius = rad * 1.1f,
+                ),
+                rad, center,
+            )
         }
     }
 

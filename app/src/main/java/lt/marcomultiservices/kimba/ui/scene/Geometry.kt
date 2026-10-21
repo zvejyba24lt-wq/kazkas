@@ -78,7 +78,13 @@ class SceneGeometry(val w: Float, val h: Float) {
     }
 
     val puffs: List<Puff> = List(18) {
-        val parts = List(6) { Triple((rnd.nextFloat() - 0.5f) * 2.4f, (rnd.nextFloat() - 0.5f) * 0.5f, 0.5f + rnd.nextFloat() * 0.6f) }
+        // A cumulus: billows piled into a dome over a flat base (dy < 0 is up).
+        val parts = List(13) { k ->
+            val dx = (k / 12f * 2f - 1f) * 1.25f + (rnd.nextFloat() - 0.5f) * 0.2f
+            val dome = 1f - (dx / 1.35f) * (dx / 1.35f)
+            val r = 0.22f + 0.3f * dome * (0.7f + rnd.nextFloat() * 0.5f)
+            Triple(dx, -dome * (0.15f + rnd.nextFloat() * 0.45f), r)
+        }.sortedBy { -it.second }
         Puff(rnd.nextFloat() * 1.4f, hy * (0.06f + rnd.nextFloat() * 0.6f), 0.6f + rnd.nextFloat() * 0.9f, parts)
     }
 
@@ -201,11 +207,11 @@ class SceneGeometry(val w: Float, val h: Float) {
             val ry = height * 0.36f
             val ph1 = rnd.nextFloat() * 6.28f
             val ph2 = rnd.nextFloat() * 6.28f
-            val n = 48
+            val n = 72
             for (i in 0..n) {
                 val a = i / n.toFloat() * 2 * PI.toFloat()
-                // Lobes of leaves along the edge; the crown is flatter at the bottom.
-                val bump = 1f + 0.09f * sin(a * 6 + ph1) + 0.05f * sin(a * 11 + ph2)
+                // Scalloped clumps of leaves along the edge; the crown is flatter at the bottom.
+                val bump = 0.8f + 0.2f * kotlin.math.abs(sin(a * 3.5f + ph1)) + 0.05f * sin(a * 13 + ph2)
                 val flat = if (sin(a) > 0) 1f - 0.25f * sin(a) else 1f
                 val px = cx + kotlin.math.cos(a) * rx * bump
                 val py = cy + sin(a) * ry * bump * flat

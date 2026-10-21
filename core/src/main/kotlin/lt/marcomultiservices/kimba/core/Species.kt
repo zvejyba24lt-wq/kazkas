@@ -266,6 +266,26 @@ object Fish {
         },
     )
 
+    /** Plural for "catch 3 …": Lithuanian accusative, German and English plural. */
+    private val plurals = mapOf(
+        "roach" to L("kuojas", "Rotaugen", "roach"), "bleak" to L("aukšles", "Ukeleis", "bleak"),
+        "perch" to L("ešerius", "Barsche", "perch"), "rudd" to L("raudes", "Rotfedern", "rudd"),
+        "crucian" to L("karosus", "Karauschen", "crucian carp"), "tench" to L("lynus", "Schleien", "tench"),
+        "bream" to L("karšius", "Brassen", "bream"), "carp" to L("karpius", "Karpfen", "carp"),
+        "pike" to L("lydekas", "Hechte", "pike"), "zander" to L("sterkus", "Zander", "zander"),
+        "eel" to L("ungurius", "Aale", "eels"), "catfish" to L("šamus", "Welse", "wels catfish"),
+        "burbot" to L("vėgėles", "Quappen", "burbot"), "chub" to L("šapalus", "Döbel", "chub"),
+        "asp" to L("salačius", "Rapfen", "asp"), "barbel" to L("ūsorius", "Barben", "barbel"),
+        "trout" to L("upėtakius", "Bachforellen", "brown trout"), "grayling" to L("kiršlius", "Äschen", "grayling"),
+        "grass_carp" to L("baltuosius amūrus", "Graskarpfen", "grass carp"), "cod" to L("menkes", "Dorsche", "cod"),
+        "flounder" to L("plekšnes", "Flundern", "flounder"), "herring" to L("strimėles", "Heringe", "herring"),
+        "sea_trout" to L("šlakius", "Meerforellen", "sea trout"), "garfish" to L("vėjažuves", "Hornhechte", "garfish"),
+        "turbot" to L("otus", "Steinbutte", "turbot"), "whitefish" to L("sykus", "Felchen", "whitefish"),
+        "huchen" to L("Dunojaus lašišas", "Huchen", "Danube salmon"), "vimba" to L("žiobrius", "Zährten", "vimba"),
+    )
+
+    fun plural(id: String): L? = plurals[id]
+
     fun byId(id: String): Species? = all.firstOrNull { it.id == id }
     fun goldenById(id: String): Golden? = goldens.firstOrNull { it.id == id }
 
