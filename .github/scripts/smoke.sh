@@ -37,11 +37,12 @@ timeout 30 adb shell input swipe $((W/2)) $((H*84/100)) $((W/2)) $((H*84/100)) 1
 shot 05_laukiam 6
 demo -e fight pike; shot 06_kova 3
 # The other rods: a feeder on its rest watching the tip, the tackle box, a spinning lure coming back.
-demo -e screen lake -e tackle feeder; sleep 3
-demo -e cast 0.6; shot 06a_fideris 6
+demo -e screen lake -e tackle feeder; sleep 6
+demo -e cast 0.6; shot 06a_fideris 9
 demo -e screen lake; sleep 2
-demo --ez box true; shot 06b_dezute 3
-demo -e screen lake -e tackle spin; sleep 3
+demo -e screen lake; sleep 4
+demo --ez box true; shot 06b_dezute 6
+demo -e screen lake -e tackle spin; sleep 6
 demo -e cast 0.8; shot 06c_spiningas 5
 demo -e screen lake -e tackle float; sleep 2
 
