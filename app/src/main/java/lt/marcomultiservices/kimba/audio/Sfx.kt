@@ -23,7 +23,7 @@ import kotlin.random.Random
  * lake by day, at night, in the rain, on the river and by the sea.
  */
 class Sfx(context: Context) {
-    enum class Fx { CAST, PLOP, NIBBLE, BITE, REEL, STRAIN, SNAP, SPLASH, COIN, LEVEL, TAP, ALARM }
+    enum class Fx { CAST, PLOP, NIBBLE, BITE, REEL, STRAIN, SNAP, SPLASH, COIN, LEVEL, TAP, ALARM, DRAG }
     enum class Amb { DAY, CALM, NIGHT, RAIN, RIVER, SEA }
 
     private val pool = SoundPool.Builder()
@@ -53,7 +53,7 @@ class Sfx(context: Context) {
                 if (want != null && ambIds[want] == id && enabled) startAmbient(want)
             }
         }
-        val dir = File(context.cacheDir, "sfx-v1").apply { mkdirs() }
+        val dir = File(context.cacheDir, "sfx-v2").apply { mkdirs() }
         thread(name = "sfx-synth", isDaemon = true) {
             // Short effects first so they are ready by the first cast.
             for (fx in Fx.entries) fxIds[fx] = pool.load(file(dir, fx.name) { Synth.fx(fx) }.path, 1)
@@ -81,11 +81,41 @@ class Sfx(context: Context) {
         pool.play(id, v, v, 1, 0, rate.coerceIn(0.5f, 2f))
     }
 
+    private val held = ConcurrentHashMap<Fx, Int>()
+
+    /**
+     * Keeps a looping effect running while [on] (the reel being wound, the drag paying out line),
+     * following [rate] and [volume] as they change; stops it when [on] turns false.
+     */
+    @Synchronized
+    fun hold(fx: Fx, on: Boolean, volume: Float = 1f, rate: Float = 1f) {
+        val stream = held[fx]
+        if (!on || !enabled) {
+            if (stream != null) { pool.stop(stream); held.remove(fx) }
+            return
+        }
+        val v = volume.coerceIn(0f, 1f)
+        val r = rate.coerceIn(0.5f, 2f)
+        if (stream != null) {
+            pool.setRate(stream, r)
+            pool.setVolume(stream, v, v)
+            return
+        }
+        val id = fxIds[fx] ?: return
+        if (id !in loaded) return
+        val s = pool.play(id, v, v, 2, -1, r)
+        if (s != 0) held[fx] = s
+    }
+
     /** The background loop for the scene, or null for silence (app in the background, menus). */
     @Synchronized
     fun ambient(a: Amb?) {
         wantedAmb = a
-        if (a == null) stopAmbient() else if (enabled) startAmbient(a)
+        if (a == null) {
+            stopAmbient()
+            for (st in held.values) pool.stop(st)
+            held.clear()
+        } else if (enabled) startAmbient(a)
     }
 
     @Synchronized
@@ -137,6 +167,7 @@ internal object Synth {
         Sfx.Fx.NIBBLE -> buf(0.14f).also { bubble(it, 0f, 650f, 1100f, 0.09f, 0.35f) }
         Sfx.Fx.BITE -> bite()
         Sfx.Fx.REEL -> reel()
+        Sfx.Fx.DRAG -> drag()
         Sfx.Fx.STRAIN -> strain()
         Sfx.Fx.SNAP -> snap()
         Sfx.Fx.SPLASH -> splash()
@@ -253,14 +284,58 @@ internal object Synth {
         return b
     }
 
-    /** A burst of ratchet clicks from the reel. */
+    /**
+     * A spinning reel being wound, as a seamless 1 s loop: the whirr of the gears meshing (a
+     * buzzy tone that wavers with each tooth), the rotor swelling as it turns three times a
+     * second, and the soft hiss of line running over the roller onto the spool. Every period
+     * divides one second, so the loop has no seam.
+     */
     private fun reel(): FloatArray {
-        val b = buf(0.11f)
+        val n = RATE
+        val b = FloatArray(n)
         val r = Random(4)
-        for (k in 0 until 4) {
-            val at = k * 0.026f
-            noise(b, at, 0.006f, r, { t -> (1 - t) }, { 0.9f })
-            tone(b, at, 0.012f, 2300f + k * 40f, 0.35f, decay = 400f)
+        var lp = 0f
+        var hp = 0f
+        for (i in 0 until n) {
+            val t = i / RATE.toFloat()
+            val rotor = 0.75f + 0.25f * sin(TWO_PI * 3f * t)
+            val teeth = 0.7f + 0.3f * sin(TWO_PI * 36f * t)
+            val g = TWO_PI * 210f * t
+            val gear = (sin(g) + 0.6f * sin(2 * g + 0.4f) + 0.35f * sin(3 * g + 1.1f) + 0.2f * sin(5 * g)) * teeth * rotor
+            // Line hiss: noise with the lows taken out.
+            val w = r.nextFloat() * 2 - 1
+            lp += (w - lp) * 0.35f
+            hp = w - lp
+            b[i] = gear * 0.32f + hp * 0.22f * rotor
+        }
+        return b
+    }
+
+    /**
+     * The drag (frikcionas) giving line to a running fish, as a seamless 1 s loop: the clicker
+     * striking the spool about 48 times a second, each strike a tiny metallic tick with two
+     * ringing partials, over the whine of the spool spinning backwards.
+     */
+    private fun drag(): FloatArray {
+        val n = RATE
+        val b = FloatArray(n)
+        val r = Random(7)
+        val clicks = 48
+        for (k in 0 until clicks) {
+            val at = (k + (r.nextFloat() - 0.5f) * 0.25f) / clicks
+            val loud = 0.75f + 0.25f * r.nextFloat()
+            val s0 = (at * RATE).toInt()
+            for (i in 0 until (0.016f * RATE).toInt()) {
+                val idx = (s0 + i).mod(n)
+                val t = i / RATE.toFloat()
+                val ping = sin(TWO_PI * 3150f * t) * exp(-t * 520f) + 0.6f * sin(TWO_PI * 5300f * t + 0.7f) * exp(-t * 800f)
+                val tick = if (i < 24) (r.nextFloat() * 2 - 1) * (1 - i / 24f) else 0f
+                b[idx] += (ping * 0.7f + tick) * loud
+            }
+        }
+        for (i in 0 until n) {
+            val t = i / RATE.toFloat()
+            b[i] += sin(TWO_PI * 640f * t) * 0.05f + sin(TWO_PI * 1280f * t) * 0.03f
         }
         return b
     }

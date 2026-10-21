@@ -121,35 +121,104 @@ internal fun DrawScope.drawAim(geo: SceneGeometry, at: Offset, t: Float) {
     }
 }
 
-/** A tapered carbon rod from the bottom right corner, bending towards the line under tension. */
+/**
+ * A tapered carbon rod from the bottom right corner, bending towards the line under tension:
+ * a cork handle, a spinning reel hanging below it, guides with thread whippings, and on a
+ * feeder rod ([quiver]) a bright orange quiver tip with white bands that shows the bite.
+ */
 internal fun DrawScope.drawRod(geo: SceneGeometry, colors: SceneColors, tip: Offset, quiver: Boolean = false) {
     val base = geo.rodBase
     val ctrl = Offset(geo.w * 0.92f, geo.h * 0.70f)
-    val steps = 24
-    var prev = base
-    for (i in 1..steps) {
-        val u = i / steps.toFloat()
-        val p = Offset(
+    val n = 48
+    val pts = Array(n + 1) { i ->
+        val u = i / n.toFloat()
+        Offset(
             (1 - u) * (1 - u) * base.x + 2 * (1 - u) * u * ctrl.x + u * u * tip.x,
             (1 - u) * (1 - u) * base.y + 2 * (1 - u) * u * ctrl.y + u * u * tip.y,
         )
-        val width = geo.w * (0.028f - 0.024f * u)
-        // A feeder rod ends in a bright quiver tip that shows the bite against the far shore.
-        val col = when {
-            u < 0.22f -> colors.lit(Palette.RodCork)
-            quiver && u > 0.8f -> colors.lit(if (i % 2 == 0) Palette.QuiverTip else Palette.QuiverBand)
-            else -> colors.lit(Palette.RodBlank)
-        }
-        drawLine(col, prev, p, strokeWidth = width, cap = StrokeCap.Round)
-        if (u >= 0.22f) drawLine(colors.lit(Palette.RodShine).copy(alpha = 0.6f), Offset(prev.x - width * 0.2f, prev.y - width * 0.2f), Offset(p.x - width * 0.2f, p.y - width * 0.2f), strokeWidth = width * 0.25f)
-        if (i % 6 == 0 && u > 0.3f) drawCircle(colors.lit(Palette.RodGuide), width * 0.8f, p, style = Stroke(1.5f))
-        prev = p
     }
-    // Reel.
-    val reel = Offset(geo.w * 0.955f, geo.h * 0.9f)
-    drawCircle(colors.lit(Palette.ReelBody), geo.w * 0.03f, reel)
-    drawCircle(colors.lit(Palette.ReelRim), geo.w * 0.03f, reel, style = Stroke(2f))
-    drawCircle(colors.lit(Palette.ReelKnob), geo.w * 0.008f, reel)
+    fun normal(i: Int): Offset {
+        val a = pts[(i - 1).coerceAtLeast(0)]
+        val b = pts[(i + 1).coerceAtMost(n)]
+        val dx = b.x - a.x
+        val dy = b.y - a.y
+        val l = kotlin.math.sqrt(dx * dx + dy * dy).coerceAtLeast(0.001f)
+        return Offset(-dy / l, dx / l)
+    }
+    fun width(u: Float): Float = geo.w * (if (u < 0.2f) 0.034f - 0.01f * u else 0.022f - 0.0195f * ((u - 0.2f) / 0.8f))
+    // The blank as one smooth filled shape: down one edge and back up the other.
+    fun band(from: Int, to: Int): Path = Path().apply {
+        for (i in from..to) {
+            val q = pts[i] + normal(i) * (width(i / n.toFloat()) / 2)
+            if (i == from) moveTo(q.x, q.y) else lineTo(q.x, q.y)
+        }
+        for (i in to downTo from) {
+            val q = pts[i] - normal(i) * (width(i / n.toFloat()) / 2)
+            lineTo(q.x, q.y)
+        }
+        close()
+    }
+    val handleEnd = (n * 0.2f).toInt()
+    val tipStart = if (quiver) (n * 0.84f).toInt() else n
+    drawPath(band(0, handleEnd), colors.lit(Palette.RodCork))
+    // Cork rings.
+    for (i in 1 until handleEnd step 2) {
+        val c = pts[i]
+        val nn = normal(i) * (width(i / n.toFloat()) / 2)
+        drawLine(Color.Black.copy(alpha = 0.16f), c - nn, c + nn, strokeWidth = 1.2f)
+    }
+    drawPath(band(handleEnd, tipStart), colors.lit(Palette.RodBlank))
+    if (quiver) drawPath(band(tipStart, n), colors.lit(Palette.QuiverTip))
+    // Light along the upper edge of the blank.
+    val shine = Path().apply {
+        for (i in handleEnd..n) {
+            val q = pts[i] + normal(i) * (width(i / n.toFloat()) * 0.22f)
+            if (i == handleEnd) moveTo(q.x, q.y) else lineTo(q.x, q.y)
+        }
+    }
+    drawPath(shine, colors.lit(Palette.RodShine).copy(alpha = 0.55f), style = Stroke(geo.w * 0.0025f, cap = StrokeCap.Round))
+    // Guides: a thread whipping and a ring standing off the blank.
+    for (u in floatArrayOf(0.34f, 0.48f, 0.6f, 0.71f, 0.81f, 0.9f, 0.97f)) {
+        val i = (u * n).toInt()
+        val c = pts[i]
+        val nn = normal(i)
+        val wdt = width(u)
+        val along = Offset(nn.y, -nn.x)
+        drawLine(colors.lit(Palette.RodWhip), c - along * (wdt * 0.9f), c + along * (wdt * 0.9f), strokeWidth = wdt * 1.25f)
+        val ring = c - nn * (wdt * 1.6f)
+        drawLine(colors.lit(Palette.RodGuide), c, ring, strokeWidth = 1.4f)
+        drawCircle(colors.lit(Palette.RodGuide), wdt * 0.75f + 2f, ring, style = Stroke(1.4f))
+    }
+    if (quiver) for (u in floatArrayOf(0.88f, 0.93f)) {
+        val i = (u * n).toInt()
+        val nn = normal(i) * (width(u) / 2 + 0.5f)
+        drawLine(colors.lit(Palette.QuiverBand), pts[i] - nn, pts[i] + nn, strokeWidth = geo.w * 0.006f)
+    }
+    drawReel(geo, colors, pts[(n * 0.13f).toInt()], pts[(n * 0.16f).toInt()] - pts[(n * 0.1f).toInt()])
+}
+
+/** A spinning reel hanging under the rod at [at]; [along] points up the rod. */
+private fun DrawScope.drawReel(geo: SceneGeometry, colors: SceneColors, at: Offset, along: Offset) {
+    val angle = kotlin.math.atan2(along.y, along.x) * 180f / PI.toFloat()
+    val s = geo.w * 0.03f
+    rotate(angle, pivot = at) {
+        // Rod pointing along +x here: the reel hangs on its foot below (+y).
+        drawLine(colors.lit(Palette.ReelBody), at, Offset(at.x, at.y + s * 1.3f), strokeWidth = s * 0.35f, cap = StrokeCap.Round)
+        val body = Rect(at.x - s * 0.9f, at.y + s * 1.1f, at.x + s * 0.5f, at.y + s * 2.4f)
+        drawOval(Brush.verticalGradient(listOf(colors.lit(Palette.ReelRim), colors.lit(Palette.ReelBody)), body.top, body.bottom), body.topLeft, body.size)
+        // Spool with line, facing up the rod.
+        val spool = Rect(at.x + s * 0.4f, at.y + s * 1.05f, at.x + s * 1.25f, at.y + s * 2.45f)
+        drawRoundRect(Brush.horizontalGradient(listOf(colors.lit(Palette.ReelRim), colors.lit(Palette.ReelSpool)), spool.left, spool.right), spool.topLeft, spool.size, androidx.compose.ui.geometry.CornerRadius(s * 0.25f))
+        drawRoundRect(colors.lit(Palette.Line).copy(alpha = 0.7f), Offset(spool.left + s * 0.15f, spool.top + s * 0.25f), Size(spool.width - s * 0.3f, spool.height - s * 0.5f), androidx.compose.ui.geometry.CornerRadius(s * 0.15f))
+        // Bail arm.
+        drawArc(colors.lit(Palette.ReelRim), -80f, 160f, false, Offset(spool.right - s * 0.4f, spool.top - s * 0.15f), Size(s * 0.8f, spool.height + s * 0.3f), style = Stroke(s * 0.1f))
+        // Handle and knob.
+        val hub = Offset(body.center.x - s * 0.1f, body.center.y)
+        val knob = Offset(hub.x - s * 0.6f, hub.y + s * 1.1f)
+        drawLine(colors.lit(Palette.ReelRim), hub, knob, strokeWidth = s * 0.16f, cap = StrokeCap.Round)
+        drawCircle(colors.lit(Palette.ReelBody), s * 0.18f, hub)
+        drawOval(colors.lit(Palette.ReelKnob), Offset(knob.x - s * 0.22f, knob.y - s * 0.32f), Size(s * 0.44f, s * 0.64f))
+    }
 }
 
 /** The fishing line from the rod tip to the float: slack while waiting, tight and red when about to snap. */
@@ -165,39 +234,84 @@ internal fun DrawScope.drawLine(geo: SceneGeometry, tip: Offset, end: Offset, st
     drawPath(path, col, style = Stroke(if (stage == Stage.FIGHT) 2.2f else 1.4f))
 }
 
-/** A small metal feeder cage with a lead weight, hanging from the line or flying. */
+/**
+ * A cage feeder packed with brown groundbait, hanging from the line or flying: a mesh cylinder
+ * with metal rims and a lead strip along one side. Art slot `feeder_cage` (1:1.6 portrait)
+ * replaces it; the line is tied at its top centre.
+ */
 internal fun DrawScope.drawFeederCage(pos: Offset, u: Float, colors: SceneColors) {
-    val w = u * 1.1f
-    val h = u * 2.2f
-    val top = pos.y - h * 0.2f
-    val body = Path().apply {
-        moveTo(pos.x, top)
-        cubicTo(pos.x + w, top + h * 0.1f, pos.x + w, top + h * 0.9f, pos.x, top + h)
-        cubicTo(pos.x - w, top + h * 0.9f, pos.x - w, top + h * 0.1f, pos.x, top)
-        close()
+    val w = u * 1.0f
+    val h = u * 2.0f
+    val top = pos.y + u * 0.3f
+    ArtPack["feeder_cage"]?.let { img ->
+        drawArt(img, Rect(pos.x - w * 0.8f, pos.y, pos.x + w * 0.8f, pos.y + h * 1.3f), light = colors.lit(Color.White))
+        return
     }
-    drawPath(body, colors.lit(Palette.FeederCage).copy(alpha = 0.35f))
-    for (k in 1..3) drawLine(colors.lit(Palette.FeederCage), Offset(pos.x - w * 0.8f, top + h * k / 4f), Offset(pos.x + w * 0.8f, top + h * k / 4f), strokeWidth = u * 0.14f, cap = StrokeCap.Round)
-    drawPath(body, colors.lit(Palette.FeederCage), style = Stroke(u * 0.18f))
-    drawOval(colors.lit(Palette.FeederLead), Offset(pos.x - w * 0.55f, top + h * 0.82f), Size(w * 1.1f, h * 0.3f))
+    // Swivel and short link to the line.
+    drawLine(colors.lit(Palette.FeederCage), pos, Offset(pos.x, top), strokeWidth = u * 0.12f)
+    val body = Rect(pos.x - w / 2, top, pos.x + w / 2, top + h)
+    val r = androidx.compose.ui.geometry.CornerRadius(w * 0.3f)
+    drawRoundRect(Brush.horizontalGradient(listOf(colors.lit(Palette.Groundbait), colors.lit(Palette.GroundbaitDark)), body.left, body.right), body.topLeft, body.size, r)
+    // Crumbs of groundbait showing through.
+    for (k in 0 until 7) {
+        val gx = body.left + w * (0.2f + 0.6f * ((k * 37) % 10) / 10f)
+        val gy = body.top + h * (0.15f + 0.7f * ((k * 53) % 10) / 10f)
+        drawCircle(colors.lit(Palette.GroundbaitDark).copy(alpha = 0.7f), u * 0.08f, Offset(gx, gy))
+    }
+    // Mesh: vertical wires and rings.
+    val wire = colors.lit(Palette.FeederCage)
+    for (k in 1..3) drawLine(wire, Offset(body.left + w * k / 4f, body.top), Offset(body.left + w * k / 4f, body.bottom), strokeWidth = u * 0.07f)
+    for (k in 1..3) drawLine(wire, Offset(body.left, body.top + h * k / 4f), Offset(body.right, body.top + h * k / 4f), strokeWidth = u * 0.07f)
+    drawRoundRect(wire, body.topLeft, body.size, r, style = Stroke(u * 0.14f))
+    // Lead strip down one side, shiny metal rims top and bottom.
+    drawRoundRect(colors.lit(Palette.FeederLead), Offset(body.left - u * 0.08f, body.top + h * 0.1f), Size(u * 0.28f, h * 0.8f), androidx.compose.ui.geometry.CornerRadius(u * 0.1f))
+    drawLine(colors.lit(Palette.ReelRim), Offset(body.left, body.top), Offset(body.right, body.top), strokeWidth = u * 0.16f, cap = StrokeCap.Round)
+    drawLine(colors.lit(Palette.ReelRim), Offset(body.left, body.bottom), Offset(body.right, body.bottom), strokeWidth = u * 0.16f, cap = StrokeCap.Round)
 }
 
-/** A spinning spoon, silver with a red dot, flashing as it turns. */
+/** Three small hook points round a shank end at [at], [s] across: a treble hook. */
+internal fun DrawScope.drawTreble(at: Offset, s: Float, color: Color) {
+    drawLine(color, at, Offset(at.x, at.y + s * 0.9f), strokeWidth = s * 0.1f)
+    for (side in listOf(-1f, 1f)) {
+        val hook = Path().apply {
+            moveTo(at.x, at.y + s * 0.6f)
+            quadraticTo(at.x + side * s * 0.05f, at.y + s * 1.25f, at.x + side * s * 0.45f, at.y + s * 0.95f)
+            lineTo(at.x + side * s * 0.42f, at.y + s * 0.7f)
+        }
+        drawPath(hook, color, style = Stroke(s * 0.09f, cap = StrokeCap.Round))
+    }
+    drawCircle(color, s * 0.08f, Offset(at.x, at.y + s * 1.05f))
+}
+
+/**
+ * A casting spoon (blizgė): a curved silver blade with a polished highlight and a red spot,
+ * on a split ring with a treble hook, flashing as it wobbles. Art slot `spoon` (1:2.4
+ * portrait, ring at the top) replaces it.
+ */
 internal fun DrawScope.drawSpoon(pos: Offset, u: Float, t: Float, colors: SceneColors) {
-    val turn = 0.45f + 0.55f * abs(sin(t * 9f))
-    val w = u * 0.9f * turn
+    val turn = 0.55f + 0.45f * abs(sin(t * 9f))
+    ArtPack["spoon"]?.let { img ->
+        val w = u * 0.9f * turn
+        drawArt(img, Rect(pos.x - w, pos.y - u * 0.4f, pos.x + w, pos.y + u * 3.9f), light = colors.lit(Color.White))
+        return
+    }
+    val w = u * 0.85f * turn
     val h = u * 2.0f
-    drawLine(colors.lit(Palette.SpoonShade), Offset(pos.x, pos.y - h * 0.7f), Offset(pos.x, pos.y - h * 0.35f), strokeWidth = u * 0.12f)
-    val body = Path().apply {
-        moveTo(pos.x, pos.y - h * 0.35f)
-        cubicTo(pos.x + w, pos.y - h * 0.2f, pos.x + w * 0.8f, pos.y + h * 0.5f, pos.x, pos.y + h * 0.6f)
-        cubicTo(pos.x - w * 0.8f, pos.y + h * 0.5f, pos.x - w, pos.y - h * 0.2f, pos.x, pos.y - h * 0.35f)
+    val top = pos.y + u * 0.35f
+    // Split ring.
+    drawCircle(colors.lit(Palette.SpoonShade), u * 0.18f, Offset(pos.x, pos.y + u * 0.15f), style = Stroke(u * 0.07f))
+    val blade = Path().apply {
+        moveTo(pos.x, top)
+        cubicTo(pos.x + w * 0.9f, top + h * 0.1f, pos.x + w * 1.1f, top + h * 0.75f, pos.x, top + h)
+        cubicTo(pos.x - w * 1.1f, top + h * 0.75f, pos.x - w * 0.9f, top + h * 0.1f, pos.x, top)
         close()
     }
-    drawPath(body, Brush.horizontalGradient(listOf(colors.lit(Palette.Spoon), colors.lit(Palette.SpoonShade)), pos.x - w, pos.x + w))
-    drawCircle(colors.lit(Palette.SpoonRed), u * 0.22f * turn.coerceAtLeast(0.5f), Offset(pos.x, pos.y + h * 0.15f))
-    drawCircle(Color.White.copy(alpha = 0.8f * turn), u * 0.18f, Offset(pos.x - w * 0.3f, pos.y - h * 0.05f))
-    drawLine(colors.lit(Palette.SpoonShade), Offset(pos.x, pos.y + h * 0.6f), Offset(pos.x, pos.y + h * 0.85f), strokeWidth = u * 0.1f)
+    drawPath(blade, Brush.linearGradient(listOf(colors.lit(Palette.Spoon), colors.lit(Palette.SpoonShade), colors.lit(Palette.Spoon)), Offset(pos.x - w, top), Offset(pos.x + w, top + h)))
+    drawPath(blade, colors.lit(Palette.SpoonShade).copy(alpha = 0.8f), style = Stroke(u * 0.06f))
+    // Hammered highlight that flashes with the wobble.
+    drawOval(Color.White.copy(alpha = 0.35f + 0.5f * turn), Offset(pos.x - w * 0.45f, top + h * 0.18f), Size(w * 0.45f, h * 0.38f))
+    drawOval(colors.lit(Palette.SpoonRed), Offset(pos.x - w * 0.22f, top + h * 0.62f), Size(w * 0.44f, h * 0.16f))
+    drawTreble(Offset(pos.x, top + h), u * 0.9f, colors.lit(Palette.SpoonShade))
 }
 
 /** Where a feeder line goes into the water: small rings that pulse when the fish pulls. */
@@ -231,21 +345,63 @@ internal fun DrawScope.drawSpinWake(geo: SceneGeometry, pos: Offset, t: Float) {
 }
 
 /**
- * The forked rod rest the feeder rod lies on, with the electronic bite alarm on it once
- * bought: its red light flashes while [alarm] is on.
+ * The bank stick the feeder rod lies on, at the point under the rod: a telescopic metal pole
+ * pushed into the ground with a rubber V head, or, once bought, an electronic bite alarm on top
+ * whose red light flashes while [alarm] is on. Art slots `rod_rest` and `bite_alarm` (both
+ * 1:1, the rod rests on their top centre) replace the drawings.
  */
-internal fun DrawScope.drawRodRest(geo: SceneGeometry, colors: SceneColors, hasAlarm: Boolean, alarm: Boolean, t: Float) {
-    val at = Offset(geo.w * 0.93f, geo.h * 0.8f)
-    val wood = colors.lit(Palette.RodRest)
-    val s = geo.w * 0.012f
-    drawLine(wood, Offset(at.x, at.y + s), Offset(at.x + s * 0.4f, geo.h * 0.97f), strokeWidth = s * 1.1f, cap = StrokeCap.Round)
-    drawLine(wood, Offset(at.x, at.y + s), Offset(at.x - s * 1.6f, at.y - s * 1.2f), strokeWidth = s * 0.8f, cap = StrokeCap.Round)
-    drawLine(wood, Offset(at.x, at.y + s), Offset(at.x + s * 1.6f, at.y - s * 1.0f), strokeWidth = s * 0.8f, cap = StrokeCap.Round)
-    if (!hasAlarm) return
-    val box = Rect(at.x - s * 2.2f, at.y + s * 1.6f, at.x + s * 2.2f, at.y + s * 4.6f)
-    drawRoundRect(colors.lit(Palette.AlarmBody), box.topLeft, box.size, androidx.compose.ui.geometry.CornerRadius(s * 0.8f))
-    val led = Offset(box.center.x + s * 1.1f, box.center.y)
+internal fun DrawScope.drawRodRest(geo: SceneGeometry, colors: SceneColors, tip: Offset, hasAlarm: Boolean, alarm: Boolean, t: Float) {
+    val base = geo.rodBase
+    val ctrl = Offset(geo.w * 0.92f, geo.h * 0.70f)
+    val u = 0.36f
+    val at = Offset(
+        (1 - u) * (1 - u) * base.x + 2 * (1 - u) * u * ctrl.x + u * u * tip.x,
+        (1 - u) * (1 - u) * base.y + 2 * (1 - u) * u * ctrl.y + u * u * tip.y,
+    )
+    val s = geo.w * 0.022f
+    val ground = geo.h * 0.985f
+    // Telescopic pole: a thicker lower part and a thinner upper one.
+    drawLine(Brush.horizontalGradient(listOf(colors.lit(Palette.ReelRim), colors.lit(Palette.ReelBody)), at.x - s * 0.3f, at.x + s * 0.3f), Offset(at.x, ground), Offset(at.x, at.y + s * 4f), strokeWidth = s * 0.55f)
+    drawLine(Brush.horizontalGradient(listOf(colors.lit(Palette.ReelRim), colors.lit(Palette.ReelBody)), at.x - s * 0.2f, at.x + s * 0.2f), Offset(at.x, at.y + s * 4.2f), Offset(at.x, at.y + s * 1.2f), strokeWidth = s * 0.36f)
+    drawRoundRect(colors.lit(Palette.AlarmBody), Offset(at.x - s * 0.4f, at.y + s * 3.8f), Size(s * 0.8f, s * 0.5f), androidx.compose.ui.geometry.CornerRadius(s * 0.15f))
+    if (!hasAlarm) {
+        val img = ArtPack["rod_rest"]
+        if (img != null) { drawArt(img, Rect(at.x - s * 2f, at.y - s * 0.6f, at.x + s * 2f, at.y + s * 3.4f), light = colors.lit(Color.White)); return }
+        // Rubber V head cradling the rod.
+        val head = Path().apply {
+            moveTo(at.x - s * 1.4f, at.y - s * 0.9f)
+            quadraticTo(at.x - s * 1.2f, at.y + s * 1.3f, at.x, at.y + s * 1.3f)
+            quadraticTo(at.x + s * 1.2f, at.y + s * 1.3f, at.x + s * 1.4f, at.y - s * 0.9f)
+            lineTo(at.x + s * 0.9f, at.y - s * 0.9f)
+            quadraticTo(at.x + s * 0.8f, at.y + s * 0.5f, at.x, at.y + s * 0.5f)
+            quadraticTo(at.x - s * 0.8f, at.y + s * 0.5f, at.x - s * 0.9f, at.y - s * 0.9f)
+            close()
+        }
+        drawPath(head, colors.lit(Palette.AlarmBody))
+        return
+    }
+    val img = ArtPack["bite_alarm"]
     val on = alarm && sin(t * 30f) > -0.3f
-    if (on) drawCircle(Brush.radialGradient(listOf(Palette.AlarmLed.copy(alpha = 0.7f), Palette.AlarmLed.copy(alpha = 0f)), led, s * 4f), s * 4f, led)
-    drawCircle(if (on) Palette.AlarmLed else Palette.AlarmLed.copy(alpha = 0.3f), s * 0.6f, led)
+    val led = Offset(at.x - s * 1.3f, at.y + s * 1.6f)
+    if (img != null) {
+        drawArt(img, Rect(at.x - s * 2.2f, at.y - s * 0.6f, at.x + s * 2.2f, at.y + s * 3.8f), light = colors.lit(Color.White))
+    } else {
+        // Sleek alarm body with the rod lying in its groove, a sensor wheel and the light at the front.
+        val body = Path().apply {
+            moveTo(at.x - s * 1.9f, at.y + s * 0.3f)
+            lineTo(at.x + s * 1.7f, at.y + s * 0.1f)
+            quadraticTo(at.x + s * 2.1f, at.y + s * 0.2f, at.x + s * 1.9f, at.y + s * 1.0f)
+            lineTo(at.x + s * 0.6f, at.y + s * 2.9f)
+            quadraticTo(at.x, at.y + s * 3.4f, at.x - s * 0.6f, at.y + s * 2.9f)
+            lineTo(at.x - s * 1.9f, at.y + s * 1.2f)
+            quadraticTo(at.x - s * 2.2f, at.y + s * 0.7f, at.x - s * 1.9f, at.y + s * 0.3f)
+            close()
+        }
+        drawPath(body, Brush.verticalGradient(listOf(colors.lit(Palette.AlarmTop), colors.lit(Palette.AlarmBody)), at.y, at.y + s * 3f))
+        drawCircle(colors.lit(Palette.ReelRim), s * 0.35f, Offset(at.x + s * 0.4f, at.y + s * 0.5f), style = Stroke(s * 0.12f))
+        drawRoundRect(colors.lit(Palette.AlarmTop), Offset(at.x - s * 0.5f, at.y + s * 1.6f), Size(s * 1.4f, s * 0.35f), androidx.compose.ui.geometry.CornerRadius(s * 0.15f))
+    }
+    if (on) drawCircle(Brush.radialGradient(listOf(Palette.AlarmLed.copy(alpha = 0.75f), Palette.AlarmLed.copy(alpha = 0f)), led, s * 4f), s * 4f, led)
+    drawCircle(if (on) Palette.AlarmLed else Palette.AlarmLed.copy(alpha = 0.35f), s * 0.38f, led)
+    if (on) drawCircle(Color.White.copy(alpha = 0.8f), s * 0.14f, led)
 }

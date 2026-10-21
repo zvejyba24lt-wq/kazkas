@@ -233,7 +233,7 @@ fun LakeScene(
             pierCache.draw(this, Triple(geo, colors, sea), pierRect(geo, sea)) { drawPier(geo, colors, sea, 0f) }
             // No reeds out on a sea pier.
             if (!sea) drawReeds(geo, colors, t, back = true)
-            if (resting) drawRodRest(geo, colors, hasAlarm, s.alarm, t)
+            if (resting) drawRodRest(geo, colors, tip, hasAlarm, s.alarm, t)
             drawRod(geo, colors, tip, quiver = kind == Tackle.FEEDER)
             drawLine(geo, tip, floatPos, s.stage, tension, slack = when (kind) { Tackle.FEEDER -> 0.12f; Tackle.SPIN -> 0.25f; else -> 1f })
             if (s.stage == Stage.LANDING) s.bite?.let { b -> drawLandedFish(geo, floatPos, t, lift.value, b.species.id, b.golden != null, (b.cm / 60.0).toFloat()) }

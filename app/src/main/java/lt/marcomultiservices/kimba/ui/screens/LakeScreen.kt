@@ -203,7 +203,7 @@ fun LakeScreen(
             conditions?.let { c ->
                 val trip = Destinations.byId(progress.trip)
                 val placeName = trip?.let { t(it.name) } ?: "${saved?.place?.name ?: ""} · ${t(progress.water.label)}"
-                TopHud(c, placeName, progress, saved?.baitsNow(), vm.offline.collectAsStateWithLifecycle().value, onForecast, onSettings)
+                TopHud(c, placeName, progress, saved?.baitsNow(), vm.offline.collectAsStateWithLifecycle().value, onForecast, onSettings, onBook)
             }
             Spacer(Modifier.weight(1f))
             // First-play tips: each shows until the player has done that step once.
@@ -226,14 +226,11 @@ fun LakeScreen(
             }
             Spacer(Modifier.height(10.dp))
             if (stage == Stage.IDLE || stage == Stage.CHARGING) {
-                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
-                    TackleBoxButton(progress, enabled = stage == Stage.IDLE) { boxOpen = true }
-                }
-                Spacer(Modifier.height(10.dp))
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column {
+                        // The tackle box sits with the other buttons; it shows the bait on the hook.
+                        TackleBoxButton(progress, enabled = stage == Stage.IDLE) { boxOpen = true }
                         NavButton(Icons.Rounded.Map, t(S.map), onMap)
-                        NavButton(Icons.Rounded.MenuBook, t(S.book), onBook)
                     }
                     Spacer(Modifier.weight(1f))
                     CastButton(stage == Stage.CHARGING, lake.chargeStart,
@@ -262,9 +259,7 @@ fun LakeScreen(
             }
         }
 
-        if (boxOpen && (stage == Stage.IDLE || stage == Stage.CHARGING)) {
-            TackleBox(progress, onTackle = { vm.equip(it) }, onBait = { vm.equip(it) }, onShop = { boxOpen = false; onShop() }, onClose = { boxOpen = false })
-        }
+        TackleBox(boxOpen && (stage == Stage.IDLE || stage == Stage.CHARGING), progress, onTackle = { vm.equip(it) }, onBait = { vm.equip(it) }, onShop = { boxOpen = false; onShop() }, onClose = { boxOpen = false })
 
         if (noCasts) {
             Box(Modifier.fillMaxSize().background(Color(0x88000000)).clickable { noCasts = false }, contentAlignment = Alignment.Center) {
@@ -297,7 +292,7 @@ fun formatDuration(ms: Long): String {
 }
 
 @Composable
-private fun TopHud(c: Conditions, place: String, progress: Progress, baits: Baits?, offline: Boolean, onForecast: () -> Unit, onSettings: () -> Unit) {
+private fun TopHud(c: Conditions, place: String, progress: Progress, baits: Baits?, offline: Boolean, onForecast: () -> Unit, onSettings: () -> Unit, onBook: () -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
         Glass(Modifier.weight(1f, fill = false).clip(RoundedCornerShape(18.dp)).clickable(onClick = onForecast), padding = 10.dp) {
             Column {
@@ -351,7 +346,11 @@ private fun TopHud(c: Conditions, place: String, progress: Progress, baits: Bait
                     }
                 }
             }
-            Icon(Icons.Rounded.Settings, t(S.settings), tint = K.Text, modifier = Modifier.padding(top = 6.dp).size(38.dp).clip(CircleShape).background(Color(0x80101A28)).clickable(onClick = onSettings).padding(8.dp))
+            Row {
+                Icon(Icons.Rounded.MenuBook, t(S.book), tint = K.Text, modifier = Modifier.padding(top = 6.dp).size(38.dp).clip(CircleShape).background(Color(0x80101A28)).clickable(onClick = onBook).padding(8.dp))
+                Spacer(Modifier.width(8.dp))
+                Icon(Icons.Rounded.Settings, t(S.settings), tint = K.Text, modifier = Modifier.padding(top = 6.dp).size(38.dp).clip(CircleShape).background(Color(0x80101A28)).clickable(onClick = onSettings).padding(8.dp))
+            }
         }
     }
 }

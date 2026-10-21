@@ -130,6 +130,8 @@ object Palette {
     val ReelBody = Color(0xFF2A2F36)
     val ReelRim = Color(0xFF9AA5B0)
     val ReelKnob = Color(0xFFD2B04A)
+    val ReelSpool = Color(0xFF5E6873)
+    val RodWhip = Color(0xFF7A1E22)
     val Line = Color(0xCCF2F0EA)
     val LineStrain = Color(0xFFFF6A50)
     /** Feeder rod: the bright quiver tip, the cage, the rod rest and the bite alarm. */
@@ -139,6 +141,9 @@ object Palette {
     val FeederLead = Color(0xFF3A3F45)
     val RodRest = Color(0xFF5C4128)
     val AlarmBody = Color(0xFF1C1F24)
+    val AlarmTop = Color(0xFF3A4048)
+    val Groundbait = Color(0xFF8A6A44)
+    val GroundbaitDark = Color(0xFF5A4128)
     val AlarmLed = Color(0xFFFF3B2E)
     /** Spinning lure. */
     val Spoon = Color(0xFFE8ECEF)

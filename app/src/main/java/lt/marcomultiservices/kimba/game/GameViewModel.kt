@@ -427,8 +427,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         learn(Tip.STRIKE)
         buzz(40)
         sfx.play(Sfx.Fx.SPLASH, 0.45f, rate = 1.2f)
-        val reelGap = (120 / (gear?.reel?.speed ?: 1.0)).toLong()
         job = viewModelScope.launch {
+            // The reel and drag loops stop however the fight ends, also when it is cancelled.
+            coroutineContext[Job]?.invokeOnCompletion { sfx.hold(Sfx.Fx.REEL, false); sfx.hold(Sfx.Fx.DRAG, false) }
             var last = System.nanoTime()
             while (fight.result == null) {
                 delay(16)
@@ -439,7 +440,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     buzz(longArrayOf(0, 30, 40, 30, 40, 30))
                     sfx.play(Sfx.Fx.SPLASH, 0.55f, rate = 1.1f + 0.2f * rng.nextFloat())
                 }
-                if (reeling && !fight.running) sfx.play(Sfx.Fx.REEL, 0.45f, rate = 0.95f + 0.1f * rng.nextFloat(), minGapMs = reelGap)
+                // The reel whirrs while it is wound; a running fish pulls line off against the drag, which screams.
+                sfx.hold(Sfx.Fx.REEL, reeling && !fight.running, 0.5f, rate = (0.85 + 0.3 * (gear?.reel?.speed ?: 1.0)).toFloat())
+                val dragging = fight.running || fight.tension > 0.9
+                sfx.hold(Sfx.Fx.DRAG, dragging, (0.45 + 0.4 * fight.tension).toFloat().coerceAtMost(0.9f), rate = (0.8 + 0.35 * fight.currentPull).toFloat())
                 // A warning before the line gives: it creaks and the phone ticks.
                 if (fight.tension > 0.85) {
                     sfx.play(Sfx.Fx.STRAIN, 0.5f, minGapMs = 520)
@@ -447,6 +451,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 }
                 _lake.update { it.copy(tension = fight.tension.toFloat(), fightDistance = fight.distance.toFloat(), running = fight.running) }
             }
+            sfx.hold(Sfx.Fx.REEL, false)
+            sfx.hold(Sfx.Fx.DRAG, false)
             when (fight.result!!) {
                 FightResult.LANDED -> landed(bite)
                 FightResult.SNAPPED -> { buzz(120); sfx.play(Sfx.Fx.SNAP); _lake.update { it.copy(stage = Stage.LOST, lost = LostReason.SNAPPED) } }

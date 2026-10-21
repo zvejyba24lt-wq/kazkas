@@ -31,6 +31,10 @@ Koordinatės žemiau pateiktos ekrano dalimis: `w` – ekrano plotis, `h` – au
 | `stone` | Akmuo upėje | Santykis 2:0,9 | Puta aplink piešiama kodu. |
 | `buoy` | Jūros plūduras | Santykis 1:2, vandens linija apačioje | Mirksinti šviesa naktį piešiama kodu. |
 | `cloud_1`, `cloud_2`, `cloud_3` | Debesys | Bet koks santykis, plotis ≈ 0,4w | Jų skaičius priklauso nuo tikro debesuotumo; jie dreifuoja su vėju. |
+| `feeder_cage` | Fiderio šėryklėlė su jaukais | Santykis 1:1,6 (stačia) | Valas pririštas viršuje per vidurį. |
+| `spoon` | Blizgė su trišakiu kabliuku | Santykis 1:2,4 (stačia) | Žiedelis viršuje. Žaidimas pats ją „mirksina“ sukdamas. |
+| `rod_rest` | Meškerės stovas (šakutė) | Santykis 1:1 | Meškerė guli viršuje per vidurį. Stiebas piešiamas kodu. |
+| `bite_alarm` | Elektroninis signalizatorius | Santykis 1:1 | Meškerė guli viršuje. Raudona lemputė mirksi kodu, kairėje apačioje. |
 | `item_<rūšis>_<vardas>` | Parduotuvės ikonos | Kvadratas | Pvz. `item_lure_worm`, `item_rod_carbon`, `item_float_glow`, `item_up_boat`. Vardai yra `core/.../Gear.kt` (`Lure`, `Rod`, `Reel`, `Line`, `FloatStyle`, `Upgrade`). |
 
 Žuvų nuotraukos dedamos atskirai: `app/src/main/assets/fish/<rūšies id>.webp`, galva į kairę,
