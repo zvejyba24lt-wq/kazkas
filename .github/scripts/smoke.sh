@@ -74,6 +74,7 @@ adb shell am force-stop "$PKG"
 adb shell cmd locale set-app-locales "$PKG" --locales en; sleep 2
 timeout 60 adb shell am start -W -n "$ACT" --ez noConsent true; shot 35_english 10
 
+if ! timeout 20 adb get-state > /dev/null 2>&1; then echo "The emulator died during the test"; exit 1; fi
 timeout 60 adb logcat -d > "$OUT/logcat_full.txt"
 grep -E "$PKG|AndroidRuntime|Fatal signal|DEBUG +:|ANR in|has died|RuntimeShader|WM-" "$OUT/logcat_full.txt" | tail -n 400 > "$OUT/logcat.txt"
 awk -v pkg="$PKG" '
