@@ -316,15 +316,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val power = castPower(uptime - s.chargeStart).toDouble()
         val c = _conditions.value ?: return
         job?.cancel()
+        val p = _saved.value?.progress ?: return
+        // The cast flies at once; the bait is taken from the box meanwhile (pressCast checked there is one).
+        viewModelScope.launch {
+            store.update { saved -> saved.baits.use(System.currentTimeMillis(), saved.progress.boxSize)?.let { saved.copy(baits = it) } ?: saved }
+        }
         job = viewModelScope.launch {
-            var ok = false
-            store.update { saved ->
-                val used = saved.baits.use(System.currentTimeMillis(), saved.progress.boxSize)
-                ok = used != null
-                if (used != null) saved.copy(baits = used) else saved
-            }
-            if (!ok) { _lake.value = LakeState(castId = s.castId); return@launch }
-            val p = store.current().progress
             val rolled = BiteEngine.roll(c, power, rng, p.spot, p.gear)
             // The very first fish comes soon, after two clear nibbles, so the tips can teach it.
             val bite = if (knows(Tip.STRIKE)) rolled else

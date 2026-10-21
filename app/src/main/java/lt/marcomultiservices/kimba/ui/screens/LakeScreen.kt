@@ -440,10 +440,8 @@ private fun Coach(tip: Tip, arrow: Boolean = false, tackle: Tackle = Tackle.FLOA
         Tip.STRIKE -> S.tipStrikeTitle to S.tipStrike
         Tip.REEL -> S.tipReelTitle to S.tipReel
     }
-    var shown by remember(tip) { mutableStateOf(false) }
-    LaunchedEffect(tip) { shown = true }
     val bounce by rememberInfiniteTransition(label = "coach").animateFloat(0f, 1f, infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "b")
-    AnimatedVisibility(shown, enter = fadeIn(tween(400)) + scaleIn(tween(400), initialScale = 0.92f)) {
+    run {
         Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
             Glass(Modifier.fillMaxWidth().border(1.dp, K.Amber.copy(alpha = 0.55f), RoundedCornerShape(22.dp)), radius = 22.dp, padding = 16.dp) {
                 Column {
