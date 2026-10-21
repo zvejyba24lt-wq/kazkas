@@ -40,6 +40,10 @@ import lt.marcomultiservices.kimba.core.Quest
 import lt.marcomultiservices.kimba.core.Quests
 import lt.marcomultiservices.kimba.core.Reward
 import lt.marcomultiservices.kimba.core.Streak
+import lt.marcomultiservices.kimba.core.Tackle
+import lt.marcomultiservices.kimba.core.Lure
+import lt.marcomultiservices.kimba.core.Upgrade
+import lt.marcomultiservices.kimba.core.Shop
 import lt.marcomultiservices.kimba.core.Water
 import lt.marcomultiservices.kimba.core.Sky
 import lt.marcomultiservices.kimba.core.Weather
@@ -73,6 +77,15 @@ data class LakeState(
     /** Uptime millis of the last nibble (the float trembles after it) and how many came so far. */
     val nibbleAt: Long = 0,
     val nibbles: Int = 0,
+    /** The rod of this cast: decides what the scene shows (float, rod tip, spinning lure). */
+    val tackle: Tackle = Tackle.FLOAT,
+    /** Uptime millis when the bait landed, and for a spinning lure the seconds it takes to wind it back. */
+    val landedAt: Long = 0,
+    val retrieve: Float = 0f,
+    /** How far the spinning lure had come back (0..1) when the fish took it. */
+    val takenAt: Float = 0f,
+    /** The electronic bite alarm is beeping. */
+    val alarm: Boolean = false,
     val tension: Float = 0f,
     val fightDistance: Float = 1f,
     val running: Boolean = false,
@@ -317,15 +330,25 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             val bite = if (knows(Tip.STRIKE)) rolled else
                 Bite(rolled.species, rolled.golden, rolled.cm, rolled.waitSeconds.coerceIn(8.0, 11.0), listOf(3.0, 5.5), rolled.condition)
             learn(Tip.CAST)
-            _lake.value = LakeState(stage = Stage.FLYING, castDist = power, castId = s.castId + 1, bite = bite)
+            val tackle = p.tackle
+            // A spinning lure is wound straight back: the take comes sooner, with fewer knocks before it.
+            val cast = if (tackle != Tackle.SPIN) bite else {
+                val wait = (bite.waitSeconds * 0.5).coerceIn(3.5, 9.0)
+                Bite(bite.species, bite.golden, bite.cm, wait, bite.nibbles.map { it * 0.5 }.filter { it < wait - 0.8 }.take(2), bite.condition)
+            }
+            _lake.value = LakeState(stage = Stage.FLYING, castDist = power, castId = s.castId + 1, bite = cast, tackle = tackle)
             sfx.play(Sfx.Fx.CAST, 0.7f + 0.3f * power.toFloat())
             delay(FLIGHT_MS)
-            sfx.play(Sfx.Fx.PLOP, 0.5f + 0.4f * (1 - power.toFloat()), rate = 0.9f + 0.2f * rng.nextFloat())
-            waitForBite(bite)
+            sfx.play(Sfx.Fx.PLOP, (if (tackle == Tackle.FEEDER) 0.8f else 0.5f) + 0.4f * (1 - power.toFloat()), rate = (if (tackle == Tackle.FEEDER) 0.75f else 0.9f) + 0.2f * rng.nextFloat())
+            _lake.update { it.copy(landedAt = android.os.SystemClock.uptimeMillis(), retrieve = if (tackle == Tackle.SPIN) (cast.waitSeconds + 2.5).toFloat() else 0f) }
+            waitForBite(cast)
         }
     }
 
-    private suspend fun waitForBite(bite: Bite) {
+    /** A bite alarm sounds on a bottom rod once it is bought. */
+    private fun hasAlarm(): Boolean = _lake.value.tackle == Tackle.FEEDER && _saved.value?.progress?.owns(Upgrade.ALARM) == true
+
+    private suspend fun waitForBite(bite: Bite) = kotlinx.coroutines.coroutineScope {
         _lake.update { it.copy(stage = Stage.WAITING, dip = 0f) }
         val start = System.currentTimeMillis()
         val nibbles = ArrayDeque(bite.nibbles)
@@ -338,28 +361,38 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 // A nibble: two or three quick twitches of the float, then it settles and trembles.
                 buzz(18)
                 sfx.play(Sfx.Fx.NIBBLE, 0.6f, rate = 0.85f + 0.3f * rng.nextFloat())
-                _lake.update { it.copy(nibbleAt = android.os.SystemClock.uptimeMillis(), nibbles = it.nibbles + 1) }
+                _lake.update { it.copy(nibbleAt = android.os.SystemClock.uptimeMillis(), nibbles = it.nibbles + 1, alarm = hasAlarm()) }
+                if (hasAlarm()) sfx.play(Sfx.Fx.ALARM, 0.7f)
                 repeat(2 + rng.nextInt(2)) {
                     _lake.update { it.copy(dip = 0.18f + rng.nextFloat() * 0.25f) }
                     delay(110L + rng.nextInt(70))
                     _lake.update { it.copy(dip = 0.02f) }
                     delay(90L + rng.nextInt(80))
                 }
-                _lake.update { it.copy(dip = 0f) }
+                _lake.update { it.copy(dip = 0f, alarm = false) }
             }
             delay(30)
         }
         // Just before the bite the fish lifts the bait: the float rises a little, then goes under.
         _lake.update { it.copy(dip = -0.22f, nibbleAt = android.os.SystemClock.uptimeMillis()) }
         delay(260)
-        _lake.update { it.copy(stage = Stage.BITE, dip = 1f) }
+        val taken = _lake.value.let { st -> if (st.retrieve > 0f) ((android.os.SystemClock.uptimeMillis() - st.landedAt) / 1000f / st.retrieve).coerceIn(0f, 1f) else 0f }
+        _lake.update { it.copy(stage = Stage.BITE, dip = 1f, takenAt = taken, alarm = hasAlarm()) }
+        if (hasAlarm()) launch { repeat(4) { sfx.play(Sfx.Fx.ALARM); delay(140) } }
         learn(Tip.WAIT)
         buzz(longArrayOf(0, 60, 50, 90))
         sfx.play(Sfx.Fx.BITE, rate = if (bite.pull > 0.6) 0.85f else 1f)
         // A beginner gets more time to strike.
-        delay(if (!knows(Tip.STRIKE)) 1700 else if (bite.golden != null || bite.pull > 0.8) 750 else 950)
+        val tackle = _lake.value.tackle
+        delay(when {
+            !knows(Tip.STRIKE) -> 1700L
+            tackle == Tackle.FEEDER -> 1300L
+            tackle == Tackle.SPIN -> 800L
+            bite.golden != null || bite.pull > 0.8 -> 750L
+            else -> 950L
+        })
         if (_lake.value.stage == Stage.BITE) {
-            _lake.update { it.copy(stage = Stage.LOST, lost = LostReason.MISSED, dip = 0f) }
+            _lake.update { it.copy(stage = Stage.LOST, lost = LostReason.MISSED, dip = 0f, alarm = false) }
         }
     }
 
@@ -375,7 +408,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 _lake.update { it.copy(hint = true, dip = 0f) }
                 job = viewModelScope.launch {
                     val again = Bite(bite.species, bite.golden, bite.cm, bite.waitSeconds * 0.6 + 3, bite.nibbles.map { it * 0.6 + 2 }, bite.condition)
-                    _lake.update { it.copy(bite = again) }
+                    // A spinning lure keeps coming back meanwhile: it needs the longer way.
+                    _lake.update { st ->
+                        val gone = (android.os.SystemClock.uptimeMillis() - st.landedAt) / 1000f
+                        st.copy(bite = again, retrieve = if (st.retrieve > 0f) gone + again.waitSeconds.toFloat() + 2.5f else 0f)
+                    }
                     launch { delay(2500); _lake.update { it.copy(hint = false) } }
                     waitForBite(again)
                 }
@@ -389,7 +426,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         reeling = false
         val gear = _saved.value?.progress?.gear
         val fight = Fight(bite.pull, rng, gear?.strength ?: 1.0, gear?.reel?.speed ?: 1.0)
-        _lake.update { it.copy(stage = Stage.FIGHT, dip = 0f, tension = 0.3f, fightDistance = 1f) }
+        _lake.update { it.copy(stage = Stage.FIGHT, dip = 0f, tension = 0.3f, fightDistance = 1f, alarm = false) }
         learn(Tip.STRIKE)
         buzz(40)
         sfx.play(Sfx.Fx.SPLASH, 0.45f, rate = 1.2f)
@@ -474,6 +511,15 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         p.copy(coins = if (coins >= 0) coins else p.coins, xp = if (xp >= 0) xp else p.xp)
     }
 
+    /** Gives every rod and bait and picks [name] (for screenshots). */
+    fun demoTackle(name: String) {
+        val t = Tackle.entries.firstOrNull { it.name.equals(name, true) } ?: return
+        updateProgress { p -> p.copy(owned = p.owned + Tackle.entries.map { it.key } + Lure.entries.map { it.key } + Upgrade.ALARM.key).equip(t) }
+    }
+
+    /** Opens the tackle box on the lake (for screenshots). */
+    val demoBox = MutableStateFlow(false)
+
     /** Goes to a destination without paying (for screenshots). */
     fun demoTrip(d: Destination) {
         updateProgress { it.copy(trips = it.trips + d.id, trip = d.id) }.invokeOnCompletion { afterMove() }
@@ -556,13 +602,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     companion object {
-        const val FLIGHT_MS = 1300L
+        const val FLIGHT_MS = 2000L
         /** How long the landed fish is lifted out of the water before its card shows. */
         const val LANDING_MS = 1600L
 
-        /** Power meter: rises and falls every 2.4 s while the button is held. */
+        /** Power meter: rises and falls every 3.2 s while the button is held. */
         fun castPower(heldMs: Long): Float {
-            val p = (heldMs % 2400L) / 1200f
+            val p = (heldMs % 3200L) / 1600f
             return (if (p <= 1f) p else 2f - p).coerceIn(0.05f, 1f)
         }
 

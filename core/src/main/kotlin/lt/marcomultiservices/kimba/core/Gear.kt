@@ -8,6 +8,32 @@ interface Item {
     val level: Int
 }
 
+/**
+ * The kind of rod. It decides which baits can be used and how a bite shows: the float on a
+ * float rod, the rod tip on a feeder (bottom) rod, a knock on the line while a spinning lure
+ * is wound back.
+ */
+enum class Tackle(override val label: L, override val price: Int, override val level: Int, val note: L) : Item {
+    FLOAT(L("Plūdinė meškerė", "Posenrute", "Float rod"), 0, 1,
+        L("Kibimą rodo plūdė. Sliekas, lervos, kukurūzas.", "Die Pose zeigt den Biss. Wurm, Maden, Mais.", "The float shows the bite. Worm, maggots, sweetcorn.")),
+    FEEDER(L("Fiderinė (dugninė) meškerė", "Feederrute (Grundrute)", "Feeder (bottom) rod"), 700, 2,
+        L("Masalas guli ant dugno, kibimą rodo meškerės galūnė. Stambesnės dugno žuvys.", "Der Köder liegt am Grund, die Rutenspitze zeigt den Biss. Größere Grundfische.", "The bait lies on the bottom; the rod tip shows the bite. Bigger bottom fish.")),
+    SPIN(L("Spiningas", "Spinnrute", "Spinning rod"), 900, 2,
+        L("Blizgės ir vobleriai plėšrūnams. Blizgė komplekte.", "Blinker und Wobbler für Räuber. Blinker inklusive.", "Spinners and wobblers for predators. Spinner included."));
+
+    override val key: String get() = "tackle:$name"
+
+    /** Fish that feed on the bottom bite better on a feeder; surface fish hardly ever. */
+    fun affinity(s: Species): Double = when (this) {
+        FEEDER -> when (s.id) {
+            "bream", "carp", "tench", "crucian", "eel", "catfish", "barbel", "burbot", "flounder", "turbot", "grass_carp", "vimba", "cod" -> 1.7
+            "bleak", "rudd", "garfish", "herring" -> 0.3
+            else -> 1.0
+        }
+        else -> 1.0
+    }
+}
+
 /** What hangs on the hook. Each lure draws different fish. */
 enum class Lure(
     override val label: L,
@@ -62,6 +88,13 @@ enum class Lure(
     );
 
     override val key: String get() = "lure:$name"
+
+    /** Rods this bait is fished on: spinning lures only on a spinning rod, boilies on the bottom. */
+    val tackle: Set<Tackle> get() = when (this) {
+        SPINNER, PILK, WOBBLER -> setOf(Tackle.SPIN)
+        BOILIE -> setOf(Tackle.FEEDER)
+        else -> setOf(Tackle.FLOAT, Tackle.FEEDER)
+    }
 
     fun affinity(s: Species): Double = likes[s.id] ?: default
 
@@ -119,7 +152,9 @@ enum class Upgrade(override val label: L, override val price: Int, override val 
     BOX_10(L("Didžiausia masalų dėžė", "Größte Köderdose", "Largest bait box"), 8000, 8,
         L("10 užmetimų", "10 Würfe", "10 casts")),
     BOAT(L("Valtis", "Boot", "Boat"), 10000, 8,
-        L("Pasieki gilumą, kimba greičiau", "Erreicht die Tiefe, Bisse kommen schneller", "Reach deep water, bites come faster"));
+        L("Pasieki gilumą, kimba greičiau", "Erreicht die Tiefe, Bisse kommen schneller", "Reach deep water, bites come faster")),
+    ALARM(L("Elektroninis signalizatorius", "Elektronischer Bissanzeiger", "Electronic bite alarm"), 3500, 7,
+        L("Ant dugninės meškerės pypsi ir mirksi, kai žuvis liečia masalą", "Piept und blinkt an der Grundrute, wenn ein Fisch den Köder berührt", "Beeps and flashes on the bottom rod when a fish touches the bait"));
 
     override val key: String get() = "up:$name"
 }
@@ -127,6 +162,7 @@ enum class Upgrade(override val label: L, override val price: Int, override val 
 /** Everything the player fishes with right now. */
 data class Gear(
     val lure: Lure = Lure.WORM,
+    val tackle: Tackle = Tackle.FLOAT,
     val rod: Rod = Rod.BASIC,
     val reel: Reel = Reel.BASIC,
     val line: Line = Line.THIN,
@@ -136,7 +172,7 @@ data class Gear(
 }
 
 object Shop {
-    val items: List<Item> = Lure.entries + Rod.entries + Reel.entries + Line.entries + FloatStyle.entries + Upgrade.entries
-    val starter: Set<String> = setOf(Lure.WORM.key, Rod.BASIC.key, Reel.BASIC.key, Line.THIN.key, FloatStyle.CLASSIC.key)
+    val items: List<Item> = Tackle.entries + Lure.entries + Rod.entries + Reel.entries + Line.entries + FloatStyle.entries + Upgrade.entries
+    val starter: Set<String> = setOf(Tackle.FLOAT.key, Lure.WORM.key, Rod.BASIC.key, Reel.BASIC.key, Line.THIN.key, FloatStyle.CLASSIC.key)
     fun byKey(key: String): Item? = items.firstOrNull { it.key == key }
 }

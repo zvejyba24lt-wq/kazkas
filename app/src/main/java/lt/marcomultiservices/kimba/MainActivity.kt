@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity() {
     /**
      * Demo and screenshot hooks: `-e place Vilnius`, `-e scene storm|dawnfog|night|snow|rain|dusk|day|live`,
      * `-e catch moon_pike`, `-e fight pike`, `-e screen book|forecast|settings|lake|shop|map|quests`,
-     * `-e water lake|pond|river|sea`, `-e trip bodensee`, `--ei coins 50000 --ei xp 20000` (test money).
+     * `-e water lake|pond|river|sea`, `-e trip bodensee`, `-e tackle float|feeder|spin`, `--ez box true`, `--ei coins 50000 --ei xp 20000` (test money).
      */
     private fun handleDemo(intent: Intent?) {
         if (!BuildConfig.DEMO_HOOKS) return
@@ -59,6 +59,8 @@ class MainActivity : AppCompatActivity() {
         extras.getString("scene")?.let { vm.setDemo(it.takeIf { s -> s != "live" }) }
         extras.getString("catch")?.let { vm.showDemoCatch(it) }
         extras.getString("fight")?.let { vm.demoFight(it) }
+        extras.getString("tackle")?.let { vm.demoTackle(it) }
+        if (extras.getBoolean("box", false)) vm.demoBox.value = true
         extras.getString("screen")?.let { s -> Screen.entries.firstOrNull { it.name.equals(s, ignoreCase = true) }?.let { startScreen.value = it to System.nanoTime() } }
     }
 }

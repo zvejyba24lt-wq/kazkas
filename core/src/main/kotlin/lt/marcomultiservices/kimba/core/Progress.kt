@@ -10,6 +10,7 @@ data class Progress(
     val xp: Int = 0,
     val owned: Set<String> = Shop.starter,
     val lure: Lure = Lure.WORM,
+    val tackle: Tackle = Tackle.FLOAT,
     val rod: Rod = Rod.BASIC,
     val reel: Reel = Reel.BASIC,
     val line: Line = Line.THIN,
@@ -28,7 +29,23 @@ data class Progress(
     val achieved: Set<String> = emptySet(),
 ) {
     val level: Int get() = Levels.levelOf(xp)
-    val gear: Gear get() = Gear(lure, rod, reel, line, Upgrade.BOAT.key in owned)
+    val gear: Gear get() = Gear(bait, tackle, rod, reel, line, Upgrade.BOAT.key in owned)
+
+    /** The bait actually on the hook: the chosen one if it fits the rod, else the first owned one that does. */
+    val bait: Lure get() = if (tackle in lure.tackle) lure else baitsFor(tackle).firstOrNull() ?: Lure.WORM
+
+    /** Owned baits that can be fished on [t]. */
+    fun baitsFor(t: Tackle): List<Lure> = Lure.entries.filter { owns(it) && t in it.tackle }
+
+    /** Older saves: spinning lures bought before rods had kinds come with a spinning rod. */
+    fun migrated(): Progress {
+        if (owns(Tackle.FLOAT) && (owns(Tackle.SPIN) || Lure.entries.none { owns(it) && it.tackle == setOf(Tackle.SPIN) })) return this
+        val spin = Lure.entries.any { owns(it) && it.tackle == setOf(Tackle.SPIN) }
+        return copy(
+            owned = owned + Tackle.FLOAT.key + (if (spin) listOf(Tackle.SPIN.key) else emptyList()),
+            tackle = if (spin && lure.tackle == setOf(Tackle.SPIN)) Tackle.SPIN else tackle,
+        )
+    }
     val boxSize: Int get() = when {
         Upgrade.BOX_10.key in owned -> 10
         Upgrade.BOX_7.key in owned -> 7
@@ -41,14 +58,21 @@ data class Progress(
 
     fun buy(item: Item): Progress? {
         if (!canBuy(item)) return null
-        val p = copy(coins = coins - item.price, owned = owned + item.key)
+        // A spinning rod comes with a spinner, so it can be used straight away.
+        val extra = if (item == Tackle.SPIN) listOf(Lure.SPINNER.key) else emptyList()
+        val p = copy(coins = coins - item.price, owned = owned + item.key + extra)
         return p.equip(item)
     }
 
     fun equip(item: Item): Progress {
         if (!owns(item)) return this
         return when (item) {
-            is Lure -> copy(lure = item)
+            // A bait for another kind of rod switches to that rod if the player has one.
+            is Lure -> when {
+                tackle in item.tackle -> copy(lure = item)
+                else -> item.tackle.firstOrNull { owns(it) }?.let { copy(tackle = it, lure = item) } ?: this
+            }
+            is Tackle -> copy(tackle = item, lure = if (item in lure.tackle) lure else baitsFor(item).firstOrNull() ?: lure)
             is Rod -> copy(rod = item)
             is Reel -> copy(reel = item)
             is Line -> copy(line = item)

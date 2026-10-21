@@ -77,7 +77,7 @@ class Store(private val context: Context) {
         place = p[kPlace]?.let { runCatching { json.decodeFromString(Place.serializer(), it) }.getOrNull() },
         baits = p[kBaits]?.let { runCatching { json.decodeFromString(Baits.serializer(), it) }.getOrNull() } ?: Baits(Baits.MAX, 0),
         catches = p[kCatches]?.let { runCatching { json.decodeFromString(ListSerializer(Catch.serializer()), it) }.getOrNull() } ?: emptyList(),
-        progress = p[kProgress]?.let { runCatching { json.decodeFromString(Progress.serializer(), it) }.getOrNull() } ?: Progress(),
+        progress = (p[kProgress]?.let { runCatching { json.decodeFromString(Progress.serializer(), it) }.getOrNull() } ?: Progress()).migrated(),
         notify = p[kNotify] ?: true,
         sound = p[kSound] ?: true,
         notified = p[kNotified]?.split("|")?.filter { it.isNotEmpty() }?.toSet() ?: emptySet(),

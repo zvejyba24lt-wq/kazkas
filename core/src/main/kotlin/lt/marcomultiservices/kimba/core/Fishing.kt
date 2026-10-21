@@ -36,10 +36,11 @@ object BiteEngine {
     fun roll(c: Conditions, cast: Double, rng: Random, spot: Spot = Spot.HOME_LAKE, gear: Gear = Gear()): Bite {
         val act = Fish.activities(c, spot)
         // A boat takes the bait further out, where the deep-water fish are.
-        val reach = if (gear.boat) (cast + 0.2).coerceAtMost(1.1) else cast
+        // A feeder is thrown further, to the deeper bottom.
+        val reach = (cast + (if (gear.boat) 0.2 else 0.0) + (if (gear.tackle == Tackle.FEEDER) 0.12 else 0.0)).coerceAtMost(1.2)
         val weights = act.mapValues { (s, a) ->
             val d = (s.depth - reach) / 0.35
-            a * gear.lure.affinity(s) * (exp(-d * d) + 0.04) * (if (s.shy) gear.line.shyFactor else 1.0)
+            a * gear.lure.affinity(s) * gear.tackle.affinity(s) * (exp(-d * d) + 0.04) * (if (s.shy) gear.line.shyFactor else 1.0)
         }
         var r = rng.nextDouble() * weights.values.sum()
         var species = weights.keys.last()
@@ -51,7 +52,7 @@ object BiteEngine {
         val golden = Fish.goldens.firstOrNull { it.base == species && it.active(c) }
             ?.takeIf { rng.nextDouble() < GOLDEN_CHANCE }
         // Most fish are small; trophies are rare (about 1 in 80 bites lands in the top fifth).
-        val size = sizeFraction(rng.nextDouble(), (if (golden != null) 2.0 else 5.5) * lure.sizeBias)
+        val size = sizeFraction(rng.nextDouble(), (if (golden != null) 2.0 else 5.5) * lure.sizeBias * (if (gear.tackle == Tackle.FEEDER) 0.85 else 1.0))
         val cm = species.minCm + (species.maxCm - species.minCm) * size
         val index = (Fish.biteIndex(c, spot) / 100.0) * (weights.values.sum() / act.values.sum()).coerceIn(0.5, 1.3)
         val wait = (16.0 - 11.0 * index) * (0.6 + 0.8 * rng.nextDouble()) * (if (gear.boat) 0.75 else 1.0)

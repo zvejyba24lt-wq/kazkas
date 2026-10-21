@@ -68,6 +68,31 @@ object S {
         "Keep your finger on the screen to reel. When “It runs!” turns red, let go so the line doesn't snap.",
     )
 
+    val tipWaitFeeder = L(
+        "Masalas guli ant dugno. Stebėk ryškią meškerės galūnę: kai ji tik linkteli, žuvis dar uostinėja. Kai galūnė smarkiai nusilenkia, kirsk!",
+        "Der Köder liegt am Grund. Beobachte die leuchtende Rutenspitze: Nickt sie nur, knabbert der Fisch erst. Biegt sie sich kräftig, schlag an!",
+        "The bait lies on the bottom. Watch the bright rod tip: a small nod is only a nibble. When it bends right over, strike!",
+    )
+    val tipWaitSpin = L(
+        "Blizgė pati grįžta į krantą. Lengvi stuktelėjimai reiškia, kad plėšrūnas seka. Kirsk tik tada, kai stipriai trūktels!",
+        "Der Blinker läuft von selbst zurück. Leichte Zupfer heißen, dass ein Räuber folgt. Schlag erst beim harten Ruck an!",
+        "The spinner comes back by itself. Light taps mean a predator is following. Strike only on the hard knock!",
+    )
+    val waitFeeder = L("Stebėk meškerės galūnę…", "Beobachte die Rutenspitze…", "Watch the rod tip…")
+    val waitSpin = L("Blizgė grįžta… lauk smūgio", "Der Blinker läuft… warte auf den Ruck", "Winding in… wait for the knock")
+    val tooEarlyTip = L("Per anksti! Palauk, kol galūnė smarkiai nusilenks.", "Zu früh! Warte, bis sich die Spitze kräftig biegt.", "Too early! Wait until the tip bends right over.")
+
+    // Tackle box
+    val tackleBox = L("Masalų dėžutė", "Köderbox", "Tackle box")
+    val rodKind = L("Meškerė", "Rute", "Rod")
+    val baitsTitle = L("Masalai", "Köder", "Baits")
+    val onlySpin = L("Tik spiningui", "Nur Spinnrute", "Spinning rod only")
+    val onlyFeeder = L("Tik dugninei", "Nur Grundrute", "Bottom rod only")
+    val floatOrFeeder = L("Plūdinei ar dugninei", "Pose oder Grund", "Float or bottom rod")
+    val inShop = L("Parduotuvėje", "Im Shop", "In the shop")
+    val close = L("Uždaryti", "Schließen", "Close")
+    val rodKinds = L("Meškerių tipai", "Rutenarten", "Rod types")
+
     // Goals
     val nextUnlock = L("%d lygyje: %s", "Ab Level %d: %s", "At level %d: %s")
     val achievements = L("Pasiekimai", "Erfolge", "Achievements")
@@ -175,7 +200,7 @@ object S {
     val shop = L("Parduotuvė", "Shop", "Shop")
     val shopNote = L("Viskas perkama tik monetomis, kurias užsidirbi žvejodamas. Jokių atsitiktinių dėžių.", "Alles nur mit Münzen, die du beim Angeln verdienst. Keine Zufallskisten.", "Everything is bought only with coins you earn fishing. No random boxes.")
     val lures = L("Masalai", "Köder", "Baits")
-    val rods = L("Meškerės", "Ruten", "Rods")
+    val rods = L("Meškerių kotai (stiprumas)", "Rutenblanks (Stärke)", "Rod blanks (strength)")
     val reels = L("Ritės", "Rollen", "Reels")
     val lines = L("Valai", "Schnüre", "Lines")
     val floats = L("Plūdės", "Posen", "Floats")

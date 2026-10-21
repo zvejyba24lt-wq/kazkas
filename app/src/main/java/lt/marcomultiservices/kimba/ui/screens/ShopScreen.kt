@@ -51,6 +51,7 @@ import lt.marcomultiservices.kimba.core.Progress
 import lt.marcomultiservices.kimba.core.Reel
 import lt.marcomultiservices.kimba.core.Rod
 import lt.marcomultiservices.kimba.core.Upgrade
+import lt.marcomultiservices.kimba.core.Tackle
 import lt.marcomultiservices.kimba.game.GameViewModel
 import lt.marcomultiservices.kimba.ui.K
 import lt.marcomultiservices.kimba.ui.S
@@ -67,7 +68,7 @@ fun ShopScreen(vm: GameViewModel, onBack: () -> Unit) {
     val saved by vm.saved.collectAsStateWithLifecycle()
     val p = saved?.progress ?: Progress()
     val sections: List<Pair<L, List<Item>>> = listOf(
-        S.lures to Lure.entries, S.rods to Rod.entries, S.reels to Reel.entries,
+        S.rodKinds to Tackle.entries, S.lures to Lure.entries, S.rods to Rod.entries, S.reels to Reel.entries,
         S.lines to Line.entries, S.upgrades to Upgrade.entries, S.floats to FloatStyle.entries,
     )
     ScreenFrame(t(S.shop), onBack) {
@@ -91,7 +92,8 @@ fun ShopScreen(vm: GameViewModel, onBack: () -> Unit) {
 }
 
 private fun isEquipped(p: Progress, item: Item): Boolean = when (item) {
-    is Lure -> p.lure == item
+    is Lure -> p.gear.lure == item
+    is Tackle -> p.tackle == item
     is Rod -> p.rod == item
     is Reel -> p.reel == item
     is Line -> p.line == item
@@ -101,7 +103,8 @@ private fun isEquipped(p: Progress, item: Item): Boolean = when (item) {
 
 @Composable
 private fun note(item: Item): String = when (item) {
-    is Lure -> t(item.note)
+    is Lure -> t(item.note) + " · " + t(when (item.tackle) { setOf(Tackle.SPIN) -> S.onlySpin; setOf(Tackle.FEEDER) -> S.onlyFeeder; else -> S.floatOrFeeder })
+    is Tackle -> t(item.note)
     is Rod -> t(S.strengthNote, ((item.strength - 1) * 100).roundToInt())
     is Reel -> t(S.speedNote, ((item.speed - 1) * 100).roundToInt())
     is Line -> t(S.lineNote, (item.strength * 100).roundToInt(), ((1 - item.shyFactor) * 100).roundToInt())
@@ -151,7 +154,7 @@ private fun ShopRow(item: Item, p: Progress, onBuy: () -> Unit, onEquip: () -> U
 }
 
 /** Small drawn icons for the shop rows. */
-private fun DrawScope.drawItemIcon(item: Item, dim: Boolean) {
+internal fun DrawScope.drawItemIcon(item: Item, dim: Boolean) {
     val a = if (dim) 0.35f else 1f
     val w = size.width
     val h = size.height
@@ -186,6 +189,30 @@ private fun DrawScope.drawItemIcon(item: Item, dim: Boolean) {
             }
             Lure.LIVEBAIT -> lt.marcomultiservices.kimba.ui.fish.FishArt.draw(this, "roach", false, androidx.compose.ui.geometry.Rect(Offset(w * 0.05f, 0f), Size(w * 0.9f, h)), silhouette = dim)
         }
+        is Tackle -> {
+            // A rod with what makes it that kind: a float, a feeder cage with a quiver tip, a spinning reel.
+            drawLine(Color(0xFF2A2E34).copy(alpha = a), Offset(w * 0.12f, h * 0.92f), Offset(w * 0.8f, h * 0.1f), strokeWidth = w * 0.05f, cap = StrokeCap.Round)
+            drawLine(Color(0xFF8E6A47).copy(alpha = a), Offset(w * 0.12f, h * 0.92f), Offset(w * 0.27f, h * 0.74f), strokeWidth = w * 0.09f, cap = StrokeCap.Round)
+            when (item) {
+                Tackle.FLOAT -> {
+                    drawLine(Color(0xCCF2F0EA).copy(alpha = a), Offset(w * 0.8f, h * 0.1f), Offset(w * 0.82f, h * 0.5f), strokeWidth = w * 0.015f)
+                    drawFloat(Offset(w * 0.82f, h * 0.62f), h * 0.36f, FloatStyle.CLASSIC, alpha = a)
+                }
+                Tackle.FEEDER -> {
+                    drawLine(Color(0xFFFF7A2E).copy(alpha = a), Offset(w * 0.69f, h * 0.24f), Offset(w * 0.8f, h * 0.1f), strokeWidth = w * 0.05f, cap = StrokeCap.Round)
+                    drawLine(Color(0xCCF2F0EA).copy(alpha = a), Offset(w * 0.8f, h * 0.1f), Offset(w * 0.84f, h * 0.55f), strokeWidth = w * 0.015f)
+                    drawOval(Color(0xFF6E7781).copy(alpha = a), Offset(w * 0.76f, h * 0.55f), Size(w * 0.16f, h * 0.24f), style = Stroke(w * 0.03f))
+                    drawOval(Color(0xFF3A3F45).copy(alpha = a), Offset(w * 0.77f, h * 0.74f), Size(w * 0.14f, h * 0.07f))
+                }
+                Tackle.SPIN -> {
+                    drawCircle(Color(0xFF9AA5B0).copy(alpha = a), w * 0.1f, Offset(w * 0.36f, h * 0.76f))
+                    drawCircle(Color(0xFF2A2F36).copy(alpha = a), w * 0.05f, Offset(w * 0.36f, h * 0.76f))
+                    drawLine(Color(0xCCF2F0EA).copy(alpha = a), Offset(w * 0.8f, h * 0.1f), Offset(w * 0.84f, h * 0.48f), strokeWidth = w * 0.015f)
+                    drawOval(Brush.horizontalGradient(listOf(Color(0xFFF4F4F4).copy(alpha = a), Color(0xFF9AA4AE).copy(alpha = a))), Offset(w * 0.77f, h * 0.5f), Size(w * 0.14f, h * 0.26f))
+                    drawCircle(Color(0xFFD8402E).copy(alpha = a), w * 0.03f, Offset(w * 0.84f, h * 0.65f))
+                }
+            }
+        }
         is Rod -> {
             val col = when (item) { Rod.BASIC -> Color(0xFFC8A060); Rod.CARBON -> Color(0xFF30343A); Rod.PRO -> Color(0xFF2A4A7A); Rod.LEGEND -> Color(0xFFD8A830) }
             drawLine(col.copy(alpha = a), Offset(w * 0.15f, h * 0.9f), Offset(w * 0.9f, h * 0.1f), strokeWidth = w * 0.06f, cap = StrokeCap.Round)
@@ -212,6 +239,13 @@ private fun DrawScope.drawItemIcon(item: Item, dim: Boolean) {
                 drawLine(Color(0xFFDDC8A0).copy(alpha = a), Offset(w * 0.05f, h * 0.5f), Offset(w * 0.95f, h * 0.5f), strokeWidth = w * 0.04f)
                 drawLine(Color(0xFF6A4A2A).copy(alpha = a), Offset(w * 0.6f, h * 0.45f), Offset(w * 0.92f, h * 0.15f), strokeWidth = w * 0.04f, cap = StrokeCap.Round)
                 drawLine(Color(0xFF5B8BD0).copy(alpha = 0.6f * a), Offset(0f, h * 0.82f), Offset(w, h * 0.82f), strokeWidth = w * 0.03f)
+            }
+            Upgrade.ALARM -> {
+                drawRoundRect(Color(0xFF1C1F24).copy(alpha = a), Offset(w * 0.18f, h * 0.38f), Size(w * 0.64f, h * 0.3f), androidx.compose.ui.geometry.CornerRadius(w * 0.08f))
+                drawLine(Color(0xFF2A2E34).copy(alpha = a), Offset(w * 0.05f, h * 0.36f), Offset(w * 0.95f, h * 0.36f), strokeWidth = w * 0.05f, cap = StrokeCap.Round)
+                drawCircle(Brush.radialGradient(listOf(Color(0xAAFF3B2E), Color(0x00FF3B2E)), Offset(w * 0.66f, h * 0.53f), w * 0.2f), w * 0.2f, Offset(w * 0.66f, h * 0.53f), alpha = a)
+                drawCircle(Color(0xFFFF3B2E).copy(alpha = a), w * 0.06f, Offset(w * 0.66f, h * 0.53f))
+                drawLine(Color(0xFF5C4128).copy(alpha = a), Offset(w * 0.5f, h * 0.68f), Offset(w * 0.5f, h * 0.95f), strokeWidth = w * 0.06f, cap = StrokeCap.Round)
             }
             else -> {
                 drawRoundRect(Brush.verticalGradient(listOf(Color(0xFF5A7A4A).copy(alpha = a), Color(0xFF3A5030).copy(alpha = a))), Offset(w * 0.12f, h * 0.35f), Size(w * 0.76f, h * 0.45f), androidx.compose.ui.geometry.CornerRadius(w * 0.08f))

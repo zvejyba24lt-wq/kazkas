@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.platform.LocalDensity
 import lt.marcomultiservices.kimba.core.Conditions
 import lt.marcomultiservices.kimba.core.FloatStyle
+import lt.marcomultiservices.kimba.core.Tackle
 import lt.marcomultiservices.kimba.core.Water
 import lt.marcomultiservices.kimba.game.GameViewModel
 import lt.marcomultiservices.kimba.game.LakeState
@@ -49,6 +50,9 @@ fun LakeScene(
     modifier: Modifier = Modifier,
     waterKind: Water = Water.LAKE,
     floatStyle: FloatStyle = FloatStyle.CLASSIC,
+    /** The rod in hand while no cast is out (a cast keeps its own in [LakeState.tackle]). */
+    tackle: Tackle = Tackle.FLOAT,
+    hasAlarm: Boolean = false,
 ) {
     BoxWithConstraints(modifier) {
         val density = LocalDensity.current
@@ -103,11 +107,23 @@ fun LakeScene(
             val glowX = if (conditions.sunElevation > -3) sun.x else moon.x
 
             // Float and line state.
+            val kind = if (s.stage == Stage.IDLE || s.stage == Stage.CHARGING) tackle else s.tackle
             val target = geo.floatTarget(s.castDist, s.castId)
+            // A spinning lure comes back from where it landed towards the bank below the angler.
+            val spinEnd = Offset(geo.w * 0.6f, geo.h * 0.9f)
+            val spinFrac = when {
+                kind != Tackle.SPIN -> 0f
+                s.stage == Stage.WAITING && s.retrieve > 0f -> ((android.os.SystemClock.uptimeMillis() - s.landedAt) / 1000f / s.retrieve).coerceIn(0f, 1f)
+                s.stage == Stage.BITE || s.stage == Stage.FIGHT -> s.takenAt
+                else -> 0f
+            }
+            val hookAt = Offset(target.x + (spinEnd.x - target.x) * spinFrac, target.y + (spinEnd.y - target.y) * spinFrac)
+            // The bottom rod lies on its rest with the tip up against the far shore.
+            val resting = kind == Tackle.FEEDER && (s.stage == Stage.WAITING || s.stage == Stage.BITE)
             val bend = when (s.stage) {
                 Stage.FIGHT -> tension.coerceIn(0f, 1.2f)
                 Stage.LANDING -> 0.7f - 0.3f * lift.value
-                else -> 0.08f + dip * 0.15f
+                else -> 0.08f + dip * (if (kind == Tackle.SPIN) 0.4f else 0.15f)
             }
             // The rod swings back while charging a cast and whips forward on release.
             val swing = when (s.stage) {
@@ -118,8 +134,14 @@ fun LakeScene(
                 }
                 else -> 0f
             }
-            val tip = Offset(
-                geo.rodTip.x - geo.w * 0.05f * bend - geo.w * 0.06f * swing,
+            val nibbleAge = android.os.SystemClock.uptimeMillis() - s.nibbleAt
+            val tremble = if (s.stage == Stage.WAITING && s.nibbleAt > 0 && nibbleAge < 900) 1f - nibbleAge / 900f else 0f
+            val tip = if (resting) {
+                // The quiver tip nods towards the bait on a nibble and pulls right round on a bite.
+                val d = dip + tremble * sin(t * 48f) * 0.08f
+                Offset(geo.w * (0.62f - 0.04f * d), geo.h * (0.40f + 0.07f * d))
+            } else Offset(
+                geo.rodTip.x - geo.w * 0.05f * bend - geo.w * 0.06f * swing + (if (kind == Tackle.SPIN) tremble * sin(t * 50f) * geo.w * 0.004f else 0f),
                 geo.rodTip.y + geo.h * 0.11f * bend + geo.h * 0.07f * swing,
             )
             val hanging = s.stage == Stage.IDLE || s.stage == Stage.CHARGING
@@ -135,18 +157,17 @@ fun LakeScene(
                 }
                 s.stage == Stage.FIGHT -> {
                     val k = 1f - s.fightDistance
-                    Offset(target.x + (geo.w * 0.58f - target.x) * k, target.y + (geo.h * 0.93f - target.y) * k)
+                    Offset(hookAt.x + (geo.w * 0.58f - hookAt.x) * k, hookAt.y + (geo.h * 0.93f - hookAt.y) * k)
                 }
                 s.stage == Stage.LANDING -> {
                     val l = lift.value
                     Offset(geo.w * (0.58f - 0.06f * l), geo.h * (0.9f - 0.36f * l))
                 }
-                s.stage == Stage.BITE -> Offset(target.x + geo.w * 0.025f * geo.scaleAt(target.y) * pull.value, target.y)
+                kind == Tackle.SPIN -> hookAt
+                s.stage == Stage.BITE && kind == Tackle.FLOAT -> Offset(target.x + geo.w * 0.025f * geo.scaleAt(target.y) * pull.value, target.y)
                 else -> target
             }
-            // The float shakes for a moment after each nibble; bubbles rise where the fish feeds.
-            val nibbleAge = android.os.SystemClock.uptimeMillis() - s.nibbleAt
-            val tremble = if (s.stage == Stage.WAITING && s.nibbleAt > 0 && nibbleAge < 900) 1f - nibbleAge / 900f else 0f
+            // Bubbles rise where the fish feeds.
             val bubbles = when (s.stage) {
                 Stage.WAITING -> if (s.nibbles == 0) 0.08f else (0.2f + 0.18f * s.nibbles).coerceAtMost(0.75f)
                 Stage.BITE -> 1f
@@ -194,9 +215,15 @@ fun LakeScene(
                 val power = GameViewModel.castPower(android.os.SystemClock.uptimeMillis() - s.chargeStart)
                 drawAim(geo, geo.floatTarget(power.toDouble(), s.castId + 1), t)
             }
-            if (onWater && dip > 0.05f) drawFishShadow(geo, floatPos, dip, t, s.bite?.let { (it.cm / 60.0).toFloat() } ?: 0.6f)
-            if (onWater) drawBubbles(geo, floatPos, t, bubbles)
-            if (onWater) drawFloatOnWater(geo, floatPos, dip, t, s.stage == Stage.BITE, floatStyle, colors.daylight, tremble)
+            if (onWater && kind == Tackle.FLOAT && dip > 0.05f) drawFishShadow(geo, floatPos, dip, t, s.bite?.let { (it.cm / 60.0).toFloat() } ?: 0.6f)
+            if (onWater && kind != Tackle.SPIN) drawBubbles(geo, floatPos, t, bubbles)
+            when {
+                !onWater -> Unit
+                kind == Tackle.FLOAT -> drawFloatOnWater(geo, floatPos, dip, t, s.stage == Stage.BITE, floatStyle, colors.daylight, tremble)
+                kind == Tackle.FEEDER -> drawLineEntry(geo, floatPos, t, dip)
+                s.stage == Stage.BITE -> drawFightSplash(geo, floatPos, t, true)
+                else -> drawSpinWake(geo, floatPos, t)
+            }
             if (s.stage == Stage.WAITING && splash.value < 1f) drawCastSplash(geo, floatPos, splash.value)
             if (s.stage == Stage.FIGHT) {
                 drawFightSplash(geo, floatPos, t, s.running)
@@ -206,10 +233,18 @@ fun LakeScene(
             pierCache.draw(this, Triple(geo, colors, sea), pierRect(geo, sea)) { drawPier(geo, colors, sea, 0f) }
             // No reeds out on a sea pier.
             if (!sea) drawReeds(geo, colors, t, back = true)
-            drawRod(geo, colors, tip)
-            drawLine(geo, tip, floatPos, s.stage, tension)
+            if (resting) drawRodRest(geo, colors, hasAlarm, s.alarm, t)
+            drawRod(geo, colors, tip, quiver = kind == Tackle.FEEDER)
+            drawLine(geo, tip, floatPos, s.stage, tension, slack = when (kind) { Tackle.FEEDER -> 0.12f; Tackle.SPIN -> 0.25f; else -> 1f })
             if (s.stage == Stage.LANDING) s.bite?.let { b -> drawLandedFish(geo, floatPos, t, lift.value, b.species.id, b.golden != null, (b.cm / 60.0).toFloat()) }
-            if (hanging || s.stage == Stage.FLYING) drawFloatBody(floatPos, geo.h * 0.016f * geo.scaleAt(geo.h), 0f, floatStyle, colors.daylight)
+            if (hanging || s.stage == Stage.FLYING) {
+                val u = geo.h * 0.016f * geo.scaleAt(geo.h)
+                when (kind) {
+                    Tackle.FLOAT -> drawFloatBody(floatPos, u, 0f, floatStyle, colors.daylight)
+                    Tackle.FEEDER -> drawFeederCage(floatPos, u, colors)
+                    Tackle.SPIN -> drawSpoon(floatPos, u, t, colors)
+                }
+            }
             if (!sea) drawReeds(geo, colors, t, back = false)
             drawWeather(geo, colors, conditions, t)
             drawVignette(geo)

@@ -23,7 +23,7 @@ import kotlin.random.Random
  * lake by day, at night, in the rain, on the river and by the sea.
  */
 class Sfx(context: Context) {
-    enum class Fx { CAST, PLOP, NIBBLE, BITE, REEL, STRAIN, SNAP, SPLASH, COIN, LEVEL, TAP }
+    enum class Fx { CAST, PLOP, NIBBLE, BITE, REEL, STRAIN, SNAP, SPLASH, COIN, LEVEL, TAP, ALARM }
     enum class Amb { DAY, CALM, NIGHT, RAIN, RIVER, SEA }
 
     private val pool = SoundPool.Builder()
@@ -143,6 +143,8 @@ internal object Synth {
         Sfx.Fx.COIN -> coin()
         Sfx.Fx.LEVEL -> level()
         Sfx.Fx.TAP -> buf(0.05f).also { tone(it, 0f, 0.05f, 1250f, 0.25f, decay = 110f) }
+        // The electronic bite alarm: a short square-ish beep.
+        Sfx.Fx.ALARM -> buf(0.16f).also { tone(it, 0f, 0.15f, 2350f, 0.5f, decay = 6f, harmonics = 0.6f) }
     }.also { normalize(it) }
 
     fun ambient(a: Sfx.Amb): FloatArray = when (a) {

@@ -116,6 +116,7 @@ import lt.marcomultiservices.kimba.game.GameViewModel
 import lt.marcomultiservices.kimba.game.LostReason
 import lt.marcomultiservices.kimba.game.Stage
 import lt.marcomultiservices.kimba.game.Tip
+import lt.marcomultiservices.kimba.core.Tackle
 import lt.marcomultiservices.kimba.core.Unlocks
 import lt.marcomultiservices.kimba.game.baitsNow
 import lt.marcomultiservices.kimba.ui.Glass
@@ -143,6 +144,9 @@ fun LakeScreen(
     val saved by vm.saved.collectAsStateWithLifecycle()
     val stage = lake.stage
     var noCasts by remember { mutableStateOf(false) }
+    var boxOpen by remember { mutableStateOf(false) }
+    val demoBox by vm.demoBox.collectAsStateWithLifecycle()
+    LaunchedEffect(demoBox) { if (demoBox) { boxOpen = true; vm.demoBox.value = false } }
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() }
     val progress = saved?.progress ?: Progress()
@@ -178,7 +182,7 @@ fun LakeScreen(
     }
 
     Box(Modifier.fillMaxSize().background(K.Night)) {
-        conditions?.let { LakeScene(it, lakeState, Modifier.fillMaxSize(), progress.spot.water, progress.float) }
+        conditions?.let { LakeScene(it, lakeState, Modifier.fillMaxSize(), progress.spot.water, progress.float, progress.tackle, progress.owns(lt.marcomultiservices.kimba.core.Upgrade.ALARM)) }
 
         // Taps on the lake strike; holding during the fight reels in.
         Box(
@@ -207,14 +211,24 @@ fun LakeScreen(
             fun tip(t: Tip) = known != null && t.name !in known
             when (stage) {
                 Stage.IDLE, Stage.CHARGING -> if (tip(Tip.CAST)) Coach(Tip.CAST, arrow = true)
-                Stage.WAITING -> if (!lake.hint && tip(Tip.WAIT)) Coach(Tip.WAIT) else Hint(if (lake.hint) t(S.tooEarly) else t(S.waitForBite), warn = lake.hint)
+                Stage.WAITING -> if (!lake.hint && tip(Tip.WAIT)) Coach(Tip.WAIT, tackle = lake.tackle) else Hint(
+                    when {
+                        lake.hint -> t(if (lake.tackle == Tackle.FLOAT) S.tooEarly else S.tooEarlyTip)
+                        lake.tackle == Tackle.FEEDER -> t(S.waitFeeder)
+                        lake.tackle == Tackle.SPIN -> t(S.waitSpin)
+                        else -> t(S.waitForBite)
+                    },
+                    warn = lake.hint,
+                )
                 Stage.BITE -> { if (tip(Tip.STRIKE)) Coach(Tip.STRIKE); StrikeBanner() }
                 Stage.FIGHT -> { if (tip(Tip.REEL)) { Coach(Tip.REEL); Spacer(Modifier.height(8.dp)) }; FightHud(lake.tension, lake.fightDistance, lake.running) }
                 else -> Unit
             }
             Spacer(Modifier.height(10.dp))
             if (stage == Stage.IDLE || stage == Stage.CHARGING) {
-                LureRow(progress, enabled = stage == Stage.IDLE) { vm.equip(it) }
+                Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+                    TackleBoxButton(progress, enabled = stage == Stage.IDLE) { boxOpen = true }
+                }
                 Spacer(Modifier.height(10.dp))
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
                     Column {
@@ -246,6 +260,10 @@ fun LakeScreen(
                     CatchCard(lake.caught, lake.newSpecies, lake.record, lake.reward, lake.doubled, progress.noAds, onDouble = { rewarded { vm.doubleCoins() } }) { next() }
                 } else if (lake.lost != null) LostCard(lake.lost) { next() }
             }
+        }
+
+        if (boxOpen && (stage == Stage.IDLE || stage == Stage.CHARGING)) {
+            TackleBox(progress, onTackle = { vm.equip(it) }, onBait = { vm.equip(it) }, onShop = { boxOpen = false; onShop() }, onClose = { boxOpen = false })
         }
 
         if (noCasts) {
@@ -312,8 +330,9 @@ private fun TopHud(c: Conditions, place: String, progress: Progress, baits: Bait
                     LevelBar(progress)
                     // What the next level opens, so there is always something to fish towards.
                     Unlocks.next(progress.level)?.let { n ->
+                        val lang = LocalLang.current
                         Text(
-                            t(S.nextUnlock, n.level, n.names.take(2).joinToString(", ") { t(it) }),
+                            t(S.nextUnlock, n.level, n.names.take(2).joinToString(", ") { it[lang] }),
                             color = K.Muted, fontSize = 10.sp, textAlign = TextAlign.End, maxLines = 2, overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.padding(top = 3.dp).width(120.dp),
                         )
@@ -414,10 +433,10 @@ private fun Hint(text: String, warn: Boolean) {
 
 /** A first-play tip card; [arrow] points down at the cast button. */
 @Composable
-private fun Coach(tip: Tip, arrow: Boolean = false) {
+private fun Coach(tip: Tip, arrow: Boolean = false, tackle: Tackle = Tackle.FLOAT) {
     val (title, body) = when (tip) {
         Tip.CAST -> S.tipCastTitle to S.tipCast
-        Tip.WAIT -> S.tipWaitTitle to S.tipWait
+        Tip.WAIT -> S.tipWaitTitle to when (tackle) { Tackle.FEEDER -> S.tipWaitFeeder; Tackle.SPIN -> S.tipWaitSpin; else -> S.tipWait }
         Tip.STRIKE -> S.tipStrikeTitle to S.tipStrike
         Tip.REEL -> S.tipReelTitle to S.tipReel
     }
@@ -486,31 +505,6 @@ private fun FightHud(tension: Float, distance: Float, running: Boolean) {
                 val fx = 14.dp.toPx() + (size.width - 30.dp.toPx()) * distance.coerceIn(0f, 1f)
                 FishArt.draw(this, "roach", false, Rect(fx - 14.dp.toPx(), y - 7.dp.toPx(), fx + 14.dp.toPx(), y + 7.dp.toPx()), silhouette = true)
                 drawCircle(K.Amber, 3.dp.toPx(), Offset(fx - 14.dp.toPx(), y))
-            }
-        }
-    }
-}
-
-@Composable
-private fun LureRow(progress: Progress, enabled: Boolean, onPick: (Lure) -> Unit) {
-    val sfx = LocalContext.current.app.sfx
-    val owned = Lure.entries.filter { progress.owns(it) }
-    Row(
-        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
-        horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
-    ) {
-        Text(t(S.lure), color = K.Muted, fontSize = 12.sp)
-        Spacer(Modifier.width(8.dp))
-        for (l in owned) {
-            val sel = l == progress.lure
-            Box(
-                Modifier.padding(horizontal = 3.dp).clip(RoundedCornerShape(16.dp))
-                    .background(if (sel) K.Amber else Color(0x99101A28))
-                    .border(1.dp, if (sel) K.Amber else K.Line, RoundedCornerShape(16.dp))
-                    .clickable(enabled = enabled) { sfx.play(Sfx.Fx.TAP, 0.5f); onPick(l) }
-                    .padding(horizontal = 12.dp, vertical = 7.dp),
-            ) {
-                Text(t(l.label), color = if (sel) Color(0xFF2A1A06) else K.Text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
             }
         }
     }

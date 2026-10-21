@@ -36,6 +36,14 @@ tap $((W/2)) $((H/2)); shot 03_ezeras_tikras_oras 3
 timeout 30 adb shell input swipe $((W/2)) $((H*84/100)) $((W/2)) $((H*84/100)) 1000; shot 04_uzmesta 3
 shot 05_laukiam 4
 demo -e fight pike; shot 06_kova 3
+# The other rods: a feeder on its rest watching the tip, the tackle box, a spinning lure coming back.
+demo -e screen lake -e tackle feeder; sleep 3
+timeout 30 adb shell input swipe $((W/2)) $((H*84/100)) $((W/2)) $((H*84/100)) 1200; shot 06a_fideris 5
+demo -e screen lake; sleep 2
+demo --ez box true; shot 06b_dezute 3
+demo -e screen lake -e tackle spin; sleep 3
+timeout 30 adb shell input swipe $((W/2)) $((H*84/100)) $((W/2)) $((H*84/100)) 1200; shot 06c_spiningas 4
+demo -e screen lake -e tackle float; sleep 2
 
 demo --ei coins 25000 --ei xp 11000 -e scene storm; shot 07_perkunija 4
 demo -e scene dawnfog; shot 08_rukas_ausra 4

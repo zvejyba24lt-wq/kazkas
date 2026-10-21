@@ -122,7 +122,7 @@ internal fun DrawScope.drawAim(geo: SceneGeometry, at: Offset, t: Float) {
 }
 
 /** A tapered carbon rod from the bottom right corner, bending towards the line under tension. */
-internal fun DrawScope.drawRod(geo: SceneGeometry, colors: SceneColors, tip: Offset) {
+internal fun DrawScope.drawRod(geo: SceneGeometry, colors: SceneColors, tip: Offset, quiver: Boolean = false) {
     val base = geo.rodBase
     val ctrl = Offset(geo.w * 0.92f, geo.h * 0.70f)
     val steps = 24
@@ -134,7 +134,12 @@ internal fun DrawScope.drawRod(geo: SceneGeometry, colors: SceneColors, tip: Off
             (1 - u) * (1 - u) * base.y + 2 * (1 - u) * u * ctrl.y + u * u * tip.y,
         )
         val width = geo.w * (0.028f - 0.024f * u)
-        val col = if (u < 0.22f) colors.lit(Palette.RodCork) else colors.lit(Palette.RodBlank)
+        // A feeder rod ends in a bright quiver tip that shows the bite against the far shore.
+        val col = when {
+            u < 0.22f -> colors.lit(Palette.RodCork)
+            quiver && u > 0.8f -> colors.lit(if (i % 2 == 0) Palette.QuiverTip else Palette.QuiverBand)
+            else -> colors.lit(Palette.RodBlank)
+        }
         drawLine(col, prev, p, strokeWidth = width, cap = StrokeCap.Round)
         if (u >= 0.22f) drawLine(colors.lit(Palette.RodShine).copy(alpha = 0.6f), Offset(prev.x - width * 0.2f, prev.y - width * 0.2f), Offset(p.x - width * 0.2f, p.y - width * 0.2f), strokeWidth = width * 0.25f)
         if (i % 6 == 0 && u > 0.3f) drawCircle(colors.lit(Palette.RodGuide), width * 0.8f, p, style = Stroke(1.5f))
@@ -148,14 +153,99 @@ internal fun DrawScope.drawRod(geo: SceneGeometry, colors: SceneColors, tip: Off
 }
 
 /** The fishing line from the rod tip to the float: slack while waiting, tight and red when about to snap. */
-internal fun DrawScope.drawLine(geo: SceneGeometry, tip: Offset, end: Offset, stage: Stage, tension: Float) {
+internal fun DrawScope.drawLine(geo: SceneGeometry, tip: Offset, end: Offset, stage: Stage, tension: Float, slack: Float = 1f) {
     val sag = when (stage) {
         Stage.FIGHT -> geo.h * 0.03f * (1f - tension).coerceIn(0f, 1f)
-        Stage.WAITING, Stage.BITE -> geo.h * 0.04f
+        Stage.WAITING, Stage.BITE -> geo.h * 0.04f * slack
         else -> geo.h * 0.005f
     }
     val mid = Offset((tip.x + end.x) / 2, (tip.y + end.y) / 2 + sag)
     val path = Path().apply { moveTo(tip.x, tip.y); quadraticTo(mid.x, mid.y, end.x, end.y) }
     val col = if (stage == Stage.FIGHT && tension > 0.85f) Palette.LineStrain else Palette.Line
     drawPath(path, col, style = Stroke(if (stage == Stage.FIGHT) 2.2f else 1.4f))
+}
+
+/** A small metal feeder cage with a lead weight, hanging from the line or flying. */
+internal fun DrawScope.drawFeederCage(pos: Offset, u: Float, colors: SceneColors) {
+    val w = u * 1.1f
+    val h = u * 2.2f
+    val top = pos.y - h * 0.2f
+    val body = Path().apply {
+        moveTo(pos.x, top)
+        cubicTo(pos.x + w, top + h * 0.1f, pos.x + w, top + h * 0.9f, pos.x, top + h)
+        cubicTo(pos.x - w, top + h * 0.9f, pos.x - w, top + h * 0.1f, pos.x, top)
+        close()
+    }
+    drawPath(body, colors.lit(Palette.FeederCage).copy(alpha = 0.35f))
+    for (k in 1..3) drawLine(colors.lit(Palette.FeederCage), Offset(pos.x - w * 0.8f, top + h * k / 4f), Offset(pos.x + w * 0.8f, top + h * k / 4f), strokeWidth = u * 0.14f, cap = StrokeCap.Round)
+    drawPath(body, colors.lit(Palette.FeederCage), style = Stroke(u * 0.18f))
+    drawOval(colors.lit(Palette.FeederLead), Offset(pos.x - w * 0.55f, top + h * 0.82f), Size(w * 1.1f, h * 0.3f))
+}
+
+/** A spinning spoon, silver with a red dot, flashing as it turns. */
+internal fun DrawScope.drawSpoon(pos: Offset, u: Float, t: Float, colors: SceneColors) {
+    val turn = 0.45f + 0.55f * abs(sin(t * 9f))
+    val w = u * 0.9f * turn
+    val h = u * 2.0f
+    drawLine(colors.lit(Palette.SpoonShade), Offset(pos.x, pos.y - h * 0.7f), Offset(pos.x, pos.y - h * 0.35f), strokeWidth = u * 0.12f)
+    val body = Path().apply {
+        moveTo(pos.x, pos.y - h * 0.35f)
+        cubicTo(pos.x + w, pos.y - h * 0.2f, pos.x + w * 0.8f, pos.y + h * 0.5f, pos.x, pos.y + h * 0.6f)
+        cubicTo(pos.x - w * 0.8f, pos.y + h * 0.5f, pos.x - w, pos.y - h * 0.2f, pos.x, pos.y - h * 0.35f)
+        close()
+    }
+    drawPath(body, Brush.horizontalGradient(listOf(colors.lit(Palette.Spoon), colors.lit(Palette.SpoonShade)), pos.x - w, pos.x + w))
+    drawCircle(colors.lit(Palette.SpoonRed), u * 0.22f * turn.coerceAtLeast(0.5f), Offset(pos.x, pos.y + h * 0.15f))
+    drawCircle(Color.White.copy(alpha = 0.8f * turn), u * 0.18f, Offset(pos.x - w * 0.3f, pos.y - h * 0.05f))
+    drawLine(colors.lit(Palette.SpoonShade), Offset(pos.x, pos.y + h * 0.6f), Offset(pos.x, pos.y + h * 0.85f), strokeWidth = u * 0.1f)
+}
+
+/** Where a feeder line goes into the water: small rings that pulse when the fish pulls. */
+internal fun DrawScope.drawLineEntry(geo: SceneGeometry, pos: Offset, t: Float, dip: Float) {
+    val u = geo.h * 0.016f * geo.scaleAt(pos.y)
+    val stir = dip.coerceAtLeast(0f)
+    for (k in 0 until 2) {
+        val ph = (t * 0.45f + k / 2f) % 1f
+        val r = u * (0.5f + ph * 3.5f) * (1f + stir)
+        drawOval(Color.White.copy(alpha = (1f - ph) * (0.16f + stir * 0.4f)), Offset(pos.x - r, pos.y - r * 0.3f), Size(r * 2, r * 0.6f), style = Stroke(1.1f + stir))
+    }
+}
+
+/**
+ * A spinning lure being wound back just under the surface: a soft V of ripples behind it and a
+ * flash where it turns.
+ */
+internal fun DrawScope.drawSpinWake(geo: SceneGeometry, pos: Offset, t: Float) {
+    val u = geo.h * 0.016f * geo.scaleAt(pos.y)
+    for (k in 0 until 4) {
+        val ph = (t * 1.6f + k / 4f) % 1f
+        val back = u * (0.5f + ph * 4f)
+        val spread = u * (0.4f + ph * 2.2f)
+        val a = (1f - ph) * 0.35f
+        // The lure comes towards the angler, so the wake trails behind it, further out.
+        drawLine(Color.White.copy(alpha = a), Offset(pos.x, pos.y - back * 0.3f), Offset(pos.x - spread, pos.y - back * 0.55f), strokeWidth = 1.3f, cap = StrokeCap.Round)
+        drawLine(Color.White.copy(alpha = a), Offset(pos.x, pos.y - back * 0.3f), Offset(pos.x + spread, pos.y - back * 0.55f), strokeWidth = 1.3f, cap = StrokeCap.Round)
+    }
+    val flash = abs(sin(t * 9f))
+    drawCircle(Color.White.copy(alpha = 0.25f + 0.45f * flash), u * (0.25f + 0.2f * flash), pos)
+}
+
+/**
+ * The forked rod rest the feeder rod lies on, with the electronic bite alarm on it once
+ * bought: its red light flashes while [alarm] is on.
+ */
+internal fun DrawScope.drawRodRest(geo: SceneGeometry, colors: SceneColors, hasAlarm: Boolean, alarm: Boolean, t: Float) {
+    val at = Offset(geo.w * 0.93f, geo.h * 0.8f)
+    val wood = colors.lit(Palette.RodRest)
+    val s = geo.w * 0.012f
+    drawLine(wood, Offset(at.x, at.y + s), Offset(at.x + s * 0.4f, geo.h * 0.97f), strokeWidth = s * 1.1f, cap = StrokeCap.Round)
+    drawLine(wood, Offset(at.x, at.y + s), Offset(at.x - s * 1.6f, at.y - s * 1.2f), strokeWidth = s * 0.8f, cap = StrokeCap.Round)
+    drawLine(wood, Offset(at.x, at.y + s), Offset(at.x + s * 1.6f, at.y - s * 1.0f), strokeWidth = s * 0.8f, cap = StrokeCap.Round)
+    if (!hasAlarm) return
+    val box = Rect(at.x - s * 2.2f, at.y + s * 1.6f, at.x + s * 2.2f, at.y + s * 4.6f)
+    drawRoundRect(colors.lit(Palette.AlarmBody), box.topLeft, box.size, androidx.compose.ui.geometry.CornerRadius(s * 0.8f))
+    val led = Offset(box.center.x + s * 1.1f, box.center.y)
+    val on = alarm && sin(t * 30f) > -0.3f
+    if (on) drawCircle(Brush.radialGradient(listOf(Palette.AlarmLed.copy(alpha = 0.7f), Palette.AlarmLed.copy(alpha = 0f)), led, s * 4f), s * 4f, led)
+    drawCircle(if (on) Palette.AlarmLed else Palette.AlarmLed.copy(alpha = 0.3f), s * 0.6f, led)
 }

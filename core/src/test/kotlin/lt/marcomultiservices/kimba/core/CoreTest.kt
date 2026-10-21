@@ -223,9 +223,18 @@ class CoreTest {
         assertEquals(null, p.buy(Lure.SPINNER)) // level 2 needed
         p = p.copy(xp = Levels.xpFor(2), coins = 1000)
         p = p.buy(Lure.SPINNER)!!
-        assertEquals(Lure.SPINNER, p.lure)
+        // A spinner does not go on a float rod.
+        assertEquals(Lure.WORM, p.lure)
+        assertEquals(Lure.WORM, p.gear.lure)
         assertEquals(600, p.coins)
         assertEquals(null, p.buy(Lure.SPINNER))
+        p = p.copy(coins = 1500).buy(Tackle.SPIN)!!
+        assertEquals(Tackle.SPIN, p.tackle)
+        assertEquals(Lure.SPINNER, p.gear.lure)
+        p = p.equip(Lure.WORM)
+        assertEquals(Tackle.FLOAT, p.tackle)
+        assertEquals(Lure.WORM, p.gear.lure)
+        p = p.copy(coins = 1000)
         assertTrue(Economy.coins(Fish.pike, null, 4000) > Economy.coins(Fish.roach, null, 200) * 10)
         val nemunas = Destinations.byId("nemunas")!!
         assertEquals(null, p.travel(nemunas))
@@ -351,5 +360,16 @@ class CoreTest {
             level = n.level
         }
         assertTrue(level >= 15)
+    }
+
+    @Test
+    fun oldSavesWithSpinnersGetASpinningRod() {
+        val old = Progress(owned = setOf("lure:WORM", "lure:SPINNER", "rod:BASIC"), lure = Lure.SPINNER)
+        val m = old.migrated()
+        assertTrue(m.owns(Tackle.SPIN) && m.owns(Tackle.FLOAT))
+        assertEquals(Tackle.SPIN, m.tackle)
+        assertEquals(Lure.SPINNER, m.gear.lure)
+        assertEquals(m, m.migrated())
+        assertEquals(Progress(), Progress().migrated())
     }
 }
