@@ -136,8 +136,18 @@ fun LakeScene(
                 Water.RIVER -> drawRiverBits(geo, colors, t)
                 Water.SEA -> drawGulls(geo, colors, t)
             }
+            if (s.stage == Stage.CHARGING) {
+                // Where the float will land if released now.
+                val power = GameViewModel.castPower(android.os.SystemClock.uptimeMillis() - s.chargeStart)
+                drawAim(geo, geo.floatTarget(power.toDouble(), s.castId + 1), t)
+            }
+            if (onWater && dip > 0.05f) drawFishShadow(geo, floatPos, dip, t, s.bite?.let { (it.cm / 60.0).toFloat() } ?: 0.6f)
             if (onWater) drawFloatOnWater(geo, floatPos, dip, t, s.stage == Stage.BITE, floatStyle, colors.daylight)
-            if (s.stage == Stage.FIGHT) drawFightSplash(geo, floatPos, t, s.running)
+            if (s.stage == Stage.FIGHT) {
+                drawFightSplash(geo, floatPos, t, s.running)
+                val b = s.bite
+                if (s.running && b != null) drawFishJump(geo, floatPos, t, b.species.id, b.golden != null, (b.cm / 60.0).toFloat())
+            }
             drawPier(geo, colors, sea)
             drawReeds(geo, colors, t, back = true, dune = sea)
             drawRod(geo, colors, tip)
@@ -405,6 +415,61 @@ private fun DrawScope.drawFloatOnWater(geo: SceneGeometry, pos: Offset, dip: Flo
     drawOval(Color.Black.copy(alpha = 0.15f), Offset(pos.x - u * 0.9f, pos.y - u * 0.15f), Size(u * 1.8f, u * 0.4f))
     if (bite) {
         drawOval(Color.White.copy(alpha = 0.5f), Offset(pos.x - u * 2.2f, pos.y - u * 0.5f), Size(u * 4.4f, u * 1.0f), style = Stroke(2.5f))
+    }
+}
+
+/** A ring on the water where the cast will land, with a dotted line out to it. */
+private fun DrawScope.drawAim(geo: SceneGeometry, at: Offset, t: Float) {
+    val s = geo.scaleAt(at.y)
+    val r = geo.w * 0.045f * s * (1f + 0.08f * sin(t * 6f))
+    val amber = Color(0xFFFFC56B)
+    drawOval(amber.copy(alpha = 0.18f), Offset(at.x - r, at.y - r * 0.32f), Size(r * 2, r * 0.64f))
+    drawOval(amber.copy(alpha = 0.9f), Offset(at.x - r, at.y - r * 0.32f), Size(r * 2, r * 0.64f), style = Stroke(2.5f))
+    drawCircle(amber, 3f + 2f * s, at)
+    val from = Offset(geo.w * 0.5f, geo.h * 0.93f)
+    val dots = 14
+    for (i in 1 until dots) {
+        val f = i / dots.toFloat()
+        val p = Offset(from.x + (at.x - from.x) * f, from.y + (at.y - from.y) * f)
+        drawCircle(amber.copy(alpha = 0.25f + 0.35f * f), (1.5f + 2.5f * geo.scaleAt(p.y)) * 0.8f, p)
+    }
+}
+
+/** A dark fish shape circling under the float while it nibbles and bites. */
+private fun DrawScope.drawFishShadow(geo: SceneGeometry, pos: Offset, dip: Float, t: Float, size: Float) {
+    val s = geo.scaleAt(pos.y)
+    val len = geo.w * 0.09f * s * size.coerceIn(0.4f, 2.2f)
+    val a = t * 1.6f
+    val rad = len * (1.1f - dip * 0.8f)
+    val c = Offset(pos.x + cos(a) * rad, pos.y + len * 0.25f + sin(a) * rad * 0.25f)
+    rotate(a * 57.3f + 90f, c) {
+        drawOval(Color(0xFF071010).copy(alpha = (0.12f + 0.28f * dip).coerceAtMost(0.4f)), Offset(c.x - len / 2, c.y - len * 0.12f), Size(len, len * 0.24f))
+    }
+}
+
+/** During a run the fish leaps clear of the water now and then. */
+private fun DrawScope.drawFishJump(geo: SceneGeometry, pos: Offset, t: Float, species: String, golden: Boolean, size: Float) {
+    val period = 2.6f
+    val ph = (t % period) / period
+    if (ph > 0.32f) return
+    val f = ph / 0.32f
+    val s = geo.scaleAt(pos.y)
+    val len = geo.w * 0.12f * s * size.coerceIn(0.5f, 2f)
+    val dir = if (((t / period).toInt() % 2) == 0) 1f else -1f
+    val x = pos.x + dir * (f - 0.5f) * len * 1.4f
+    val y = pos.y - sin(f * PI.toFloat()) * len * 0.9f
+    // Head up on the way out, down on the way back in.
+    val angle = dir * (f - 0.5f) * 80f
+    rotate(angle, Offset(x, y)) {
+        withTransform({ if (dir > 0) scale(-1f, 1f, Offset(x, y)) }) {
+            lt.marcomultiservices.kimba.ui.fish.FishArt.draw(this, species, golden, Rect(x - len / 2, y - len * 0.2f, x + len / 2, y + len * 0.2f), t)
+        }
+    }
+    // Spray where it left and where it falls back.
+    for (i in 0 until 8) {
+        val k = (f * 1.5f + i * 0.13f) % 1f
+        val spot = if (f < 0.5f) Offset(pos.x - dir * len * 0.7f, pos.y) else Offset(pos.x + dir * len * 0.7f, pos.y)
+        drawCircle(Color.White.copy(alpha = (1 - k) * 0.6f), (2f + 3f * s) * (1 - k * 0.5f), Offset(spot.x + cos(i * 2.4f) * len * 0.25f * k, spot.y - sin(k * PI.toFloat()) * len * 0.3f))
     }
 }
 
@@ -708,6 +773,34 @@ private fun DrawScope.drawWeather(geo: SceneGeometry, colors: SceneColors, c: Co
             val p = Offset(f.x + sin(t * 0.4f + f.phase) * f.ax, f.y + cos(t * 0.53f + f.phase) * f.ay)
             drawCircle(Brush.radialGradient(listOf(Color(0xCCE8FF8A), Color(0x00E8FF8A)), p, 14f), 14f, p, alpha = pulse)
             drawCircle(Color(0xFFF6FFD0), 2f, p, alpha = pulse)
+        }
+    }
+    // Dragonflies darting over the water on warm summer days.
+    if (c.month in 5..8 && colors.daylight > 0.6f && colors.rain < 0.05f && c.weather.tempC > 16 && colors.wind < 7f) {
+        for (k in 0 until 3) {
+            val f = geo.flies[k]
+            // Hover, then dart to a new spot.
+            val cycle = 3.2f + k * 0.7f
+            val n = kotlin.math.floor((t + f.phase) / cycle)
+            val ph = ((t + f.phase) % cycle) / cycle
+            val r0 = Random(n.toInt() * 7 + k)
+            val r1 = Random(n.toInt() * 7 + k + 7)
+            val a = Offset(geo.w * (0.1f + r0.nextFloat() * 0.8f), geo.hy + geo.h * (0.03f + r0.nextFloat() * 0.18f))
+            val b = Offset(geo.w * (0.1f + r1.nextFloat() * 0.8f), geo.hy + geo.h * (0.03f + r1.nextFloat() * 0.18f))
+            val m = ((ph - 0.8f) / 0.2f).coerceIn(0f, 1f)
+            val e = m * m * (3 - 2 * m)
+            val p = Offset(a.x + (b.x - a.x) * e + sin(t * 9f + k) * 1.5f, a.y + (b.y - a.y) * e + cos(t * 7f + k) * 1.5f)
+            val sc = geo.scaleAt(p.y) * geo.w * 0.012f
+            val body = Color(0xFF1E5A7A)
+            val dir = if (b.x >= a.x) 1f else -1f
+            drawLine(body, Offset(p.x - dir * sc * 1.6f, p.y), Offset(p.x + dir * sc * 1.0f, p.y), strokeWidth = sc * 0.35f, cap = StrokeCap.Round)
+            // Wings blur as they beat.
+            val beat = 0.5f + 0.5f * sin(t * 60f + k)
+            val wing = Color(0xFFDDEEFF).copy(alpha = 0.35f + 0.25f * beat)
+            for (side in listOf(-1f, 1f)) {
+                drawOval(wing, Offset(p.x - sc * 0.9f, p.y + side * sc * (0.1f + 0.5f * beat) - sc * 0.25f), Size(sc * 1.1f, sc * 0.5f))
+                drawOval(wing, Offset(p.x - sc * 0.1f, p.y + side * sc * (0.1f + 0.5f * beat) - sc * 0.25f), Size(sc * 1.1f, sc * 0.5f))
+            }
         }
     }
     if (colors.storm) {

@@ -29,6 +29,8 @@ data class Saved(
     val catches: List<Catch> = emptyList(),
     val progress: Progress = Progress(),
     val notify: Boolean = true,
+    /** Sound effects and the ambient sounds of the lake. */
+    val sound: Boolean = true,
     /** Golden windows already announced, as "id@startMillis", so each is notified once. */
     val notified: Set<String> = emptySet(),
 )
@@ -43,6 +45,7 @@ class Store(private val context: Context) {
     private val kLure = stringPreferencesKey("lure")
     private val kProgress = stringPreferencesKey("progress")
     private val kNotify = booleanPreferencesKey("notify")
+    private val kSound = booleanPreferencesKey("sound")
     private val kNotified = stringPreferencesKey("notified")
 
     val flow: Flow<Saved> = context.dataStore.data.map(::read)
@@ -58,6 +61,7 @@ class Store(private val context: Context) {
             p[kCatches] = json.encodeToString(ListSerializer(Catch.serializer()), s.catches)
             p[kProgress] = json.encodeToString(Progress.serializer(), s.progress)
             p[kNotify] = s.notify
+            p[kSound] = s.sound
             p[kNotified] = s.notified.takeLast(40).joinToString("|")
         }
     }
@@ -71,6 +75,7 @@ class Store(private val context: Context) {
         catches = p[kCatches]?.let { runCatching { json.decodeFromString(ListSerializer(Catch.serializer()), it) }.getOrNull() } ?: emptyList(),
         progress = p[kProgress]?.let { runCatching { json.decodeFromString(Progress.serializer(), it) }.getOrNull() } ?: Progress(),
         notify = p[kNotify] ?: true,
+        sound = p[kSound] ?: true,
         notified = p[kNotified]?.split("|")?.filter { it.isNotEmpty() }?.toSet() ?: emptySet(),
     )
 }

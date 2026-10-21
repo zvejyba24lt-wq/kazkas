@@ -16,6 +16,7 @@ import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import lt.marcomultiservices.kimba.app
+import lt.marcomultiservices.kimba.audio.Sfx
 import lt.marcomultiservices.kimba.core.Astro
 import lt.marcomultiservices.kimba.core.Baits
 import lt.marcomultiservices.kimba.core.Bite
@@ -87,6 +88,7 @@ sealed class GameEvent {
 class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val store = application.app.store
     private val repo = application.app.weather
+    private val sfx = application.app.sfx
     private val rng = Random(System.nanoTime())
     private val zone: ZoneId = ZoneId.systemDefault()
 
@@ -122,6 +124,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch {
             store.flow.collect {
                 _saved.value = it
+                sfx.enabled = it.sound
                 if (it.onboarded) dailyVisit()
             }
         }
@@ -207,12 +210,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setNotify(on: Boolean) = viewModelScope.launch { store.update { it.copy(notify = on) } }
+    fun setSound(on: Boolean) = viewModelScope.launch { store.update { it.copy(sound = on) } }
 
     private fun updateProgress(f: (Progress) -> Progress?) = viewModelScope.launch {
         store.update { s -> f(s.progress)?.let { s.copy(progress = it) } ?: s }
     }
 
-    fun buy(item: Item) = updateProgress { it.buy(item) }
+    fun buy(item: Item) = updateProgress { p -> p.buy(item)?.also { sfx.play(Sfx.Fx.COIN) } }
     fun equip(item: Item) = updateProgress { it.equip(item) }
     fun setNoAds(on: Boolean) = updateProgress { if (it.noAds == on) null else it.copy(noAds = on) }
 
@@ -281,7 +285,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             val p = store.current().progress
             val bite = BiteEngine.roll(c, power, rng, p.spot, p.gear)
             _lake.value = LakeState(stage = Stage.FLYING, castDist = power, castId = s.castId + 1, bite = bite)
+            sfx.play(Sfx.Fx.CAST, 0.7f + 0.3f * power.toFloat())
             delay(FLIGHT_MS)
+            sfx.play(Sfx.Fx.PLOP, 0.5f + 0.4f * (1 - power.toFloat()), rate = 0.9f + 0.2f * rng.nextFloat())
             waitForBite(bite)
         }
     }
@@ -297,6 +303,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             if (next != null && t >= next) {
                 nibbles.removeFirst()
                 buzz(18)
+                sfx.play(Sfx.Fx.NIBBLE, 0.6f, rate = 0.85f + 0.3f * rng.nextFloat())
                 _lake.update { it.copy(dip = 0.3f + rng.nextFloat() * 0.15f) }
                 delay(220)
                 _lake.update { it.copy(dip = 0f) }
@@ -305,6 +312,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
         _lake.update { it.copy(stage = Stage.BITE, dip = 1f) }
         buzz(longArrayOf(0, 60, 50, 90))
+        sfx.play(Sfx.Fx.BITE, rate = if (bite.pull > 0.6) 0.85f else 1f)
         delay(if (bite.golden != null || bite.pull > 0.8) 750 else 950)
         if (_lake.value.stage == Stage.BITE) {
             _lake.update { it.copy(stage = Stage.LOST, lost = LostReason.MISSED, dip = 0f) }
@@ -339,6 +347,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val fight = Fight(bite.pull, rng, gear?.strength ?: 1.0, gear?.reel?.speed ?: 1.0)
         _lake.update { it.copy(stage = Stage.FIGHT, dip = 0f, tension = 0.3f, fightDistance = 1f) }
         buzz(40)
+        sfx.play(Sfx.Fx.SPLASH, 0.45f, rate = 1.2f)
+        val reelGap = (120 / (gear?.reel?.speed ?: 1.0)).toLong()
         job = viewModelScope.launch {
             var last = System.nanoTime()
             while (fight.result == null) {
@@ -346,13 +356,22 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 val now = System.nanoTime()
                 fight.step(((now - last) / 1e9).coerceAtMost(0.05), reeling)
                 last = now
-                if (fight.runStarted) buzz(longArrayOf(0, 30, 40, 30, 40, 30))
+                if (fight.runStarted) {
+                    buzz(longArrayOf(0, 30, 40, 30, 40, 30))
+                    sfx.play(Sfx.Fx.SPLASH, 0.55f, rate = 1.1f + 0.2f * rng.nextFloat())
+                }
+                if (reeling && !fight.running) sfx.play(Sfx.Fx.REEL, 0.45f, rate = 0.95f + 0.1f * rng.nextFloat(), minGapMs = reelGap)
+                // A warning before the line gives: it creaks and the phone ticks.
+                if (fight.tension > 0.85) {
+                    sfx.play(Sfx.Fx.STRAIN, 0.5f, minGapMs = 520)
+                    if (fight.tension > 0.92) buzzTick()
+                }
                 _lake.update { it.copy(tension = fight.tension.toFloat(), fightDistance = fight.distance.toFloat(), running = fight.running) }
             }
             when (fight.result!!) {
                 FightResult.LANDED -> landed(bite)
-                FightResult.SNAPPED -> { buzz(120); _lake.update { it.copy(stage = Stage.LOST, lost = LostReason.SNAPPED) } }
-                FightResult.ESCAPED -> _lake.update { it.copy(stage = Stage.LOST, lost = LostReason.ESCAPED) }
+                FightResult.SNAPPED -> { buzz(120); sfx.play(Sfx.Fx.SNAP); _lake.update { it.copy(stage = Stage.LOST, lost = LostReason.SNAPPED) } }
+                FightResult.ESCAPED -> { sfx.play(Sfx.Fx.PLOP, 0.5f, rate = 0.7f); _lake.update { it.copy(stage = Stage.LOST, lost = LostReason.ESCAPED) } }
             }
         }
     }
@@ -388,6 +407,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             s.copy(catches = (s.catches + catch).takeLast(600), progress = p, baits = baits)
         }
         buzz(longArrayOf(0, 40, 60, 40))
+        sfx.play(Sfx.Fx.SPLASH)
+        viewModelScope.launch { delay(350); sfx.play(Sfx.Fx.COIN, 0.8f) }
         _lake.update { it.copy(stage = Stage.CAUGHT, caught = catch, newSpecies = isNew, record = record, reward = reward) }
         reward?.let { r ->
             if (r.quests.isNotEmpty()) _events.update { it + GameEvent.QuestsDone(r.quests, r.allQuests) }
@@ -430,6 +451,16 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private fun buzz(ms: Long) = buzz(longArrayOf(0, ms))
+
+    private var lastTick = 0L
+
+    /** A light tick, at most every 250 ms, while the line is close to snapping. */
+    private fun buzzTick() {
+        val now = System.currentTimeMillis()
+        if (now - lastTick < 250) return
+        lastTick = now
+        buzz(8)
+    }
 
     private fun buzz(pattern: LongArray) {
         val ctx = getApplication<Application>()

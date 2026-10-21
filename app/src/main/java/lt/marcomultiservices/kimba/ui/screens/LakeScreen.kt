@@ -70,6 +70,7 @@ import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
 import androidx.compose.ui.draw.scale
+import androidx.compose.ui.graphics.graphicsLayer
 import androidx.compose.ui.geometry.Offset
 import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
@@ -96,6 +97,9 @@ import lt.marcomultiservices.kimba.core.Lure
 import lt.marcomultiservices.kimba.core.Progress
 import lt.marcomultiservices.kimba.core.Reward
 import lt.marcomultiservices.kimba.app
+import lt.marcomultiservices.kimba.audio.Sfx
+import androidx.lifecycle.compose.LifecycleResumeEffect
+import androidx.compose.foundation.interaction.collectIsPressedAsState
 import lt.marcomultiservices.kimba.findActivity
 import lt.marcomultiservices.kimba.game.GameEvent
 import lt.marcomultiservices.kimba.ui.LocalLang
@@ -153,6 +157,22 @@ fun LakeScreen(
     val catches = saved?.catches?.size ?: 0
     LaunchedEffect(catches) {
         if (catches == 1 && Build.VERSION.SDK_INT >= 33) notifyPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+    }
+
+    // The sounds of the place: birds by day, crickets at night, rain, the river or the surf.
+    val ambient = conditions?.let { c ->
+        when {
+            c.weather.sky in setOf(Sky.DRIZZLE, Sky.RAIN, Sky.HEAVY_RAIN, Sky.THUNDER, Sky.SLEET) -> Sfx.Amb.RAIN
+            progress.spot.water == lt.marcomultiservices.kimba.core.Water.SEA -> Sfx.Amb.SEA
+            progress.spot.water == lt.marcomultiservices.kimba.core.Water.RIVER -> Sfx.Amb.RIVER
+            c.phase == DayPhase.NIGHT -> if (c.weather.tempC > 10) Sfx.Amb.NIGHT else Sfx.Amb.CALM
+            c.weather.tempC < 3 || c.weather.sky == Sky.SNOW -> Sfx.Amb.CALM
+            else -> Sfx.Amb.DAY
+        }
+    }
+    LifecycleResumeEffect(ambient) {
+        context.app.sfx.ambient(ambient)
+        onPauseOrDispose { context.app.sfx.ambient(null) }
     }
 
     Box(Modifier.fillMaxSize().background(K.Night)) {
@@ -422,6 +442,7 @@ private fun FightHud(tension: Float, distance: Float, running: Boolean) {
 
 @Composable
 private fun LureRow(progress: Progress, enabled: Boolean, onPick: (Lure) -> Unit) {
+    val sfx = LocalContext.current.app.sfx
     val owned = Lure.entries.filter { progress.owns(it) }
     Row(
         Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
@@ -435,7 +456,7 @@ private fun LureRow(progress: Progress, enabled: Boolean, onPick: (Lure) -> Unit
                 Modifier.padding(horizontal = 3.dp).clip(RoundedCornerShape(16.dp))
                     .background(if (sel) K.Amber else Color(0x99101A28))
                     .border(1.dp, if (sel) K.Amber else K.Line, RoundedCornerShape(16.dp))
-                    .clickable(enabled = enabled) { onPick(l) }
+                    .clickable(enabled = enabled) { sfx.play(Sfx.Fx.TAP, 0.5f); onPick(l) }
                     .padding(horizontal = 12.dp, vertical = 7.dp),
             ) {
                 Text(t(l.label), color = if (sel) Color(0xFF2A1A06) else K.Text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
@@ -446,7 +467,15 @@ private fun LureRow(progress: Progress, enabled: Boolean, onPick: (Lure) -> Unit
 
 @Composable
 private fun NavButton(icon: ImageVector, label: String, onClick: () -> Unit, badge: String? = null) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(84.dp).clip(RoundedCornerShape(14.dp)).clickable(onClick = onClick).padding(4.dp)) {
+    val sfx = LocalContext.current.app.sfx
+    val interaction = remember { androidx.compose.foundation.interaction.MutableInteractionSource() }
+    val pressed by interaction.collectIsPressedAsState()
+    val scale by androidx.compose.animation.core.animateFloatAsState(if (pressed) 0.9f else 1f, label = "press")
+    Column(
+        horizontalAlignment = Alignment.CenterHorizontally,
+        modifier = Modifier.width(84.dp).scale(scale).clip(RoundedCornerShape(14.dp))
+            .clickable(interaction, indication = null) { sfx.play(Sfx.Fx.TAP, 0.6f); onClick() }.padding(4.dp),
+    ) {
         Box(Modifier.size(50.dp)) {
             Box(Modifier.size(46.dp).align(Alignment.Center).clip(CircleShape).background(Color(0xB3101A28)).border(1.dp, K.Line, CircleShape), contentAlignment = Alignment.Center) {
                 Icon(icon, label, tint = K.Text, modifier = Modifier.size(24.dp))
@@ -521,13 +550,42 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?
             Spacer(Modifier.height(6.dp))
             Text(golden?.name?.let { t(it) } ?: t(species.name), style = MaterialTheme.typography.displaySmall, color = K.Text, textAlign = TextAlign.Center)
             Spacer(Modifier.height(10.dp))
+            // The fish swings up into view, dripping, and the numbers count up.
+            val enter = remember(c) { androidx.compose.animation.core.Animatable(0f) }
+            LaunchedEffect(c) { enter.animateTo(1f, androidx.compose.animation.core.spring(dampingRatio = 0.5f, stiffness = 120f)) }
+            val drip = remember(c) { androidx.compose.animation.core.Animatable(0f) }
+            LaunchedEffect(c) { drip.animateTo(1f, tween(1400)) }
             Box(Modifier.fillMaxWidth().height(170.dp).clip(RoundedCornerShape(18.dp)).background(Brush.radialGradient(listOf(if (golden != null) Color(0x55FFD27A) else Color(0x335B8BD0), Color.Transparent)))) {
-                FishPicture(c.species, c.golden != null, time, Modifier.fillMaxSize())
+                FishPicture(
+                    c.species, c.golden != null, time,
+                    Modifier.fillMaxSize().graphicsLayer {
+                        val p = enter.value
+                        translationY = (1f - p) * 140f
+                        rotationZ = kotlin.math.sin(p * 9f) * (1f - p.coerceAtMost(1f)) * 14f
+                        scaleX = 0.75f + 0.25f * p
+                        scaleY = 0.75f + 0.25f * p
+                        alpha = p.coerceIn(0f, 1f)
+                    },
+                )
+                Canvas(Modifier.fillMaxSize()) {
+                    val d = drip.value
+                    if (d < 1f) for (i in 0 until 14) {
+                        val start = (i * 0.07f) % 0.6f
+                        val k = ((d - start) / 0.4f).coerceIn(0f, 1f)
+                        if (k <= 0f || k >= 1f) continue
+                        val x = size.width * (0.22f + (i * 0.137f) % 0.56f)
+                        val y = size.height * (0.45f + k * 0.6f)
+                        drawOval(Color(0xCCBFE3FF).copy(alpha = 1f - k), Offset(x - 2.5f, y - 5f), Size(5f, 9f))
+                    }
+                }
             }
             Spacer(Modifier.height(12.dp))
+            val count = remember(c) { androidx.compose.animation.core.Animatable(0f) }
+            LaunchedEffect(c) { count.animateTo(1f, tween(700, delayMillis = 250)) }
+            val grams = (c.grams * count.value).roundToInt()
             Row(horizontalArrangement = Arrangement.spacedBy(28.dp)) {
-                Stat(t(S.length), "%.0f cm".format(c.cm))
-                Stat(t(S.weight), if (c.grams >= 1000) "%.2f kg".format(c.grams / 1000.0) else "${c.grams} g")
+                Stat(t(S.length), "%.0f cm".format(c.cm * count.value))
+                Stat(t(S.weight), if (c.grams >= 1000) "%.2f kg".format(grams / 1000.0) else "$grams g")
             }
             if (golden != null) {
                 Spacer(Modifier.height(8.dp))
@@ -569,6 +627,8 @@ private fun EventDialog(event: GameEvent, onClose: () -> Unit) {
                 if (event.all) "\n\n" + t(S.allQuestsDone, Economy.ALL_QUESTS_COINS, Economy.ALL_QUESTS_CASTS) else ""
             )
     }
+    val sfx = LocalContext.current.app.sfx
+    LaunchedEffect(event) { sfx.play(if (event is GameEvent.LevelUp) Sfx.Fx.LEVEL else Sfx.Fx.COIN) }
     Box(Modifier.fillMaxSize().background(Color(0x99000000)).clickable(onClick = onClose), contentAlignment = Alignment.Center) {
         Glass(Modifier.padding(28.dp).fillMaxWidth(), radius = 26.dp, padding = 22.dp) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {

@@ -83,6 +83,10 @@ fun SettingsScreen(vm: GameViewModel, onBack: () -> Unit) {
                 Text(t(S.notifications), color = K.Text, fontSize = 15.sp, modifier = Modifier.weight(1f))
                 Switch(saved?.notify ?: true, { vm.setNotify(it) }, colors = SwitchDefaults.colors(checkedTrackColor = K.Amber))
             }
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(t(S.sound), color = K.Text, fontSize = 15.sp, modifier = Modifier.weight(1f))
+                Switch(saved?.sound ?: true, { vm.setSound(it) }, colors = SwitchDefaults.colors(checkedTrackColor = K.Amber))
+            }
 
             Spacer(Modifier.height(22.dp))
             SectionTitle(t(S.noAds))

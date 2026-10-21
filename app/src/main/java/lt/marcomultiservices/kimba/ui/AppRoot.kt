@@ -2,7 +2,10 @@ package lt.marcomultiservices.kimba.ui
 
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedContent
+import androidx.compose.animation.core.tween
 import androidx.compose.animation.fadeIn
+import androidx.compose.animation.slideInHorizontally
+import androidx.compose.animation.slideOutHorizontally
 import androidx.compose.animation.fadeOut
 import androidx.compose.animation.togetherWith
 import androidx.compose.foundation.background
@@ -40,7 +43,18 @@ fun AppRoot(vm: GameViewModel, startScreen: Pair<Screen, Long>?) {
         return
     }
     BackHandler(screen != Screen.LAKE) { screen = Screen.LAKE }
-    AnimatedContent(screen, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "screen") { current ->
+    AnimatedContent(
+        screen,
+        transitionSpec = {
+            // Menus slide in over the lake from the right and slide back out.
+            if (targetState != Screen.LAKE) {
+                (slideInHorizontally(tween(280)) { it / 3 } + fadeIn(tween(220))) togetherWith fadeOut(tween(200))
+            } else {
+                fadeIn(tween(220)) togetherWith (slideOutHorizontally(tween(260)) { it / 3 } + fadeOut(tween(200)))
+            }
+        },
+        label = "screen",
+    ) { current ->
         when (current) {
             Screen.LAKE -> LakeScreen(
                 vm, { screen = Screen.BOOK }, { screen = Screen.FORECAST }, { screen = Screen.SETTINGS },

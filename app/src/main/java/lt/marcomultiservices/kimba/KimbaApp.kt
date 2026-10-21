@@ -11,6 +11,7 @@ import androidx.work.PeriodicWorkRequestBuilder
 import androidx.work.WorkManager
 import kotlinx.coroutines.MainScope
 import lt.marcomultiservices.kimba.ads.AdManager
+import lt.marcomultiservices.kimba.audio.Sfx
 import lt.marcomultiservices.kimba.ads.BillingManager
 import lt.marcomultiservices.kimba.data.Store
 import lt.marcomultiservices.kimba.data.WeatherRepo
@@ -21,6 +22,7 @@ class KimbaApp : Application() {
     val store by lazy { Store(this) }
     val weather by lazy { WeatherRepo(this) }
     val ads by lazy { AdManager(this) }
+    val sfx by lazy { Sfx(this) }
     private val scope = MainScope()
     val billing by lazy {
         BillingManager(this, scope) { owned ->

@@ -63,6 +63,7 @@ object S {
     // Book
     val book = L("Žuvų knyga", "Fangbuch", "Fish book")
     val bookProgress = L("Pagauta %d iš %d", "%d von %d gefangen", "%d of %d caught")
+    val allFish = L("Visos", "Alle", "All")
     val goldenFish = L("Auksinės žuvys", "Goldene Fische", "Golden fish")
     val best = L("Rekordas", "Rekord", "Record")
     val count = L("Pagauta: %d", "Gefangen: %d", "Caught: %d")
@@ -101,6 +102,7 @@ object S {
     val place = L("Vietovė", "Ort", "Location")
     val language = L("Kalba", "Sprache", "Language")
     val phoneLanguage = L("Kaip telefone", "Wie am Handy", "Phone language")
+    val sound = L("Garsai", "Töne", "Sound")
     val notifications = L("Pranešimai apie auksinių žuvų langus", "Hinweise auf Zeitfenster für goldene Fische", "Alerts for golden fish windows")
     val noAds = L("Be reklamos", "Werbefrei", "No ads")
     val noAdsBody = L(
