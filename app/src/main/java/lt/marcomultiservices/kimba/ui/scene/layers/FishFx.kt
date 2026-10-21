@@ -72,7 +72,7 @@ internal fun DrawScope.drawFishJump(geo: SceneGeometry, pos: Offset, t: Float, s
     val angle = dir * (f - 0.5f) * 80f
     rotate(angle, Offset(x, y)) {
         withTransform({ if (dir > 0) scale(-1f, 1f, Offset(x, y)) }) {
-            lt.marcomultiservices.kimba.ui.fish.FishArt.draw(this, species, golden, Rect(x - len / 2, y - len * 0.2f, x + len / 2, y + len * 0.2f), t)
+            drawFishPicture(species, golden, Rect(x - len / 2, y - len * 0.2f, x + len / 2, y + len * 0.2f), t)
         }
     }
     // Spray where it left and where it falls back.
@@ -103,5 +103,61 @@ internal fun DrawScope.drawFightSplash(geo: SceneGeometry, pos: Offset, t: Float
         val ph = (t * 1.4f + k / 2f) % 1f
         val r = len * (0.3f + ph)
         drawOval(Palette.Spray.copy(alpha = (1 - ph) * 0.4f), Offset(pos.x - r, pos.y - r * 0.28f), Size(r * 2, r * 0.56f), style = Stroke(2f))
+    }
+}
+
+/** The fish's photo if there is one (head left, fitted into [rect] by width), otherwise its drawing. */
+internal fun DrawScope.drawFishPicture(species: String, golden: Boolean, rect: Rect, t: Float) {
+    val photo = ArtPack.fish(species)
+    if (photo == null) {
+        lt.marcomultiservices.kimba.ui.fish.FishArt.draw(this, species, golden, rect, t)
+        return
+    }
+    val ht = rect.width * photo.height / photo.width
+    val r = Rect(rect.left, rect.center.y - ht / 2, rect.right, rect.center.y + ht / 2)
+    drawArt(photo, r, filter = if (golden) lt.marcomultiservices.kimba.ui.fish.FishPhotos.goldFilter else null)
+}
+
+/** The float landing after a cast: a crown of spray and a ring spreading out. */
+internal fun DrawScope.drawCastSplash(geo: SceneGeometry, pos: Offset, p: Float) {
+    val s = geo.scaleAt(pos.y)
+    val size = geo.w * 0.05f * s
+    for (i in 0 until 10) {
+        val a = i / 10f * 2f * PI.toFloat()
+        val up = sin(p * PI.toFloat()) * size * (0.8f + 0.4f * ((i * 7) % 3) / 2f)
+        val c = Offset(pos.x + cos(a) * size * 0.9f * p, pos.y - up - sin(a) * size * 0.15f * p)
+        drawCircle(Palette.Spray.copy(alpha = (1f - p) * 0.8f), (1.5f + 2.5f * s) * (1f - p * 0.5f), c)
+    }
+    for (k in 0 until 2) {
+        val r = size * (0.4f + p * (1.6f + k))
+        drawOval(Palette.Spray.copy(alpha = (1f - p) * 0.5f), Offset(pos.x - r, pos.y - r * 0.3f), Size(r * 2, r * 0.6f), style = Stroke(2f))
+    }
+}
+
+/**
+ * A landed fish lifted out of the water on the line: it hangs head up from the hook,
+ * wriggles and drips, growing as it comes towards the angler ([l] goes 0..1).
+ */
+internal fun DrawScope.drawLandedFish(geo: SceneGeometry, mouth: Offset, t: Float, l: Float, species: String, golden: Boolean, size: Float) {
+    val len = geo.w * (0.16f + 0.3f * l) * size.coerceIn(0.6f, 1.6f)
+    // Splash where it left the water.
+    if (l < 0.5f) {
+        val base = Offset(geo.w * 0.58f, geo.h * 0.9f)
+        for (i in 0 until 12) {
+            val k = (l * 2f + i * 0.08f) % 1f
+            drawCircle(Palette.Spray.copy(alpha = (1 - k) * 0.7f), 3f + 4f * (1 - k), Offset(base.x + cos(i * 2.1f) * len * 0.4f * k, base.y - sin(k * PI.toFloat()) * len * 0.4f))
+        }
+    }
+    val wiggle = sin(t * 11f) * 10f * (1f - l * 0.6f)
+    // Head up: the picture's head (left side) points to the hook.
+    rotate(90f + wiggle, mouth) {
+        drawFishPicture(species, golden, Rect(mouth.x, mouth.y - len * 0.25f, mouth.x + len, mouth.y + len * 0.25f), t)
+    }
+    // Drops running off the tail.
+    for (i in 0 until 5) {
+        val k = (t * 1.6f + i * 0.21f) % 1f
+        val x = mouth.x + sin(i * 1.7f) * len * 0.08f
+        val y = mouth.y + len * (0.9f + k * 0.5f)
+        drawCircle(Palette.Spray.copy(alpha = (1f - k) * 0.7f), 2f + 2f * l, Offset(x, y))
     }
 }

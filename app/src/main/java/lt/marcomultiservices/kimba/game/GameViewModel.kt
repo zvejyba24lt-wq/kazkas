@@ -51,7 +51,7 @@ import java.time.ZoneId
 import kotlin.math.abs
 import kotlin.random.Random
 
-enum class Stage { IDLE, CHARGING, FLYING, WAITING, BITE, FIGHT, CAUGHT, LOST }
+enum class Stage { IDLE, CHARGING, FLYING, WAITING, BITE, FIGHT, LANDING, CAUGHT, LOST }
 
 enum class LostReason { EARLY, MISSED, SNAPPED, ESCAPED }
 
@@ -406,9 +406,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             // Keep the log bounded; the book only needs the best and the count per species.
             s.copy(catches = (s.catches + catch).takeLast(600), progress = p, baits = baits)
         }
+        // The fish comes out of the water on the line, dripping, then its card shows.
         buzz(longArrayOf(0, 40, 60, 40))
         sfx.play(Sfx.Fx.SPLASH)
-        viewModelScope.launch { delay(350); sfx.play(Sfx.Fx.COIN, 0.8f) }
+        _lake.update { it.copy(stage = Stage.LANDING, tension = 0f) }
+        delay(LANDING_MS)
+        sfx.play(Sfx.Fx.COIN, 0.8f)
         _lake.update { it.copy(stage = Stage.CAUGHT, caught = catch, newSpecies = isNew, record = record, reward = reward) }
         reward?.let { r ->
             if (r.quests.isNotEmpty()) _events.update { it + GameEvent.QuestsDone(r.quests, r.allQuests) }
@@ -503,11 +506,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     companion object {
-        const val FLIGHT_MS = 750L
+        const val FLIGHT_MS = 1300L
+        /** How long the landed fish is lifted out of the water before its card shows. */
+        const val LANDING_MS = 1600L
 
-        /** Power meter: rises and falls every 1.4 s while the button is held. */
+        /** Power meter: rises and falls every 2.4 s while the button is held. */
         fun castPower(heldMs: Long): Float {
-            val p = (heldMs % 1400L) / 700f
+            val p = (heldMs % 2400L) / 1200f
             return (if (p <= 1f) p else 2f - p).coerceIn(0.05f, 1f)
         }
 

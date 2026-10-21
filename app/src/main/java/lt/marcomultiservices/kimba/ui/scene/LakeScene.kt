@@ -2,6 +2,7 @@ package lt.marcomultiservices.kimba.ui.scene
 
 import android.os.Build
 import androidx.compose.animation.core.Animatable
+import androidx.compose.animation.core.FastOutSlowInEasing
 import androidx.compose.animation.core.LinearEasing
 import androidx.compose.animation.core.Spring
 import androidx.compose.animation.core.animateFloatAsState
@@ -66,10 +67,25 @@ fun LakeScene(
         val dipTarget by remember { derivedStateOf { lake.value.dip } }
         val dip by animateFloatAsState(dipTarget, spring(dampingRatio = 0.45f, stiffness = Spring.StiffnessMediumLow), label = "dip")
         val flight = remember { Animatable(1f) }
+        val splash = remember { Animatable(1f) }
         LaunchedEffect(castId) {
             if (castId == 0) return@LaunchedEffect
             flight.snapTo(0f)
             flight.animateTo(1f, tween(GameViewModel.FLIGHT_MS.toInt(), easing = LinearEasing))
+            // The float hits the water: a splash that settles.
+            splash.snapTo(0f)
+            splash.animateTo(1f, tween(900, easing = LinearEasing))
+        }
+        val stageNow by remember { derivedStateOf { lake.value.stage } }
+        // Lifting a landed fish out of the water.
+        val lift = remember { Animatable(0f) }
+        LaunchedEffect(stageNow) {
+            if (stageNow == Stage.LANDING) {
+                lift.snapTo(0f)
+                lift.animateTo(1f, tween(GameViewModel.LANDING_MS.toInt() - 200, easing = FastOutSlowInEasing))
+            } else {
+                lift.snapTo(0f)
+            }
         }
         val tensionTarget by remember { derivedStateOf { lake.value.tension } }
         val tension by animateFloatAsState(tensionTarget, tween(90), label = "tension")
@@ -83,19 +99,42 @@ fun LakeScene(
 
             // Float and line state.
             val target = geo.floatTarget(s.castDist, s.castId)
-            val bend = if (s.stage == Stage.FIGHT) tension.coerceIn(0f, 1.2f) else 0.08f + dip * 0.15f
-            val tip = Offset(geo.rodTip.x - geo.w * 0.05f * bend, geo.rodTip.y + geo.h * 0.11f * bend)
+            val bend = when (s.stage) {
+                Stage.FIGHT -> tension.coerceIn(0f, 1.2f)
+                Stage.LANDING -> 0.7f - 0.3f * lift.value
+                else -> 0.08f + dip * 0.15f
+            }
+            // The rod swings back while charging a cast and whips forward on release.
+            val swing = when (s.stage) {
+                Stage.CHARGING -> -GameViewModel.castPower(android.os.SystemClock.uptimeMillis() - s.chargeStart) * 0.9f
+                Stage.FLYING -> {
+                    val f = (flight.value / 0.28f).coerceIn(0f, 1f)
+                    -0.9f * s.castDist.toFloat() * (1f - f) + sin(f * PI.toFloat()) * 0.7f
+                }
+                else -> 0f
+            }
+            val tip = Offset(
+                geo.rodTip.x - geo.w * 0.05f * bend - geo.w * 0.06f * swing,
+                geo.rodTip.y + geo.h * 0.11f * bend + geo.h * 0.07f * swing,
+            )
             val hanging = s.stage == Stage.IDLE || s.stage == Stage.CHARGING
             val floatPos = when {
                 hanging -> Offset(tip.x + sin(t * 1.8f) * geo.w * 0.006f, tip.y + geo.h * 0.075f)
                 s.stage == Stage.FLYING -> {
+                    // Thrown out fast, slowing down, on a high arc that drops onto the water.
                     val f = flight.value
+                    val e = 1f - (1f - f) * (1f - f)
                     val from = Offset(tip.x, tip.y + geo.h * 0.075f)
-                    Offset(from.x + (target.x - from.x) * f, from.y + (target.y - from.y) * f - sin(PI.toFloat() * f) * geo.h * 0.2f)
+                    val arc = geo.h * (0.12f + 0.18f * s.castDist.toFloat())
+                    Offset(from.x + (target.x - from.x) * e, from.y + (target.y - from.y) * f - sin(PI.toFloat() * f) * arc)
                 }
                 s.stage == Stage.FIGHT -> {
                     val k = 1f - s.fightDistance
                     Offset(target.x + (geo.w * 0.58f - target.x) * k, target.y + (geo.h * 0.93f - target.y) * k)
+                }
+                s.stage == Stage.LANDING -> {
+                    val l = lift.value
+                    Offset(geo.w * (0.58f - 0.06f * l), geo.h * (0.9f - 0.36f * l))
                 }
                 else -> target
             }
@@ -143,6 +182,7 @@ fun LakeScene(
             }
             if (onWater && dip > 0.05f) drawFishShadow(geo, floatPos, dip, t, s.bite?.let { (it.cm / 60.0).toFloat() } ?: 0.6f)
             if (onWater) drawFloatOnWater(geo, floatPos, dip, t, s.stage == Stage.BITE, floatStyle, colors.daylight)
+            if (s.stage == Stage.WAITING && splash.value < 1f) drawCastSplash(geo, floatPos, splash.value)
             if (s.stage == Stage.FIGHT) {
                 drawFightSplash(geo, floatPos, t, s.running)
                 val b = s.bite
@@ -153,6 +193,7 @@ fun LakeScene(
             if (!sea) drawReeds(geo, colors, t, back = true)
             drawRod(geo, colors, tip)
             drawLine(geo, tip, floatPos, s.stage, tension)
+            if (s.stage == Stage.LANDING) s.bite?.let { b -> drawLandedFish(geo, floatPos, t, lift.value, b.species.id, b.golden != null, (b.cm / 60.0).toFloat()) }
             if (hanging || s.stage == Stage.FLYING) drawFloatBody(floatPos, geo.h * 0.016f * geo.scaleAt(geo.h), 0f, floatStyle, colors.daylight)
             if (!sea) drawReeds(geo, colors, t, back = false)
             drawWeather(geo, colors, conditions, t)

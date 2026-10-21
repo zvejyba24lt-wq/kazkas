@@ -22,22 +22,29 @@ import kotlin.math.roundToInt
 object ArtPack {
     private var context: Context? = null
     private var files: Set<String> = emptySet()
+    private var fishFiles: Set<String> = emptySet()
     private val cache = HashMap<String, ImageBitmap?>()
 
     /** Called once when the app starts. */
     fun init(context: Context) {
         this.context = context.applicationContext
         files = runCatching { context.assets.list("art")?.toSet() }.getOrNull() ?: emptySet()
+        fishFiles = runCatching { context.assets.list("fish")?.toSet() }.getOrNull() ?: emptySet()
     }
 
+    /** The fish photo from `assets/fish/<id>.webp`, shown in the scene when a fish leaps or is landed. */
+    fun fish(id: String): ImageBitmap? = load("fish", id, fishFiles)
+
     /** The picture for [slot], or null to draw it in code. */
-    operator fun get(slot: String): ImageBitmap? {
-        if (files.isEmpty()) return null
+    operator fun get(slot: String): ImageBitmap? = load("art", slot, files)
+
+    private fun load(dir: String, name: String, names: Set<String>): ImageBitmap? {
+        if (names.isEmpty()) return null
         return synchronized(cache) {
-            cache.getOrPut(slot) {
+            cache.getOrPut("$dir/$name") {
                 val ctx = context ?: return@getOrPut null
-                val file = listOf("webp", "png", "jpg").map { "$slot.$it" }.firstOrNull { it in files } ?: return@getOrPut null
-                runCatching { ctx.assets.open("art/$file").use { BitmapFactory.decodeStream(it)?.asImageBitmap() } }.getOrNull()
+                val file = listOf("webp", "png", "jpg").map { "$name.$it" }.firstOrNull { it in names } ?: return@getOrPut null
+                runCatching { ctx.assets.open("$dir/$file").use { BitmapFactory.decodeStream(it)?.asImageBitmap() } }.getOrNull()
             }
         }
     }
@@ -47,12 +54,12 @@ object ArtPack {
  * Draws [img] stretched into [rect]. [light] tints it like the code-drawn parts (pass
  * `colors.lit(Color.White)` so it darkens at night and warms at sunset); white keeps it as is.
  */
-fun DrawScope.drawArt(img: ImageBitmap, rect: Rect, light: Color = Color.White, alpha: Float = 1f) {
+fun DrawScope.drawArt(img: ImageBitmap, rect: Rect, light: Color = Color.White, alpha: Float = 1f, filter: ColorFilter? = null) {
     drawImage(
         img,
         dstOffset = IntOffset(rect.left.roundToInt(), rect.top.roundToInt()),
         dstSize = IntSize(rect.width.roundToInt().coerceAtLeast(1), rect.height.roundToInt().coerceAtLeast(1)),
         alpha = alpha,
-        colorFilter = if (light == Color.White) null else ColorFilter.lighting(light, Color.Black),
+        colorFilter = filter ?: if (light == Color.White) null else ColorFilter.lighting(light, Color.Black),
     )
 }
