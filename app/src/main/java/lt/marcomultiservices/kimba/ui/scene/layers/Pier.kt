@@ -196,6 +196,17 @@ private fun DrawScope.drawBaitTin(geo: SceneGeometry, colors: SceneColors) {
 /** Reeds swaying in the wind; [back] ones are drawn before the rod, the others in front of it. */
 internal fun DrawScope.drawReeds(geo: SceneGeometry, colors: SceneColors, t: Float, back: Boolean) {
     val sway = 0.012f + colors.wind * 0.004f
+    // Art slot `reeds` (about 1:1.85 portrait, stems standing on the bottom edge) replaces both
+    // rows with one painted clump in the bottom right corner, swaying with the wind.
+    ArtPack["reeds"]?.let { img ->
+        if (back) return
+        val r = Rect(geo.w * 0.62f, geo.h * 0.66f, geo.w * 1.04f, geo.h * 1.01f)
+        val lean = sin(t * 1.1f) * (1.2f + colors.wind * 0.4f)
+        androidx.compose.ui.graphics.drawscope.rotate(lean, pivot = Offset(r.center.x, r.bottom)) {
+            drawArt(img, r, light = colors.lit(Color.White))
+        }
+        return
+    }
     for (r in geo.reeds) {
         if (r.back != back) continue
         val base = Offset(r.x, geo.h * 1.02f)

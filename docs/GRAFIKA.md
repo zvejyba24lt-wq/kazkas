@@ -35,6 +35,8 @@ Koordinatės žemiau pateiktos ekrano dalimis: `w` – ekrano plotis, `h` – au
 | `spoon` | Blizgė su trišakiu kabliuku | Santykis 1:2,4 (stačia) | Žiedelis viršuje. Žaidimas pats ją „mirksina“ sukdamas. |
 | `rod_rest` | Meškerės stovas (šakutė) | Santykis 1:1 | Meškerė guli viršuje per vidurį. Stiebas piešiamas kodu. |
 | `bite_alarm` | Elektroninis signalizatorius | Santykis 1:1 | Meškerė guli viršuje. Raudona lemputė mirksi kodu, kairėje apačioje. |
+| `reel` | Ritė po meškere | Santykis 1:1, šonu | Kojelė viršuje per vidurį, špūlė į dešinę. Žaidimas pasuka ją pagal meškerę. |
+| `reeds` | Nendrių kuokštas apatiniame dešiniajame kampe | x nuo 0,62w iki 1,04w, y nuo 0,66h iki h (apie 1:1,85) | Pakeičia abi kodu pieštas nendrių eiles, siūbuoja pagal vėją. |
 | `item_<rūšis>_<vardas>` | Parduotuvės ikonos | Kvadratas | Pvz. `item_lure_worm`, `item_rod_carbon`, `item_float_glow`, `item_up_boat`. Vardai yra `core/.../Gear.kt` (`Lure`, `Rod`, `Reel`, `Line`, `FloatStyle`, `Upgrade`). |
 
 Žuvų nuotraukos dedamos atskirai: `app/src/main/assets/fish/<rūšies id>.webp`, galva į kairę,

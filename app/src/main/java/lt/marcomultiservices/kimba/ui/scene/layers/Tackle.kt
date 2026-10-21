@@ -201,6 +201,11 @@ internal fun DrawScope.drawRod(geo: SceneGeometry, colors: SceneColors, tip: Off
 private fun DrawScope.drawReel(geo: SceneGeometry, colors: SceneColors, at: Offset, along: Offset) {
     val angle = kotlin.math.atan2(along.y, along.x) * 180f / PI.toFloat()
     val s = geo.w * 0.03f
+    // Art slot `reel` (1:1, side view, reel foot at the top centre, spool facing right) replaces the drawing.
+    ArtPack["reel"]?.let { img ->
+        rotate(angle, pivot = at) { drawArt(img, Rect(at.x - s * 1.4f, at.y - s * 0.1f, at.x + s * 1.4f, at.y + s * 2.7f), light = colors.lit(Color.White)) }
+        return
+    }
     rotate(angle, pivot = at) {
         // Rod pointing along +x here: the reel hangs on its foot below (+y).
         drawLine(colors.lit(Palette.ReelBody), at, Offset(at.x, at.y + s * 1.3f), strokeWidth = s * 0.35f, cap = StrokeCap.Round)
