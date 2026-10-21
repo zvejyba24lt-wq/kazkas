@@ -3,8 +3,8 @@ package lt.marcomultiservices.kimba.core
 import kotlinx.serialization.Serializable
 import kotlin.math.abs
 import kotlin.math.exp
+import kotlin.math.ln
 import kotlin.math.min
-import kotlin.math.pow
 import kotlin.random.Random
 
 /** What will take the bait on this cast, decided when the float lands. */
@@ -50,8 +50,8 @@ object BiteEngine {
         val lure = gear.lure
         val golden = Fish.goldens.firstOrNull { it.base == species && it.active(c) }
             ?.takeIf { rng.nextDouble() < GOLDEN_CHANCE }
-        // Most fish are small; trophies are rare.
-        val size = rng.nextDouble().pow((if (golden != null) 1.2 else 2.2) * lure.sizeBias)
+        // Most fish are small; trophies are rare (about 1 in 80 bites lands in the top fifth).
+        val size = sizeFraction(rng.nextDouble(), (if (golden != null) 2.0 else 5.5) * lure.sizeBias)
         val cm = species.minCm + (species.maxCm - species.minCm) * size
         val index = (Fish.biteIndex(c, spot) / 100.0) * (weights.values.sum() / act.values.sum()).coerceIn(0.5, 1.3)
         val wait = (16.0 - 11.0 * index) * (0.6 + 0.8 * rng.nextDouble()) * (if (gear.boat) 0.75 else 1.0)
@@ -65,6 +65,9 @@ object BiteEngine {
         // Anglers measure to the whole centimetre.
         return Bite(species, golden, kotlin.math.round(cm), wait, nibbles, 0.9 + rng.nextDouble() * 0.2)
     }
+
+    /** Exponential distribution with rate [lambda], cut off at 1: where in its size range a fish falls. */
+    fun sizeFraction(u: Double, lambda: Double): Double = -ln(1 - u * (1 - exp(-lambda))) / lambda
 }
 
 enum class FightResult { LANDED, SNAPPED, ESCAPED }

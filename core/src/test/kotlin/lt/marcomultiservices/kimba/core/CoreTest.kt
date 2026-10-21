@@ -264,6 +264,17 @@ class CoreTest {
     }
 
     @Test
+    fun trophiesAreRare() {
+        val rng = Random(7)
+        val sizes = List(20000) { BiteEngine.sizeFraction(rng.nextDouble(), 5.5) }
+        val median = sizes.sorted()[sizes.size / 2]
+        val trophies = sizes.count { it > 0.8 } / sizes.size.toDouble()
+        assertTrue(median in 0.09..0.18, "median $median")
+        assertTrue(trophies in 0.005..0.025, "trophies $trophies")
+        assertTrue(sizes.all { it in 0.0..1.0 })
+    }
+
+    @Test
     fun weightsMatchRealFish() {
         // Typical weights at a given length from angling length-weight tables (grams).
         val table = listOf(

@@ -204,6 +204,13 @@ object Streak {
 
 /** Number words: Lithuanian nouns change with the count. */
 object Plural {
+    /** Lithuanian noun form for [n]: "1 moneta", "2 monetos", "10 monetų", "21 moneta". */
+    fun lt(n: Int, one: String, few: String, many: String) = when {
+        n % 10 == 1 && n % 100 != 11 -> one
+        n % 10 == 0 || n % 100 in 11..19 -> many
+        else -> few
+    }
+
     /** "1 žuvį", "2 žuvis", "10 žuvų", "21 žuvį". */
     fun fishLt(n: Int): String {
         val word = when {

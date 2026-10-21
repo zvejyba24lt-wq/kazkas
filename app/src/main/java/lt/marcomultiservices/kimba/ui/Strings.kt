@@ -2,6 +2,7 @@ package lt.marcomultiservices.kimba.ui
 
 import lt.marcomultiservices.kimba.core.DayPhase
 import lt.marcomultiservices.kimba.core.L
+import lt.marcomultiservices.kimba.core.Plural
 import lt.marcomultiservices.kimba.core.Sky
 
 /** All player-facing text of the app. */
@@ -73,7 +74,7 @@ object S {
     val activeNow = L("Dabar aktyviausios", "Gerade am aktivsten", "Most active now")
     val goldenWindows = L("Auksinių žuvų langai", "Zeitfenster für goldene Fische", "Golden fish windows")
     val noWindows = L(
-        "Per artimiausias 2 dienas auksinėms žuvims sąlygų nebus. Kitos pilnaties liko %d d., jaunaties – %d d.",
+        "Per artimiausias 2 dienas auksinėms žuvims sąlygų nebus. Iki pilnaties liko %d d., iki jaunaties – %d d.",
         "In den nächsten 2 Tagen keine Bedingungen für goldene Fische. Nächster Vollmond in %d T., Neumond in %d T.",
         "No golden fish conditions in the next 2 days. Next full moon in %d d, new moon in %d d.",
     )
@@ -119,12 +120,12 @@ object S {
     val coins = L("Monetos", "Münzen", "Coins")
     val levelUp = L("Naujas lygis!", "Neues Level!", "Level up!")
     val levelUpBody = L("Pasiekei %d lygį. Parduotuvėje ir žemėlapyje atsirado naujų dalykų.", "Du hast Level %d erreicht. Im Shop und auf der Karte gibt es Neues.", "You reached level %d. New things are waiting in the shop and on the map.")
-    val streakTitle = L("%d diena iš eilės!", "Tag %d in Folge!", "Day %d in a row!")
+    val streakTitle = L("Jau %d-a diena iš eilės!", "Tag %d in Folge!", "Day %d in a row!")
     val streakBody = L("Grįžimo dovana: +%d monetų ir +%d užmetimai. Ateik ir rytoj – dovana augs iki 7 dienos.", "Willkommensgeschenk: +%d Münzen und +%d Würfe. Komm morgen wieder – es wächst bis Tag 7.", "Welcome back gift: +%d coins and +%d casts. Come back tomorrow – it grows until day 7.")
     val questsDone = L("Užduotis įvykdyta!", "Aufgabe erledigt!", "Quest complete!")
     val allQuestsDone = L("Visos dienos užduotys įvykdytos: +%d monetų ir +%d užmetimai!", "Alle Tagesaufgaben erledigt: +%d Münzen und +%d Würfe!", "All daily quests done: +%d coins and +%d casts!")
     val great = L("Puiku!", "Super!", "Great!")
-    val plusCoins = L("+%d monetų", "+%d Münzen", "+%d coins")
+    fun plusCoins(n: Int) = L("+$n ${Plural.lt(n, "moneta", "monetos", "monetų")}", "+$n ${if (n == 1) "Münze" else "Münzen"}", "+$n ${if (n == 1) "coin" else "coins"}")
     val plusXp = L("+%d patirties", "+%d EP", "+%d XP")
     val doubleCoins = L("×2 monetos už reklamą", "×2 Münzen für ein Video", "×2 coins for a video")
     val doubleCoinsNoAds = L("×2 monetos", "×2 Münzen", "×2 coins")
@@ -164,7 +165,7 @@ object S {
     val here = L("Tu čia", "Du bist hier", "You are here")
     val locked = L("Užrakinta", "Gesperrt", "Locked")
     val onlyHere = L("Tik čia: %s", "Nur hier: %s", "Only here: %s")
-    val fishHere = L("Žuvys: %d rūšių", "Fische: %d Arten", "Fish: %d species")
+    fun fishHere(n: Int) = L("${Plural.lt(n, "Gyvena %d žuvų rūšis", "Gyvena %d žuvų rūšys", "Gyvena %d žuvų rūšių").format(n)}", "$n Fischarten", "$n fish species")
 
     // Photos
     val photoCredit = L("Nuotrauka", "Foto", "Photo")
@@ -197,10 +198,10 @@ object S {
         age < 0.03 || age > 0.97 -> L("Jaunatis", "Neumond", "New moon")
         age < 0.22 -> L("Jaunas mėnulis", "Zunehmende Sichel", "Waxing crescent")
         age < 0.28 -> L("Priešpilnis", "Erstes Viertel", "First quarter")
-        age < 0.47 -> L("Didėjantis", "Zunehmend", "Waxing gibbous")
+        age < 0.47 -> L("Didėjantis mėnulis", "Zunehmender Mond", "Waxing gibbous")
         age < 0.53 -> L("Pilnatis", "Vollmond", "Full moon")
-        age < 0.72 -> L("Delčia", "Abnehmend", "Waning gibbous")
-        age < 0.78 -> L("Paskutinis ketvirtis", "Letztes Viertel", "Last quarter")
+        age < 0.72 -> L("Mažėjantis mėnulis", "Abnehmender Mond", "Waning gibbous")
+        age < 0.78 -> L("Delčia", "Letztes Viertel", "Last quarter")
         else -> L("Senas mėnulis", "Abnehmende Sichel", "Waning crescent")
     }
 }

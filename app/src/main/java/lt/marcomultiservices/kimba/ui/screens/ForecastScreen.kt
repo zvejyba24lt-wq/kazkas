@@ -120,7 +120,7 @@ private fun NowCard(c: Conditions, spot: lt.marcomultiservices.kimba.core.Spot) 
                 drawCircle(Color(0xFFF1F0E6), radius = size.minDimension / 2 * (0.25f + 0.75f * lit), alpha = 0.4f + 0.6f * lit)
             }
             Spacer(Modifier.width(8.dp))
-            Text("${t(S.moon)}: ${t(S.moonName(c.moonAge))} (${(c.moonIllumination * 100).roundToInt()} %)", color = K.Text, fontSize = 13.sp)
+            Text("${t(S.moonName(c.moonAge))} · ${(c.moonIllumination * 100).roundToInt()} %", color = K.Text, fontSize = 13.sp)
         }
         val tips = buildList {
             if (c.falling > 0.3) add(S.tipFalling)

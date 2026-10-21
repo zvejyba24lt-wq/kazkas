@@ -58,16 +58,42 @@ layout(color) uniform half4 deep;
 layout(color) uniform half4 glowCol;
 layout(color) uniform half4 lightCol;
 
-float hash(float2 p) { return fract(sin(dot(p, float2(127.1, 311.7))) * 43758.5453); }
+// Hash without sine: stays random for the large coordinates near the horizon.
+float hash(float2 p) {
+    float3 p3 = fract(float3(p.x, p.y, p.x) * 0.1031);
+    p3 += dot(p3, p3.yzx + 33.33);
+    return fract((p3.x + p3.y) * p3.z);
+}
 
-// [lod] fades out the fine ripples towards the horizon, where they would alias into a
-// checkered pattern (one pixel covers many waves there).
+float2 grad(float2 c) { return float2(hash(c), hash(c + 19.19)) * 2.0 - 1.0; }
+
+// Gradient noise: smooth, with no grid or diagonal lattice showing through.
+float gnoise(float2 p) {
+    float2 i = floor(p);
+    float2 f = fract(p);
+    float2 u = f * f * f * (f * (f * 6.0 - 15.0) + 10.0);
+    float v0 = dot(grad(i), f);
+    float v1 = dot(grad(i + float2(1.0, 0.0)), f - float2(1.0, 0.0));
+    float v2 = dot(grad(i + float2(0.0, 1.0)), f - float2(0.0, 1.0));
+    float v3 = dot(grad(i + float2(1.0, 1.0)), f - float2(1.0, 1.0));
+    return mix(mix(v0, v1, u.x), mix(v2, v3, u.x), u.y);
+}
+
+// Irregular wind-driven ripples: octaves of noise, each turned to its own angle and drifting
+// its own way. [lod] fades out the fine ripples towards the horizon, where one pixel covers
+// many waves and they would only shimmer.
 float waves(float2 q, float t, float lod) {
-    float h = sin(q.x * 1.3 + t * 0.7 + sin(q.y * 0.7 + t * 0.3)) * 0.5;
-    h += sin(q.x * 2.9 - q.y * 1.7 + t * 1.4) * 0.25 * smoothstep(0.0, 0.25, lod);
-    h += sin(q.x * 5.3 + q.y * 3.1 - t * 2.1) * 0.12 * smoothstep(0.15, 0.5, lod);
-    h += sin(q.x * 11.0 - q.y * 7.0 + t * 3.3) * 0.05 * smoothstep(0.35, 0.8, lod);
-    return h;
+    // Gusts: slow, large patches where the water is rougher.
+    float gust = 0.75 + 0.5 * gnoise(q * 0.07 + float2(t * 0.03, -t * 0.02));
+    float2 p = q * float2(0.5, 0.9);
+    float h = gnoise(p + float2(t * 0.11, t * 0.17)) * 0.9;
+    p = float2(1.6 * p.x + 1.2 * p.y, -1.2 * p.x + 1.6 * p.y);
+    h += gnoise(p + float2(-t * 0.23, t * 0.29)) * 0.5 * smoothstep(0.0, 0.25, lod);
+    p = float2(1.6 * p.x + 1.2 * p.y, -1.2 * p.x + 1.6 * p.y);
+    h += gnoise(p + float2(t * 0.41, t * 0.37)) * 0.26 * smoothstep(0.15, 0.5, lod);
+    p = float2(1.6 * p.x + 1.2 * p.y, -1.2 * p.x + 1.6 * p.y);
+    h += gnoise(p + float2(-t * 0.6, -t * 0.5)) * 0.13 * smoothstep(0.35, 0.8, lod);
+    return h * gust;
 }
 
 half4 main(float2 p) {
@@ -122,8 +148,9 @@ half4 main(float2 p) {
 
     // White caps on the sea, current streaks on the river.
     if (swell > 0.0) {
-        float cap = smoothstep(0.82, 1.0, h0 * 0.42 + 0.5 + n.y * 2.0) * swell * smoothstep(0.02, 0.3, y);
-        col = mix(col, float3(0.92, 0.95, 0.97) * (0.5 + 0.5 * float(lightCol.a)), cap * 0.7);
+        float foam = 0.55 + 0.45 * gnoise(q * 3.1 + float2(time * 0.2, 0.0));
+        float cap = smoothstep(0.8, 1.0, h0 * 0.42 + 0.5 + n.y * 2.0) * foam * swell * smoothstep(0.02, 0.3, y);
+        col = mix(col, float3(0.92, 0.95, 0.97) * (0.5 + 0.5 * float(lightCol.a)), cap * 0.5);
     }
     if (flow > 0.0) {
         float streak = smoothstep(0.93, 1.0, sin(q.x * 0.8 + sin(q.y * 3.0) * 0.6) * 0.5 + 0.5) * smoothstep(0.05, 0.4, y);

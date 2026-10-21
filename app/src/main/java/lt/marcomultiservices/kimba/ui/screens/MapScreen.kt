@@ -213,7 +213,7 @@ private fun DestinationCard(d: Destination, p: Progress, onGo: () -> Unit) {
         Spacer(Modifier.height(4.dp))
         Text(t(d.story), color = K.Muted, fontSize = 13.sp, lineHeight = 18.sp)
         Spacer(Modifier.height(6.dp))
-        Text("${t(d.water.label)} · ${t(S.fishHere, count)}", color = K.Text, fontSize = 13.sp)
+        Text("${t(d.water.label)} · ${t(S.fishHere(count))}", color = K.Text, fontSize = 13.sp)
         if (specials.isNotEmpty()) Text(t(S.onlyHere, specials.joinToString { it.name[lang] }), color = K.Gold, fontSize = 13.sp, fontWeight = FontWeight.SemiBold)
         Spacer(Modifier.height(10.dp))
         when {

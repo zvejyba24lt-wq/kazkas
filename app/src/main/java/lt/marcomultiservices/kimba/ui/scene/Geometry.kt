@@ -1,7 +1,6 @@
 package lt.marcomultiservices.kimba.ui.scene
 
 import androidx.compose.ui.geometry.Offset
-import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.graphics.Path
 import kotlin.math.PI
 import kotlin.math.pow
@@ -111,7 +110,7 @@ class SceneGeometry(val w: Float, val h: Float) {
     val willows: List<Willow> = listOf(
         Triple(w * 0.04f, h * 0.17f, 0f), Triple(w * 0.97f, h * 0.15f, 0f), Triple(w * 0.22f, h * 0.09f, 0.3f), Triple(w * 0.8f, h * 0.1f, 0.3f),
     ).map { (x, size, depth) ->
-        Willow(x, hy - size * 1.15f, size, (if (x < w / 2) 1 else -1) * size * 0.15f, depth, List(14) { (rnd.nextFloat() - 0.5f) * 2f to (0.5f + rnd.nextFloat() * 0.5f) })
+        Willow(x, hy - size * 1.15f, size, (if (x < w / 2) 1 else -1) * size * 0.15f, depth, List(36) { k -> ((k + rnd.nextFloat()) / 36f * 2f - 1f) to (0.55f + rnd.nextFloat() * 0.45f) })
     }
 
     class Stone(val x: Float, val y: Float, val r: Float)
@@ -185,19 +184,34 @@ class SceneGeometry(val w: Float, val h: Float) {
             p.close()
         }
 
-        /** A broadleaf tree: a trunk and a crown of overlapping round lobes. */
+        /**
+         * A broadleaf tree: a trunk and one bumpy crown outline. Every contour runs clockwise
+         * like the spruces, so overlapping trees in one path never cut holes into each other.
+         */
         fun roundTree(p: Path, x: Float, base: Float, height: Float, width: Float, rnd: Random) {
-            p.addRect(Rect(x - width * 0.04f, base - height * 0.4f, x + width * 0.04f, base))
-            val cy = base - height * 0.62f
-            repeat(6) {
-                val a = it / 6f * 2 * PI.toFloat()
-                val r = width * (0.22f + rnd.nextFloat() * 0.12f)
-                val cx = x + kotlin.math.cos(a) * width * 0.22f
-                val cyy = cy + sin(a) * height * 0.16f
-                p.addOval(Rect(cx - r, cyy - r, cx + r, cyy + r))
+            val tw = width * 0.05f
+            p.moveTo(x - tw, base - height * 0.45f)
+            p.lineTo(x + tw, base - height * 0.45f)
+            p.lineTo(x + tw * 1.4f, base)
+            p.lineTo(x - tw * 1.4f, base)
+            p.close()
+            val cx = x + (rnd.nextFloat() - 0.5f) * width * 0.08f
+            val cy = base - height * 0.66f
+            val rx = width * 0.5f
+            val ry = height * 0.36f
+            val ph1 = rnd.nextFloat() * 6.28f
+            val ph2 = rnd.nextFloat() * 6.28f
+            val n = 48
+            for (i in 0..n) {
+                val a = i / n.toFloat() * 2 * PI.toFloat()
+                // Lobes of leaves along the edge; the crown is flatter at the bottom.
+                val bump = 1f + 0.09f * sin(a * 6 + ph1) + 0.05f * sin(a * 11 + ph2)
+                val flat = if (sin(a) > 0) 1f - 0.25f * sin(a) else 1f
+                val px = cx + kotlin.math.cos(a) * rx * bump
+                val py = cy + sin(a) * ry * bump * flat
+                if (i == 0) p.moveTo(px, py) else p.lineTo(px, py)
             }
-            val r = width * 0.3f
-            p.addOval(Rect(x - r, cy - height * 0.2f - r, x + r, cy - height * 0.2f + r))
+            p.close()
         }
     }
 }

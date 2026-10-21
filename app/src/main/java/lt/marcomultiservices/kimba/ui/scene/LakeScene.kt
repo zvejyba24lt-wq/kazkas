@@ -519,23 +519,65 @@ private fun DrawScope.drawSeaHorizon(geo: SceneGeometry, colors: SceneColors, t:
     }
 }
 
-/** Weeping willows framing the pond on both sides. */
+/** Weeping willows framing the pond on both sides: a leafy dome with curtains of twigs. */
 private fun DrawScope.drawWillows(geo: SceneGeometry, colors: SceneColors, t: Float) {
     val sway = sin(t * 0.6f) * geo.w * 0.004f * (1f + colors.wind * 0.15f)
     for (w in geo.willows) {
         val trunk = colors.far(Color(0xFF2E2418), w.depth)
-        drawLine(trunk, Offset(w.x, geo.hy + geo.h * 0.004f), Offset(w.x + w.lean, w.top + w.size * 0.25f), strokeWidth = w.size * 0.07f, cap = StrokeCap.Round)
-        val crown = colors.far(if (w.depth > 0.3f) GreenFar else Color(0xFF3A5A2A), w.depth)
-        drawOval(crown, Offset(w.x + w.lean - w.size * 0.55f, w.top), Size(w.size * 1.1f, w.size * 0.55f))
-        // Hanging strands down to the water.
-        for (k in 0 until w.strands.size) {
-            val (dx, len) = w.strands[k]
-            val sx = w.x + w.lean + dx * w.size * 0.5f
-            val sy = w.top + w.size * 0.3f
-            val end = Offset(sx + sway * (1f + len), (sy + len * (geo.hy - sy)).coerceAtMost(geo.hy + geo.h * 0.003f))
-            val path = Path().apply { moveTo(sx, sy); quadraticTo(sx + dx * w.size * 0.12f, (sy + end.y) / 2, end.x, end.y) }
-            drawPath(path, crown, style = Stroke(w.size * 0.05f, cap = StrokeCap.Round))
-            drawPath(path, colors.lit(Color(0xFF9AC070)).copy(alpha = 0.18f), style = Stroke(w.size * 0.012f, cap = StrokeCap.Round))
+        val cx = w.x + w.lean
+        val domeTop = w.top
+        val domeBottom = w.top + w.size * 0.42f
+        val half = w.size * 0.62f
+        // Trunk forking into two leaders under the crown.
+        val tr = Path().apply {
+            val b = w.size * 0.05f
+            moveTo(w.x - b, geo.hy + geo.h * 0.004f)
+            quadraticTo(w.x - b * 0.6f, domeBottom + w.size * 0.3f, cx - half * 0.35f, domeBottom - w.size * 0.05f)
+            lineTo(cx - half * 0.2f, domeBottom - w.size * 0.03f)
+            lineTo(cx, domeBottom + w.size * 0.12f)
+            lineTo(cx + half * 0.3f, domeBottom - w.size * 0.04f)
+            lineTo(cx + half * 0.42f, domeBottom - w.size * 0.02f)
+            quadraticTo(w.x + b * 0.6f, domeBottom + w.size * 0.3f, w.x + b, geo.hy + geo.h * 0.004f)
+            close()
+        }
+        drawPath(tr, trunk)
+
+        val dark = colors.far(if (w.depth > 0.3f) GreenFar else Color(0xFF2C4A22), w.depth)
+        val mid = lerp(dark, colors.lit(Color(0xFF6E9A44)), if (w.depth > 0.3f) 0.25f else 0.5f)
+        val light = colors.lit(Color(0xFF9CC46A)).copy(alpha = if (w.depth > 0.3f) 0.22f else 0.4f)
+        val leafDash = androidx.compose.ui.graphics.PathEffect.dashPathEffect(floatArrayOf(w.size * 0.028f, w.size * 0.012f))
+        fun strand(dx: Float, len: Float, k: Int): Path {
+            val sx = cx + dx * half
+            // Strands start on the dome's rim, higher in the middle.
+            val sy = domeBottom - (1f - dx * dx) * w.size * 0.22f
+            val ey = (sy + len * (geo.hy - sy)).coerceAtMost(geo.hy + geo.h * 0.003f)
+            val ex = sx + dx * w.size * 0.18f + sway * (1f + len) * (if (k % 2 == 0) 1f else 0.7f)
+            return Path().apply { moveTo(sx, sy); quadraticTo(sx + dx * w.size * 0.22f, sy + (ey - sy) * 0.35f, ex, ey) }
+        }
+        // Back curtain, darker.
+        w.strands.forEachIndexed { k, (dx, len) ->
+            drawPath(strand(dx * 0.9f, len * 0.9f, k), dark, style = Stroke(w.size * 0.05f, cap = StrokeCap.Round, pathEffect = leafDash))
+        }
+        // The dome: a bumpy outline, lit from above.
+        val dome = Path().apply {
+            val n = 40
+            for (i in 0..n) {
+                val a = PI.toFloat() + i / n.toFloat() * PI.toFloat()
+                val bump = 1f + 0.06f * sin(a * 9f + w.x) + 0.04f * sin(a * 17f)
+                val px = cx + kotlin.math.cos(a) * half * bump
+                val py = domeBottom + sin(a) * (domeBottom - domeTop) * bump
+                if (i == 0) moveTo(px, py) else lineTo(px, py)
+            }
+            close()
+        }
+        drawPath(dome, Brush.verticalGradient(listOf(mid, dark), domeTop, domeBottom))
+        // Front curtain with light catching the leaves.
+        w.strands.forEachIndexed { k, (dx, len) ->
+            if (k % 2 == 1) {
+                val p = strand(dx, len, k)
+                drawPath(p, mid, style = Stroke(w.size * 0.04f, cap = StrokeCap.Round, pathEffect = leafDash))
+                drawPath(p, light, style = Stroke(w.size * 0.014f, cap = StrokeCap.Round, pathEffect = leafDash))
+            }
         }
     }
 }

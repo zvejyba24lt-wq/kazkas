@@ -264,7 +264,8 @@ private fun TopHud(c: Conditions, place: String, progress: Progress, baits: Bait
                     Spacer(Modifier.width(8.dp))
                     Column {
                         Text(place, color = K.Text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
-                        Text("${t(S.sky(c.weather.sky))} · ${t(S.phase(c.phase))}", color = K.Muted, fontSize = 11.sp, maxLines = 1)
+                        // Non-breaking spaces inside each part: a long sky name wraps only at the dot.
+                        Text("${t(S.sky(c.weather.sky)).replace(' ', '\u00A0')} · ${t(S.phase(c.phase)).replace(' ', '\u00A0')}", color = K.Muted, fontSize = 11.sp, maxLines = 2)
                     }
                 }
                 Spacer(Modifier.height(8.dp))
@@ -540,7 +541,7 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     CoinIcon(Modifier.size(20.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text(t(S.plusCoins, c.coins * (if (doubled) 2 else 1)), color = K.Gold, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Text(t(S.plusCoins(c.coins * (if (doubled) 2 else 1))), color = K.Gold, fontSize = 16.sp, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.width(14.dp))
                     Text(t(S.plusXp, reward.xp), color = Color(0xFF8FD3FF), fontSize = 16.sp, fontWeight = FontWeight.Bold)
                 }

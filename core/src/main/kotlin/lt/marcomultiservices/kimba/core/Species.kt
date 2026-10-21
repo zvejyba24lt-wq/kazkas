@@ -179,7 +179,7 @@ object Fish {
 
     val flounder = Species(
         "flounder", L("Plekšnė", "Flunder", "Flounder"),
-        L("Smėlėtas dugnas, sutemos, slieka.", "Sandiger Grund, Dämmerung, Wurm.", "Sandy bottom, dusk, worm."),
+        L("Smėlėtas dugnas, sutemos, sliekas.", "Sandiger Grund, Dämmerung, Wurm.", "Sandy bottom, dusk, worm."),
         20, 50, 0.012, 0.35, 0.55, SEA, 0.7, 70,
     ) { c -> c.bell(c.waterTempC, 10.0, 7.0) * c.byPhase(0.8, 0.9, 0.6, 1.0) }
 
