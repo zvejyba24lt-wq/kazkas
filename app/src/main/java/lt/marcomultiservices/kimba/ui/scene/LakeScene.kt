@@ -87,6 +87,11 @@ fun LakeScene(
                 lift.snapTo(0f)
             }
         }
+        // On a bite the fish drags the float sideways as it goes under.
+        val pull = remember { Animatable(0f) }
+        LaunchedEffect(stageNow) {
+            if (stageNow == Stage.BITE) { pull.snapTo(0f); pull.animateTo(1f, tween(600, easing = FastOutSlowInEasing)) } else pull.snapTo(0f)
+        }
         val tensionTarget by remember { derivedStateOf { lake.value.tension } }
         val tension by animateFloatAsState(tensionTarget, tween(90), label = "tension")
 
@@ -136,7 +141,16 @@ fun LakeScene(
                     val l = lift.value
                     Offset(geo.w * (0.58f - 0.06f * l), geo.h * (0.9f - 0.36f * l))
                 }
+                s.stage == Stage.BITE -> Offset(target.x + geo.w * 0.025f * geo.scaleAt(target.y) * pull.value, target.y)
                 else -> target
+            }
+            // The float shakes for a moment after each nibble; bubbles rise where the fish feeds.
+            val nibbleAge = android.os.SystemClock.uptimeMillis() - s.nibbleAt
+            val tremble = if (s.stage == Stage.WAITING && s.nibbleAt > 0 && nibbleAge < 900) 1f - nibbleAge / 900f else 0f
+            val bubbles = when (s.stage) {
+                Stage.WAITING -> if (s.nibbles == 0) 0.08f else (0.2f + 0.18f * s.nibbles).coerceAtMost(0.75f)
+                Stage.BITE -> 1f
+                else -> 0f
             }
             val onWater = s.stage == Stage.WAITING || s.stage == Stage.BITE
             val ripple = when {
@@ -181,7 +195,8 @@ fun LakeScene(
                 drawAim(geo, geo.floatTarget(power.toDouble(), s.castId + 1), t)
             }
             if (onWater && dip > 0.05f) drawFishShadow(geo, floatPos, dip, t, s.bite?.let { (it.cm / 60.0).toFloat() } ?: 0.6f)
-            if (onWater) drawFloatOnWater(geo, floatPos, dip, t, s.stage == Stage.BITE, floatStyle, colors.daylight)
+            if (onWater) drawBubbles(geo, floatPos, t, bubbles)
+            if (onWater) drawFloatOnWater(geo, floatPos, dip, t, s.stage == Stage.BITE, floatStyle, colors.daylight, tremble)
             if (s.stage == Stage.WAITING && splash.value < 1f) drawCastSplash(geo, floatPos, splash.value)
             if (s.stage == Stage.FIGHT) {
                 drawFightSplash(geo, floatPos, t, s.running)

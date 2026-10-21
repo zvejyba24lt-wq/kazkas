@@ -71,17 +71,33 @@ fun DrawScope.drawFloat(center: Offset, height: Float, style: FloatStyle, glow: 
     drawFloatBody(Offset(center.x, center.y), height / 5f, 0f, style, if (glow) 0f else 1f, alpha)
 }
 
-/** The float sitting in the water with spreading rings; it dips with [dip] when a fish touches the bait. */
-internal fun DrawScope.drawFloatOnWater(geo: SceneGeometry, pos: Offset, dip: Float, t: Float, bite: Boolean, style: FloatStyle, daylight: Float) {
+/**
+ * The float sitting in the water with spreading rings; it dips with [dip] when a fish touches
+ * the bait (below 0 it lifts) and shakes and tilts while [tremble] (1 right after a nibble,
+ * fading to 0) lasts. On a bite it leans over as it is pulled under.
+ */
+internal fun DrawScope.drawFloatOnWater(geo: SceneGeometry, pos: Offset, dip: Float, t: Float, bite: Boolean, style: FloatStyle, daylight: Float, tremble: Float = 0f) {
     val u = geo.h * 0.016f * geo.scaleAt(pos.y)
     val bob = sin(t * 2.2f) * u * 0.12f
+    val stir = dip.coerceAtLeast(0f)
     for (k in 0 until 3) {
         val ph = (t * 0.55f + k / 3f) % 1f
-        val r = u * (1.2f + ph * 7f) * (1f + dip)
-        drawOval(Color.White.copy(alpha = (1f - ph) * (0.18f + dip * 0.35f)), Offset(pos.x - r, pos.y - r * 0.3f), Size(r * 2, r * 0.6f), style = Stroke(1.2f + dip * 1.5f))
+        val r = u * (1.2f + ph * 7f) * (1f + stir)
+        drawOval(Color.White.copy(alpha = (1f - ph) * (0.18f + stir * 0.35f)), Offset(pos.x - r, pos.y - r * 0.3f), Size(r * 2, r * 0.6f), style = Stroke(1.2f + stir * 1.5f))
     }
+    // A sharp little ring from each nibble.
+    if (tremble > 0f) {
+        val k = 1f - tremble
+        val r = u * (0.8f + k * 3.5f)
+        drawOval(Color.White.copy(alpha = tremble * 0.6f), Offset(pos.x - r, pos.y - r * 0.3f), Size(r * 2, r * 0.6f), style = Stroke(1.6f))
+    }
+    val shake = tremble * sin(t * 55f) * u * 0.32f
+    val tilt = tremble * sin(t * 38f + 1f) * 10f + (if (bite) 18f * stir.coerceAtMost(1f) else 0f)
     val sink = dip * u * 3.2f + bob
-    clipRect(bottom = pos.y + u * 0.15f) { drawFloatBody(pos, u, sink, style, daylight) }
+    val at = Offset(pos.x + shake, pos.y)
+    clipRect(bottom = pos.y + u * 0.15f) {
+        rotate(tilt, pivot = Offset(at.x, pos.y + sink)) { drawFloatBody(at, u, sink, style, daylight) }
+    }
     drawOval(Color.Black.copy(alpha = 0.15f), Offset(pos.x - u * 0.9f, pos.y - u * 0.15f), Size(u * 1.8f, u * 0.4f))
     if (bite) {
         drawOval(Color.White.copy(alpha = 0.5f), Offset(pos.x - u * 2.2f, pos.y - u * 0.5f), Size(u * 4.4f, u * 1.0f), style = Stroke(2.5f))

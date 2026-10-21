@@ -161,3 +161,40 @@ internal fun DrawScope.drawLandedFish(geo: SceneGeometry, mouth: Offset, t: Floa
         drawCircle(Palette.Spray.copy(alpha = (1f - k) * 0.7f), 2f + 2f * l, Offset(x, y))
     }
 }
+
+/**
+ * Air bubbles rising around the float where a fish is feeding: each one swells on the surface
+ * and pops into a tiny ring. [amount] 0..1 is how busy the fish is (more after nibbles).
+ */
+internal fun DrawScope.drawBubbles(geo: SceneGeometry, pos: Offset, t: Float, amount: Float) {
+    if (amount <= 0f) return
+    val u = geo.h * 0.016f * geo.scaleAt(pos.y)
+    for (i in 0 until 7) {
+        val period = 1.3f + i * 0.31f
+        val x = (t + i * 0.73f) / period
+        val cycle = kotlin.math.floor(x).toInt()
+        val ph = x - cycle
+        if (bubbleHash(cycle * 31 + i * 7) > amount) continue
+        val ang = bubbleHash(cycle * 17 + i * 13 + 5) * 2f * PI.toFloat()
+        val dist = u * (1.0f + bubbleHash(cycle * 11 + i * 3 + 9) * 3.2f)
+        val c = Offset(pos.x + kotlin.math.cos(ang) * dist, pos.y + kotlin.math.sin(ang) * dist * 0.3f)
+        if (ph < 0.6f) {
+            val k = ph / 0.6f
+            val r = u * (0.1f + 0.2f * k)
+            drawCircle(Color.White.copy(alpha = 0.18f + 0.3f * k), r, c)
+            drawCircle(Color.White.copy(alpha = 0.7f), r * 0.35f, Offset(c.x - r * 0.35f, c.y - r * 0.35f))
+        } else {
+            val k = (ph - 0.6f) / 0.4f
+            val r = u * (0.3f + 1.1f * k)
+            drawOval(Color.White.copy(alpha = (1f - k) * 0.45f), Offset(c.x - r, c.y - r * 0.3f), Size(r * 2, r * 0.6f), style = Stroke(1.2f))
+        }
+    }
+}
+
+/** A repeatable pseudo-random 0..1 from an integer, so bubbles need no allocation per frame. */
+private fun bubbleHash(n: Int): Float {
+    var h = n * 374761393 + 668265263
+    h = (h xor (h ushr 13)) * 1274126177
+    h = h xor (h ushr 16)
+    return (h and 0xFFFF) / 65535f
+}

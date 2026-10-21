@@ -22,6 +22,10 @@ data class Progress(
     val lastDay: Long = 0,
     val quests: Quests? = null,
     val noAds: Boolean = false,
+    /** Fish landed in total (the catch log is capped, this is not). */
+    val caught: Int = 0,
+    /** Keys of the [Achievement]s already earned. */
+    val achieved: Set<String> = emptySet(),
 ) {
     val level: Int get() = Levels.levelOf(xp)
     val gear: Gear get() = Gear(lure, rod, reel, line, Upgrade.BOAT.key in owned)
@@ -105,7 +109,7 @@ object Economy {
         val all = done.isNotEmpty() && updated.allDone
         if (all) coins += ALL_QUESTS_COINS
         val before = p.level
-        val next = p.copy(coins = p.coins + coins, xp = p.xp + xp, quests = updated)
+        val next = p.copy(coins = p.coins + coins, xp = p.xp + xp, quests = updated, caught = p.caught + 1)
         return next to Reward(coins, xp, next.level.takeIf { it > before }, done, all)
     }
 }

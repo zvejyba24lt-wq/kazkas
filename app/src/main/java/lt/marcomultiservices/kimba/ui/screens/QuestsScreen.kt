@@ -35,7 +35,12 @@ import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
+import lt.marcomultiservices.kimba.core.Achievement
+import lt.marcomultiservices.kimba.core.Catch
+import lt.marcomultiservices.kimba.core.Fish
+import lt.marcomultiservices.kimba.core.Plural
 import lt.marcomultiservices.kimba.core.Progress
+import lt.marcomultiservices.kimba.ui.fish.FishPicture
 import lt.marcomultiservices.kimba.core.Quest
 import lt.marcomultiservices.kimba.core.QuestKind
 import lt.marcomultiservices.kimba.core.Quests
@@ -89,6 +94,20 @@ fun QuestsScreen(vm: GameViewModel, onBack: () -> Unit) {
                     }
                 }
             }
+            Spacer(Modifier.height(26.dp))
+            SectionTitle(t(S.trophies))
+            Spacer(Modifier.height(10.dp))
+            TrophyWall(saved?.catches ?: emptyList())
+            Spacer(Modifier.height(26.dp))
+            val catches = saved?.catches ?: emptyList()
+            SectionTitle(t(S.achievements) + "  ·  " + t(S.achievementsDone, p.achieved.size, Achievement.entries.size))
+            Spacer(Modifier.height(10.dp))
+            // Earned first, then the closest ones.
+            val sorted = Achievement.entries.sortedWith(compareByDescending<Achievement> { it.key in p.achieved }.thenByDescending { it.progress(p, catches).toFloat() / it.target })
+            for (a in sorted) {
+                AchievementRow(a, a.key in p.achieved, a.progress(p, catches))
+                Spacer(Modifier.height(8.dp))
+            }
         }
     }
 }
@@ -122,5 +141,79 @@ private fun QuestCard(q: Quest) {
             Spacer(Modifier.width(10.dp))
             Text(q.progressText(), color = if (q.done) K.Reed else K.Muted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
         }
+    }
+}
+
+/** The biggest fish of each species, hung on wooden plaques. */
+@Composable
+private fun TrophyWall(catches: List<Catch>) {
+    val lang = LocalLang.current
+    val best = catches.groupBy { it.golden ?: it.species }.values.map { list -> list.maxBy { it.grams } }.sortedByDescending { it.grams }.take(6)
+    val wall = RoundedCornerShape(18.dp)
+    Column(
+        Modifier.fillMaxWidth().clip(wall)
+            .background(Brush.verticalGradient(listOf(Color(0xFF5A3B22), Color(0xFF3E2716))))
+            .border(1.dp, Color(0x66E0B070), wall)
+            .padding(10.dp),
+    ) {
+        if (best.isEmpty()) {
+            Text(t(S.trophiesEmpty), color = Color(0xFFE8D2B0), fontSize = 14.sp, modifier = Modifier.padding(12.dp))
+        }
+        for (row in best.chunked(2)) {
+            Row(Modifier.fillMaxWidth()) {
+                for (c in row) {
+                    val plaque = RoundedCornerShape(14.dp)
+                    Column(
+                        Modifier.weight(1f).padding(4.dp).clip(plaque)
+                            .background(Brush.verticalGradient(listOf(Color(0xFF8A5E36), Color(0xFF6B4527))))
+                            .border(1.dp, if (c.golden != null) K.Gold else Color(0x55FFE0B0), plaque)
+                            .padding(8.dp),
+                        horizontalAlignment = Alignment.CenterHorizontally,
+                    ) {
+                        FishPicture(c.species, c.golden != null, null, Modifier.fillMaxWidth().height(64.dp))
+                        Spacer(Modifier.height(4.dp))
+                        val name = (c.golden?.let { Fish.goldenById(it)?.name } ?: Fish.byId(c.species)?.name)?.get(lang) ?: c.species
+                        Text(name, color = Color(0xFFFFF1DC), fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
+                        Text("${Plural.kg(c.grams, lang)} · ${c.cm.toInt()} cm", color = if (c.golden != null) K.Gold else Color(0xFFE8D2B0), fontSize = 12.sp)
+                    }
+                }
+                if (row.size == 1) Spacer(Modifier.weight(1f))
+            }
+        }
+    }
+}
+
+@Composable
+private fun AchievementRow(a: Achievement, earned: Boolean, value: Int) {
+    val lang = LocalLang.current
+    val shape = RoundedCornerShape(16.dp)
+    Row(
+        Modifier.fillMaxWidth().clip(shape)
+            .background(if (earned) Brush.horizontalGradient(listOf(Color(0x40E0A030), Color(0x10E0A030))) else Brush.horizontalGradient(listOf(Color(0x1FFFFFFF), Color(0x0AFFFFFF))))
+            .border(1.dp, if (earned) Color(0x88E0A030) else K.Line, shape)
+            .padding(12.dp),
+        verticalAlignment = Alignment.CenterVertically,
+    ) {
+        TrophyIcon(Modifier.size(36.dp), earned)
+        Spacer(Modifier.width(12.dp))
+        Column(Modifier.weight(1f)) {
+            Text(a.title[lang], color = K.Text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+            Text(a.text[lang], color = K.Muted, fontSize = 12.sp, lineHeight = 16.sp)
+            if (!earned && a.target > 1) {
+                Spacer(Modifier.height(6.dp))
+                val shown = if (a == Achievement.KILO || a == Achievement.FIVE_KILO || a == Achievement.TEN_KILO) null else "$value/${a.target}"
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Canvas(Modifier.weight(1f).height(6.dp)) {
+                        val r = CornerRadius(3.dp.toPx())
+                        drawRoundRect(Color(0x33FFFFFF), cornerRadius = r)
+                        drawRoundRect(Brush.horizontalGradient(listOf(Color(0xFF8DC26F), K.Amber)), size = Size(size.width * value / a.target.toFloat(), size.height), cornerRadius = r)
+                    }
+                    if (shown != null) { Spacer(Modifier.width(8.dp)); Text(shown, color = K.Muted, fontSize = 11.sp) }
+                }
+            }
+        }
+        Spacer(Modifier.width(8.dp))
+        CoinIcon(Modifier.size(14.dp))
+        Text(" ${a.coins}", color = if (earned) K.Gold else K.Muted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
     }
 }

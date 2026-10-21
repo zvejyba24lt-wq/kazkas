@@ -115,6 +115,8 @@ import lt.marcomultiservices.kimba.core.Sky
 import lt.marcomultiservices.kimba.game.GameViewModel
 import lt.marcomultiservices.kimba.game.LostReason
 import lt.marcomultiservices.kimba.game.Stage
+import lt.marcomultiservices.kimba.game.Tip
+import lt.marcomultiservices.kimba.core.Unlocks
 import lt.marcomultiservices.kimba.game.baitsNow
 import lt.marcomultiservices.kimba.ui.Glass
 import lt.marcomultiservices.kimba.ui.K
@@ -200,10 +202,14 @@ fun LakeScreen(
                 TopHud(c, placeName, progress, saved?.baitsNow(), vm.offline.collectAsStateWithLifecycle().value, onForecast, onSettings)
             }
             Spacer(Modifier.weight(1f))
+            // First-play tips: each shows until the player has done that step once.
+            val known = saved?.tips
+            fun tip(t: Tip) = known != null && t.name !in known
             when (stage) {
-                Stage.WAITING -> Hint(if (lake.hint) t(S.tooEarly) else t(S.waitForBite), warn = lake.hint)
-                Stage.BITE -> StrikeBanner()
-                Stage.FIGHT -> FightHud(lake.tension, lake.fightDistance, lake.running)
+                Stage.IDLE, Stage.CHARGING -> if (tip(Tip.CAST)) Coach(Tip.CAST, arrow = true)
+                Stage.WAITING -> if (!lake.hint && tip(Tip.WAIT)) Coach(Tip.WAIT) else Hint(if (lake.hint) t(S.tooEarly) else t(S.waitForBite), warn = lake.hint)
+                Stage.BITE -> { if (tip(Tip.STRIKE)) Coach(Tip.STRIKE); StrikeBanner() }
+                Stage.FIGHT -> { if (tip(Tip.REEL)) { Coach(Tip.REEL); Spacer(Modifier.height(8.dp)) }; FightHud(lake.tension, lake.fightDistance, lake.running) }
                 else -> Unit
             }
             Spacer(Modifier.height(10.dp))
@@ -304,6 +310,14 @@ private fun TopHud(c: Conditions, place: String, progress: Progress, baits: Bait
                     CoinsLabel(progress.coins)
                     Spacer(Modifier.height(6.dp))
                     LevelBar(progress)
+                    // What the next level opens, so there is always something to fish towards.
+                    Unlocks.next(progress.level)?.let { n ->
+                        Text(
+                            t(S.nextUnlock, n.level, n.names.take(2).joinToString(", ") { t(it) }),
+                            color = K.Muted, fontSize = 10.sp, textAlign = TextAlign.End, maxLines = 2, overflow = TextOverflow.Ellipsis,
+                            modifier = Modifier.padding(top = 3.dp).width(120.dp),
+                        )
+                    }
                     if (baits != null) {
                         Spacer(Modifier.height(8.dp))
                         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -394,6 +408,43 @@ private fun Hint(text: String, warn: Boolean) {
     Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Glass(radius = 30.dp, padding = 12.dp) {
             Text(text, color = if (warn) K.Amber else K.Text, fontSize = 14.sp, textAlign = TextAlign.Center)
+        }
+    }
+}
+
+/** A first-play tip card; [arrow] points down at the cast button. */
+@Composable
+private fun Coach(tip: Tip, arrow: Boolean = false) {
+    val (title, body) = when (tip) {
+        Tip.CAST -> S.tipCastTitle to S.tipCast
+        Tip.WAIT -> S.tipWaitTitle to S.tipWait
+        Tip.STRIKE -> S.tipStrikeTitle to S.tipStrike
+        Tip.REEL -> S.tipReelTitle to S.tipReel
+    }
+    var shown by remember(tip) { mutableStateOf(false) }
+    LaunchedEffect(tip) { shown = true }
+    val bounce by rememberInfiniteTransition(label = "coach").animateFloat(0f, 1f, infiniteRepeatable(tween(700), RepeatMode.Reverse), label = "b")
+    AnimatedVisibility(shown, enter = fadeIn(tween(400)) + scaleIn(tween(400), initialScale = 0.92f)) {
+        Column(Modifier.fillMaxWidth(), horizontalAlignment = Alignment.CenterHorizontally) {
+            Glass(Modifier.fillMaxWidth().border(1.dp, K.Amber.copy(alpha = 0.55f), RoundedCornerShape(22.dp)), radius = 22.dp, padding = 16.dp) {
+                Column {
+                    Text(t(S.tipStep, tip.ordinal + 1), color = K.Amber, fontSize = 11.sp, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(2.dp))
+                    Text(t(title), color = K.Text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.height(4.dp))
+                    Text(t(body), color = K.Text.copy(alpha = 0.88f), fontSize = 14.sp, lineHeight = 19.sp)
+                }
+            }
+            if (arrow) {
+                Canvas(Modifier.padding(top = 4.dp).size(28.dp, 22.dp).graphicsLayer { translationY = bounce * 8.dp.toPx() }) {
+                    val p = androidx.compose.ui.graphics.Path().apply {
+                        moveTo(size.width * 0.1f, size.height * 0.2f)
+                        lineTo(size.width * 0.5f, size.height * 0.8f)
+                        lineTo(size.width * 0.9f, size.height * 0.2f)
+                    }
+                    drawPath(p, K.Amber, style = Stroke(4.dp.toPx(), cap = StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round))
+                }
+            }
         }
     }
 }
@@ -626,6 +677,7 @@ private fun EventDialog(event: GameEvent, onClose: () -> Unit) {
             event.quests.joinToString("\n") { "✓ " + it.text(lang) + "  +" + it.coins } +
                 if (event.all) "\n\n" + t(S.allQuestsDone, Economy.ALL_QUESTS_COINS, Economy.ALL_QUESTS_CASTS) else ""
             )
+        is GameEvent.Achieved -> t(S.achieved) to event.list.joinToString("\n\n") { "🏆 " + it.title[lang] + "\n" + it.text[lang] + "  +" + it.coins }
     }
     val sfx = LocalContext.current.app.sfx
     LaunchedEffect(event) { sfx.play(if (event is GameEvent.LevelUp) Sfx.Fx.LEVEL else Sfx.Fx.COIN) }
@@ -634,6 +686,7 @@ private fun EventDialog(event: GameEvent, onClose: () -> Unit) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 when (event) {
                     is GameEvent.LevelUp -> Text("${event.level}", style = MaterialTheme.typography.displaySmall.copy(fontSize = 56.sp), color = Color(0xFF8FD3FF))
+                    is GameEvent.Achieved -> TrophyIcon(Modifier.size(56.dp))
                     else -> CoinIcon(Modifier.size(48.dp))
                 }
                 Spacer(Modifier.height(8.dp))
@@ -686,5 +739,33 @@ private fun NoCastsCard(baits: Baits?, noAds: Boolean, onBonus: () -> Unit) {
             OutlinedButton(onBonus, modifier = Modifier.fillMaxWidth().height(50.dp)) { Text(t(S.bonusCasts), color = K.Amber) }
             if (!noAds) Text(t(S.bonusNote), color = K.Muted, fontSize = 11.sp, modifier = Modifier.padding(top = 4.dp))
         }
+    }
+}
+
+/** A small gold cup for achievements. */
+@Composable
+fun TrophyIcon(modifier: Modifier, earned: Boolean = true) {
+    Canvas(modifier) {
+        val w = size.width
+        val h = size.height
+        val gold = if (earned) Brush.linearGradient(listOf(Color(0xFFFFE6A0), Color(0xFFE0A030), Color(0xFFB87818)), Offset(0f, 0f), Offset(w, h))
+            else Brush.linearGradient(listOf(Color(0x66FFFFFF), Color(0x33FFFFFF)), Offset(0f, 0f), Offset(w, h))
+        val cup = androidx.compose.ui.graphics.Path().apply {
+            moveTo(w * 0.22f, h * 0.12f)
+            lineTo(w * 0.78f, h * 0.12f)
+            cubicTo(w * 0.78f, h * 0.45f, w * 0.66f, h * 0.6f, w * 0.54f, h * 0.64f)
+            lineTo(w * 0.54f, h * 0.76f)
+            cubicTo(w * 0.62f, h * 0.78f, w * 0.68f, h * 0.82f, w * 0.7f, h * 0.9f)
+            lineTo(w * 0.3f, h * 0.9f)
+            cubicTo(w * 0.32f, h * 0.82f, w * 0.38f, h * 0.78f, w * 0.46f, h * 0.76f)
+            lineTo(w * 0.46f, h * 0.64f)
+            cubicTo(w * 0.34f, h * 0.6f, w * 0.22f, h * 0.45f, w * 0.22f, h * 0.12f)
+            close()
+        }
+        val handles = Stroke(w * 0.06f, cap = StrokeCap.Round)
+        drawArc(gold, 90f, 180f, false, Offset(w * 0.08f, h * 0.18f), Size(w * 0.28f, h * 0.26f), style = handles)
+        drawArc(gold, -90f, 180f, false, Offset(w * 0.64f, h * 0.18f), Size(w * 0.28f, h * 0.26f), style = handles)
+        drawPath(cup, gold)
+        if (earned) drawCircle(Color.White.copy(alpha = 0.55f), w * 0.05f, Offset(w * 0.36f, h * 0.24f))
     }
 }

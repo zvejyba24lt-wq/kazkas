@@ -33,6 +33,8 @@ data class Saved(
     val sound: Boolean = true,
     /** Golden windows already announced, as "id@startMillis", so each is notified once. */
     val notified: Set<String> = emptySet(),
+    /** First-play tips the player has already learned (see `game.Tip`). */
+    val tips: Set<String> = emptySet(),
 )
 
 /** Everything the game remembers, in one DataStore. */
@@ -47,6 +49,7 @@ class Store(private val context: Context) {
     private val kNotify = booleanPreferencesKey("notify")
     private val kSound = booleanPreferencesKey("sound")
     private val kNotified = stringPreferencesKey("notified")
+    private val kTips = stringPreferencesKey("tips")
 
     val flow: Flow<Saved> = context.dataStore.data.map(::read)
 
@@ -63,6 +66,7 @@ class Store(private val context: Context) {
             p[kNotify] = s.notify
             p[kSound] = s.sound
             p[kNotified] = s.notified.takeLast(40).joinToString("|")
+            p[kTips] = s.tips.joinToString("|")
         }
     }
 
@@ -77,6 +81,7 @@ class Store(private val context: Context) {
         notify = p[kNotify] ?: true,
         sound = p[kSound] ?: true,
         notified = p[kNotified]?.split("|")?.filter { it.isNotEmpty() }?.toSet() ?: emptySet(),
+        tips = p[kTips]?.split("|")?.filter { it.isNotEmpty() }?.toSet() ?: emptySet(),
     )
 }
 

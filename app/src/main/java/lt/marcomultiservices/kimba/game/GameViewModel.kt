@@ -17,6 +17,8 @@ import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
 import lt.marcomultiservices.kimba.app
 import lt.marcomultiservices.kimba.audio.Sfx
+import lt.marcomultiservices.kimba.core.Achievement
+import lt.marcomultiservices.kimba.core.Achievements
 import lt.marcomultiservices.kimba.core.Astro
 import lt.marcomultiservices.kimba.core.Baits
 import lt.marcomultiservices.kimba.core.Bite
@@ -55,6 +57,9 @@ enum class Stage { IDLE, CHARGING, FLYING, WAITING, BITE, FIGHT, LANDING, CAUGHT
 
 enum class LostReason { EARLY, MISSED, SNAPPED, ESCAPED }
 
+/** First-play tips, each shown until the player has done that step once. */
+enum class Tip { CAST, WAIT, STRIKE, REEL }
+
 data class LakeState(
     val stage: Stage = Stage.IDLE,
     /** Uptime millis when charging began (the power meter runs from it). */
@@ -63,8 +68,11 @@ data class LakeState(
     val castDist: Double = 0.5,
     /** Increments with every cast, so the float flight animation restarts. */
     val castId: Int = 0,
-    /** How deep the float is pulled: 0 resting, ~0.35 nibble, 1 bite. */
+    /** How deep the float is pulled: 0 resting, ~0.35 nibble, 1 bite; below 0 it lifts. */
     val dip: Float = 0f,
+    /** Uptime millis of the last nibble (the float trembles after it) and how many came so far. */
+    val nibbleAt: Long = 0,
+    val nibbles: Int = 0,
     val tension: Float = 0f,
     val fightDistance: Float = 1f,
     val running: Boolean = false,
@@ -83,6 +91,7 @@ sealed class GameEvent {
     class StreakBonus(val day: Int, val coins: Int, val casts: Int) : GameEvent()
     class LevelUp(val level: Int) : GameEvent()
     class QuestsDone(val quests: List<Quest>, val all: Boolean) : GameEvent()
+    class Achieved(val list: List<Achievement>) : GameEvent()
 }
 
 class GameViewModel(application: Application) : AndroidViewModel(application) {
@@ -166,10 +175,30 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 if (b == null) s else s.copy(progress = p.copy(quests = Quests.today(p.quests, day, p.level)), baits = s.baits.add(b.casts, System.currentTimeMillis(), p.boxSize))
             }
             bonus?.let { b -> _events.update { it + GameEvent.StreakBonus(b.day, b.coins, b.casts) } }
+            checkAchievements()
         }
     }
 
     fun consumeEvent() = _events.update { it.drop(1) }
+
+    /** Pays and announces goals reached outside a catch (streak, trips). */
+    private suspend fun checkAchievements() {
+        var got: List<Achievement> = emptyList()
+        store.update { s ->
+            val (p, new) = Achievements.check(s.progress, s.catches)
+            got = new
+            if (new.isEmpty()) s else s.copy(progress = p)
+        }
+        if (got.isNotEmpty()) _events.update { it + GameEvent.Achieved(got) }
+    }
+
+    /** Remembers that the player has done the step of [tip], so its tip is not shown again. */
+    private fun learn(tip: Tip) {
+        if (tip.name in (_saved.value?.tips ?: emptySet())) return
+        viewModelScope.launch { store.update { it.copy(tips = it.tips + tip.name) } }
+    }
+
+    private fun knows(tip: Tip): Boolean = tip.name in (_saved.value?.tips ?: emptySet())
 
     /** Where the player fishes now: a trip destination or home. */
     fun fishingPlace(s: Saved? = _saved.value): Place? {
@@ -233,7 +262,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private fun afterMove() {
         job?.cancel()
         _lake.value = LakeState(castId = _lake.value.castId)
-        viewModelScope.launch { refresh(force = false) }
+        viewModelScope.launch { checkAchievements(); refresh(force = false) }
     }
 
     /** Reward for watching an ad when the casts are used up. */
@@ -283,7 +312,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             }
             if (!ok) { _lake.value = LakeState(castId = s.castId); return@launch }
             val p = store.current().progress
-            val bite = BiteEngine.roll(c, power, rng, p.spot, p.gear)
+            val rolled = BiteEngine.roll(c, power, rng, p.spot, p.gear)
+            // The very first fish comes soon, after two clear nibbles, so the tips can teach it.
+            val bite = if (knows(Tip.STRIKE)) rolled else
+                Bite(rolled.species, rolled.golden, rolled.cm, rolled.waitSeconds.coerceIn(8.0, 11.0), listOf(3.0, 5.5), rolled.condition)
+            learn(Tip.CAST)
             _lake.value = LakeState(stage = Stage.FLYING, castDist = power, castId = s.castId + 1, bite = bite)
             sfx.play(Sfx.Fx.CAST, 0.7f + 0.3f * power.toFloat())
             delay(FLIGHT_MS)
@@ -302,18 +335,29 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             val next = nibbles.firstOrNull()
             if (next != null && t >= next) {
                 nibbles.removeFirst()
+                // A nibble: two or three quick twitches of the float, then it settles and trembles.
                 buzz(18)
                 sfx.play(Sfx.Fx.NIBBLE, 0.6f, rate = 0.85f + 0.3f * rng.nextFloat())
-                _lake.update { it.copy(dip = 0.3f + rng.nextFloat() * 0.15f) }
-                delay(220)
+                _lake.update { it.copy(nibbleAt = android.os.SystemClock.uptimeMillis(), nibbles = it.nibbles + 1) }
+                repeat(2 + rng.nextInt(2)) {
+                    _lake.update { it.copy(dip = 0.18f + rng.nextFloat() * 0.25f) }
+                    delay(110L + rng.nextInt(70))
+                    _lake.update { it.copy(dip = 0.02f) }
+                    delay(90L + rng.nextInt(80))
+                }
                 _lake.update { it.copy(dip = 0f) }
             }
             delay(30)
         }
+        // Just before the bite the fish lifts the bait: the float rises a little, then goes under.
+        _lake.update { it.copy(dip = -0.22f, nibbleAt = android.os.SystemClock.uptimeMillis()) }
+        delay(260)
         _lake.update { it.copy(stage = Stage.BITE, dip = 1f) }
+        learn(Tip.WAIT)
         buzz(longArrayOf(0, 60, 50, 90))
         sfx.play(Sfx.Fx.BITE, rate = if (bite.pull > 0.6) 0.85f else 1f)
-        delay(if (bite.golden != null || bite.pull > 0.8) 750 else 950)
+        // A beginner gets more time to strike.
+        delay(if (!knows(Tip.STRIKE)) 1700 else if (bite.golden != null || bite.pull > 0.8) 750 else 950)
         if (_lake.value.stage == Stage.BITE) {
             _lake.update { it.copy(stage = Stage.LOST, lost = LostReason.MISSED, dip = 0f) }
         }
@@ -346,6 +390,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val gear = _saved.value?.progress?.gear
         val fight = Fight(bite.pull, rng, gear?.strength ?: 1.0, gear?.reel?.speed ?: 1.0)
         _lake.update { it.copy(stage = Stage.FIGHT, dip = 0f, tension = 0.3f, fightDistance = 1f) }
+        learn(Tip.STRIKE)
         buzz(40)
         sfx.play(Sfx.Fx.SPLASH, 0.45f, rate = 1.2f)
         val reelGap = (120 / (gear?.reel?.speed ?: 1.0)).toLong()
@@ -399,12 +444,16 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val record = !isNew && previous.all { it.cm < base.cm }
         val catch = base.copy(coins = Economy.coins(bite.species, bite.golden, bite.grams))
         var reward: Reward? = null
+        var achieved: List<Achievement> = emptyList()
         store.update { s ->
-            val (p, r) = Economy.land(s.progress, catch, isNew, today())
+            val (landed, r) = Economy.land(s.progress, catch, isNew, today())
             reward = r
-            val baits = if (r.allQuests) s.baits.add(Economy.ALL_QUESTS_CASTS, System.currentTimeMillis(), p.boxSize) else s.baits
             // Keep the log bounded; the book only needs the best and the count per species.
-            s.copy(catches = (s.catches + catch).takeLast(600), progress = p, baits = baits)
+            val catches = (s.catches + catch).takeLast(600)
+            val (p, got) = Achievements.check(landed, catches)
+            achieved = got
+            val baits = if (r.allQuests) s.baits.add(Economy.ALL_QUESTS_CASTS, System.currentTimeMillis(), p.boxSize) else s.baits
+            s.copy(catches = catches, progress = p, baits = baits, tips = s.tips + Tip.REEL.name)
         }
         // The fish comes out of the water on the line, dripping, then its card shows.
         buzz(longArrayOf(0, 40, 60, 40))
@@ -417,6 +466,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             if (r.quests.isNotEmpty()) _events.update { it + GameEvent.QuestsDone(r.quests, r.allQuests) }
             r.levelUp?.let { l -> _events.update { it + GameEvent.LevelUp(l) } }
         }
+        if (achieved.isNotEmpty()) _events.update { it + GameEvent.Achieved(achieved) }
     }
 
     /** Test money and experience for screenshots. */

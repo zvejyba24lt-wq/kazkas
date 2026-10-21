@@ -45,6 +45,37 @@ object S {
     val bonusNote = L("Už trumpą reklamos vaizdo įrašą", "Für ein kurzes Werbevideo", "For a short video ad")
     val lure = L("Masalas", "Köder", "Bait")
 
+    // First-play tips
+    val tipStep = L("Patarimas %d iš 4", "Tipp %d von 4", "Tip %d of 4")
+    val tipCastTitle = L("Užmesk meškerę", "Wirf die Angel aus", "Cast your line")
+    val tipCast = L(
+        "Laikyk mygtuką: meškerė atsilenkia, o žiedas pildosi. Paleisk, ir plūdė nuskris. Kuo pilnesnis žiedas, tuo toliau.",
+        "Halte den Knopf: Die Rute holt aus und der Ring füllt sich. Lass los, und die Pose fliegt. Je voller der Ring, desto weiter.",
+        "Hold the button: the rod swings back and the ring fills. Let go and the float flies. The fuller the ring, the farther.",
+    )
+    val tipWaitTitle = L("Kantrybės", "Geduld", "Patience")
+    val tipWait = L(
+        "Kai plūdė tik virpa ir trūkčioja, žuvis dar tik uostinėja masalą. Nekirsk! Lauk, kol plūdė staiga panirs.",
+        "Zittert und zuckt die Pose nur, knabbert der Fisch erst am Köder. Nicht anschlagen! Warte, bis sie plötzlich abtaucht.",
+        "When the float only trembles and twitches, the fish is just nibbling. Don't strike! Wait until it suddenly goes under.",
+    )
+    val tipStrikeTitle = L("Dabar!", "Jetzt!", "Now!")
+    val tipStrike = L("Plūdė paniro. Bakstelk bet kur ekrane ir kirsk!", "Die Pose ist weg. Tippe irgendwo auf den Bildschirm!", "The float went under. Tap anywhere on the screen!")
+    val tipReelTitle = L("Ištrauk žuvį", "Hol den Fisch raus", "Land the fish")
+    val tipReel = L(
+        "Laikyk pirštą ant ekrano, ir valas vyniojasi. Kai užrašas parausta „Tempia!“, atleisk pirštą, kad valas nenutrūktų.",
+        "Finger auf dem Bildschirm halten, dann kurbelst du. Wird „Er zieht!“ rot, lass los, damit die Schnur nicht reißt.",
+        "Keep your finger on the screen to reel. When “It runs!” turns red, let go so the line doesn't snap.",
+    )
+
+    // Goals
+    val nextUnlock = L("%d lygyje: %s", "Ab Level %d: %s", "At level %d: %s")
+    val achievements = L("Pasiekimai", "Erfolge", "Achievements")
+    val achievementsDone = L("%d iš %d", "%d von %d", "%d of %d")
+    val achieved = L("Pasiekimas!", "Erfolg!", "Achievement!")
+    val trophies = L("Trofėjų siena", "Trophäenwand", "Trophy wall")
+    val trophiesEmpty = L("Čia kabės tavo didžiausios žuvys.", "Hier hängen deine größten Fische.", "Your biggest fish will hang here.")
+
     // Results
     val caught = L("Pagavai!", "Gefangen!", "Caught!")
     val newSpecies = L("Nauja rūšis!", "Neue Art!", "New species!")

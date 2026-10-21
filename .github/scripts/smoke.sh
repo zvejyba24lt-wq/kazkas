@@ -63,6 +63,8 @@ demo -e screen shop; shot 27_parduotuve 4
 adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/5)) 400; shot 28_parduotuve_toliau 2
 demo -e screen map; shot 29_zemelapis 5
 demo -e screen quests; shot 30_uzduotys 3
+adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/8)) 400; shot 30b_trofejai 2
+adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/8)) 400; shot 30c_pasiekimai 2
 demo -e screen forecast; shot 31_prognoze 6
 demo -e screen settings; shot 32_nustatymai 3
 adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/5)) 400; shot 33_nustatymai_toliau 2

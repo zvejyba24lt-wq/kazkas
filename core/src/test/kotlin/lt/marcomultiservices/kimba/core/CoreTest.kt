@@ -334,4 +334,22 @@ class CoreTest {
             }
         }
     }
+
+    @Test
+    fun achievementsPayOnceAndUnlocksMoveOn() {
+        val c = Catch("pike", null, 70.0, 2500, 0L, Sky.THUNDER, 15.0, "x", Water.RIVER)
+        val p0 = Progress(coins = 0)
+        val (p1, got) = Achievements.check(p0, listOf(c))
+        assertTrue(Achievement.FIRST_FISH in got && Achievement.STORM in got && Achievement.RAIN in got && Achievement.KILO in got)
+        assertTrue(Achievement.FIVE_KILO !in got)
+        assertEquals(got.sumOf { it.coins }, p1.coins)
+        assertTrue(Achievements.check(p1, listOf(c)).second.isEmpty())
+        var level = 1
+        while (true) {
+            val n = Unlocks.next(level) ?: break
+            assertTrue(n.level > level && n.names.isNotEmpty())
+            level = n.level
+        }
+        assertTrue(level >= 15)
+    }
 }
