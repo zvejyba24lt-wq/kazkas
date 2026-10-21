@@ -89,7 +89,24 @@ import lt.marcomultiservices.kimba.core.Catch
 import lt.marcomultiservices.kimba.core.Conditions
 import lt.marcomultiservices.kimba.core.DayPhase
 import lt.marcomultiservices.kimba.core.Fish
+import lt.marcomultiservices.kimba.core.Destinations
+import lt.marcomultiservices.kimba.core.Economy
+import lt.marcomultiservices.kimba.core.Levels
 import lt.marcomultiservices.kimba.core.Lure
+import lt.marcomultiservices.kimba.core.Progress
+import lt.marcomultiservices.kimba.core.Reward
+import lt.marcomultiservices.kimba.app
+import lt.marcomultiservices.kimba.findActivity
+import lt.marcomultiservices.kimba.game.GameEvent
+import lt.marcomultiservices.kimba.ui.LocalLang
+import lt.marcomultiservices.kimba.ui.fish.FishPicture
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.style.TextOverflow
+import androidx.compose.foundation.horizontalScroll
+import androidx.compose.foundation.rememberScrollState
+import androidx.compose.material.icons.rounded.Map
+import androidx.compose.material.icons.rounded.Storefront
+import androidx.compose.material.icons.rounded.TaskAlt
 import lt.marcomultiservices.kimba.core.Sky
 import lt.marcomultiservices.kimba.game.GameViewModel
 import lt.marcomultiservices.kimba.game.LostReason
@@ -105,13 +122,32 @@ import lt.marcomultiservices.kimba.ui.t
 import kotlin.math.roundToInt
 
 @Composable
-fun LakeScreen(vm: GameViewModel, onBook: () -> Unit, onForecast: () -> Unit, onSettings: () -> Unit) {
+fun LakeScreen(
+    vm: GameViewModel,
+    onBook: () -> Unit,
+    onForecast: () -> Unit,
+    onSettings: () -> Unit,
+    onMap: () -> Unit,
+    onShop: () -> Unit,
+    onQuests: () -> Unit,
+) {
     val conditions by vm.conditions.collectAsStateWithLifecycle()
     val lakeState = vm.lake.collectAsStateWithLifecycle()
     val lake = lakeState.value
     val saved by vm.saved.collectAsStateWithLifecycle()
     val stage = lake.stage
     var noCasts by remember { mutableStateOf(false) }
+    val context = LocalContext.current
+    val activity = remember(context) { context.findActivity() }
+    val progress = saved?.progress ?: Progress()
+    val events by vm.events.collectAsStateWithLifecycle()
+    /** Rewarded video, or the reward right away for players who bought "no ads". */
+    fun rewarded(then: () -> Unit) {
+        if (progress.noAds || activity == null) then() else context.app.ads.showRewarded(activity, then)
+    }
+    fun next() {
+        if (activity != null && vm.interstitialDue()) context.app.ads.showInterstitial(activity) { vm.dismissResult() } else vm.dismissResult()
+    }
 
     val notifyPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
     val catches = saved?.catches?.size ?: 0
@@ -120,7 +156,7 @@ fun LakeScreen(vm: GameViewModel, onBook: () -> Unit, onForecast: () -> Unit, on
     }
 
     Box(Modifier.fillMaxSize().background(K.Night)) {
-        conditions?.let { LakeScene(it, lakeState, Modifier.fillMaxSize()) }
+        conditions?.let { LakeScene(it, lakeState, Modifier.fillMaxSize(), progress.spot.water, progress.float) }
 
         // Taps on the lake strike; holding during the fight reels in.
         Box(
@@ -138,7 +174,11 @@ fun LakeScreen(vm: GameViewModel, onBook: () -> Unit, onForecast: () -> Unit, on
         )
 
         Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 14.dp, vertical = 8.dp)) {
-            conditions?.let { c -> TopHud(c, saved?.place?.name ?: "", saved?.baitsNow(), vm.offline.collectAsStateWithLifecycle().value) }
+            conditions?.let { c ->
+                val trip = Destinations.byId(progress.trip)
+                val placeName = trip?.let { t(it.name) } ?: "${saved?.place?.name ?: ""} · ${t(progress.water.label)}"
+                TopHud(c, placeName, progress, saved?.baitsNow(), vm.offline.collectAsStateWithLifecycle().value, onForecast, onSettings)
+            }
             Spacer(Modifier.weight(1f))
             when (stage) {
                 Stage.WAITING -> Hint(if (lake.hint) t(S.tooEarly) else t(S.waitForBite), warn = lake.hint)
@@ -148,10 +188,13 @@ fun LakeScreen(vm: GameViewModel, onBook: () -> Unit, onForecast: () -> Unit, on
             }
             Spacer(Modifier.height(10.dp))
             if (stage == Stage.IDLE || stage == Stage.CHARGING) {
-                LureRow(saved?.lure ?: Lure.WORM, enabled = stage == Stage.IDLE) { vm.setLure(it) }
+                LureRow(progress, enabled = stage == Stage.IDLE) { vm.equip(it) }
                 Spacer(Modifier.height(10.dp))
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
-                    NavButton(Icons.Rounded.MenuBook, t(S.book), onBook)
+                    Column {
+                        NavButton(Icons.Rounded.Map, t(S.map), onMap)
+                        NavButton(Icons.Rounded.MenuBook, t(S.book), onBook)
+                    }
                     Spacer(Modifier.weight(1f))
                     CastButton(stage == Stage.CHARGING, lake.chargeStart,
                         onPress = {
@@ -161,28 +204,34 @@ fun LakeScreen(vm: GameViewModel, onBook: () -> Unit, onForecast: () -> Unit, on
                         onRelease = { vm.releaseCast(SystemClock.uptimeMillis()) },
                     )
                     Spacer(Modifier.weight(1f))
-                    Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                        NavButton(Icons.Rounded.Insights, t(S.forecast), onForecast)
+                    Column {
+                        NavButton(Icons.Rounded.Storefront, t(S.shop), onShop)
+                        val quests = progress.quests
+                        val open = quests?.list?.count { !it.done } ?: 3
+                        NavButton(Icons.Rounded.TaskAlt, t(S.quests), onQuests, badge = open.takeIf { it > 0 && quests?.day == java.time.LocalDate.now().toEpochDay() }?.toString())
                     }
-                }
-                Spacer(Modifier.height(6.dp))
-                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.End) {
-                    Icon(Icons.Rounded.Settings, t(S.settings), tint = K.Muted, modifier = Modifier.size(34.dp).clip(CircleShape).clickable(onClick = onSettings).padding(6.dp))
                 }
             }
         }
 
         AnimatedVisibility(stage == Stage.CAUGHT || stage == Stage.LOST, enter = fadeIn() + scaleIn(initialScale = 0.9f), exit = fadeOut()) {
             Box(Modifier.fillMaxSize().background(Color(0x66000000)).clickable(enabled = false) {}, contentAlignment = Alignment.Center) {
-                if (lake.caught != null && stage == Stage.CAUGHT) CatchCard(lake.caught, lake.newSpecies, lake.record) { vm.dismissResult() }
-                else if (lake.lost != null) LostCard(lake.lost) { vm.dismissResult() }
+                if (lake.caught != null && stage == Stage.CAUGHT) {
+                    CatchCard(lake.caught, lake.newSpecies, lake.record, lake.reward, lake.doubled, progress.noAds, onDouble = { rewarded { vm.doubleCoins() } }) { next() }
+                } else if (lake.lost != null) LostCard(lake.lost) { next() }
             }
         }
 
         if (noCasts) {
             Box(Modifier.fillMaxSize().background(Color(0x88000000)).clickable { noCasts = false }, contentAlignment = Alignment.Center) {
-                NoCastsCard(saved?.baitsNow()) { vm.bonusCasts(); noCasts = false }
+                NoCastsCard(saved?.baitsNow(), progress.noAds) { noCasts = false; rewarded { vm.bonusCasts() } }
             }
+        }
+
+        // Celebrations wait until the catch card is closed.
+        val event = events.firstOrNull()
+        if (event != null && stage != Stage.CAUGHT && stage != Stage.FIGHT) {
+            EventDialog(event) { vm.consumeEvent() }
         }
     }
 }
@@ -204,9 +253,9 @@ fun formatDuration(ms: Long): String {
 }
 
 @Composable
-private fun TopHud(c: Conditions, place: String, baits: Baits?, offline: Boolean) {
+private fun TopHud(c: Conditions, place: String, progress: Progress, baits: Baits?, offline: Boolean, onForecast: () -> Unit, onSettings: () -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
-        Glass(padding = 10.dp) {
+        Glass(Modifier.weight(1f, fill = false).clip(RoundedCornerShape(18.dp)).clickable(onClick = onForecast), padding = 10.dp) {
             Column {
                 Row(verticalAlignment = Alignment.CenterVertically) {
                     Icon(skyIcon(c.weather.sky, c.phase), null, tint = K.Amber, modifier = Modifier.size(22.dp))
@@ -214,28 +263,86 @@ private fun TopHud(c: Conditions, place: String, baits: Baits?, offline: Boolean
                     Text("${c.weather.tempC.roundToInt()}°", color = K.Text, fontSize = 22.sp, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.width(8.dp))
                     Column {
-                        Text(place, color = K.Text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                        Text(place, color = K.Text, fontSize = 13.sp, fontWeight = FontWeight.SemiBold, maxLines = 1, overflow = TextOverflow.Ellipsis)
                         Text("${t(S.sky(c.weather.sky))} · ${t(S.phase(c.phase))}", color = K.Muted, fontSize = 11.sp, maxLines = 1)
                     }
                 }
                 Spacer(Modifier.height(8.dp))
-                BiteMeter(Fish.biteIndex(c))
+                Row(verticalAlignment = Alignment.Bottom) {
+                    BiteMeter(Fish.biteIndex(c, progress.spot))
+                    Spacer(Modifier.width(8.dp))
+                    Icon(Icons.Rounded.Insights, t(S.forecast), tint = K.Amber, modifier = Modifier.size(18.dp))
+                }
                 if (offline) Text(t(S.offline), color = K.Muted, fontSize = 10.sp, modifier = Modifier.padding(top = 4.dp).width(190.dp))
             }
         }
-        Spacer(Modifier.weight(1f))
-        if (baits != null) {
+        Spacer(Modifier.width(8.dp))
+        Column(horizontalAlignment = Alignment.End) {
             Glass(padding = 10.dp) {
-                Column(horizontalAlignment = Alignment.CenterHorizontally) {
-                    Row(verticalAlignment = Alignment.CenterVertically) {
-                        Icon(Icons.Rounded.Phishing, null, tint = K.Amber, modifier = Modifier.size(20.dp))
-                        Spacer(Modifier.width(4.dp))
-                        Text("${baits.count}/${Baits.MAX}", color = K.Text, fontSize = 18.sp, fontWeight = FontWeight.Bold)
+                Column(horizontalAlignment = Alignment.End) {
+                    CoinsLabel(progress.coins)
+                    Spacer(Modifier.height(6.dp))
+                    LevelBar(progress)
+                    if (baits != null) {
+                        Spacer(Modifier.height(8.dp))
+                        Row(verticalAlignment = Alignment.CenterVertically) {
+                            Icon(Icons.Rounded.Phishing, null, tint = K.Amber, modifier = Modifier.size(18.dp))
+                            Spacer(Modifier.width(4.dp))
+                            Text("${baits.count}/${progress.boxSize}", color = K.Text, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                            Spacer(Modifier.width(4.dp))
+                            Text(t(S.casts), color = K.Muted, fontSize = 10.sp)
+                        }
+                        baits.nextIn(System.currentTimeMillis(), progress.boxSize)?.let { Text(t(S.nextCastIn, formatDuration(it)), color = K.Muted, fontSize = 10.sp) }
                     }
-                    Text(t(S.casts), color = K.Muted, fontSize = 10.sp)
-                    baits.nextIn(System.currentTimeMillis())?.let { Text(t(S.nextCastIn, formatDuration(it)), color = K.Muted, fontSize = 10.sp) }
                 }
             }
+            Icon(Icons.Rounded.Settings, t(S.settings), tint = K.Text, modifier = Modifier.padding(top = 6.dp).size(38.dp).clip(CircleShape).background(Color(0x80101A28)).clickable(onClick = onSettings).padding(8.dp))
+        }
+    }
+}
+
+@Composable
+fun CoinsLabel(coins: Int, size: Int = 18) {
+    Row(verticalAlignment = Alignment.CenterVertically) {
+        CoinIcon(Modifier.size((size + 2).dp))
+        Spacer(Modifier.width(5.dp))
+        Text("%,d".format(coins).replace(',', ' '), color = K.Gold, fontSize = size.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+/** A small embossed gold coin with a fish on it. */
+@Composable
+fun CoinIcon(modifier: Modifier) {
+    Canvas(modifier) {
+        val r = size.minDimension / 2
+        drawCircle(Brush.linearGradient(listOf(Color(0xFFFFE6A0), Color(0xFFE0A030), Color(0xFFB87818)), Offset(0f, 0f), Offset(size.width, size.height)), r)
+        drawCircle(Color(0xFF8A5A10), r * 0.78f, style = Stroke(r * 0.1f))
+        val p = androidx.compose.ui.graphics.Path().apply {
+            moveTo(center.x - r * 0.45f, center.y)
+            quadraticTo(center.x, center.y - r * 0.38f, center.x + r * 0.3f, center.y)
+            quadraticTo(center.x, center.y + r * 0.38f, center.x - r * 0.45f, center.y)
+            moveTo(center.x + r * 0.28f, center.y)
+            lineTo(center.x + r * 0.5f, center.y - r * 0.2f)
+            lineTo(center.x + r * 0.5f, center.y + r * 0.2f)
+            close()
+        }
+        drawPath(p, Color(0xFF8A5A10))
+    }
+}
+
+@Composable
+fun LevelBar(progress: Progress, width: Int = 120) {
+    val lvl = progress.level
+    val from = Levels.xpFor(lvl)
+    val to = Levels.xpFor(lvl + 1)
+    val f = ((progress.xp - from).toFloat() / (to - from)).coerceIn(0f, 1f)
+    Column(horizontalAlignment = Alignment.End) {
+        Text(t(S.level, lvl), color = K.Text, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(3.dp))
+        Canvas(Modifier.width(width.dp).height(6.dp)) {
+            val cr = androidx.compose.ui.geometry.CornerRadius(3.dp.toPx())
+            drawRoundRect(Color(0x33FFFFFF), cornerRadius = cr)
+            drawRoundRect(Brush.horizontalGradient(listOf(Color(0xFF5B8BD0), Color(0xFF8FD3FF))), size = Size(size.width * f, size.height), cornerRadius = cr)
         }
     }
 }
@@ -312,12 +419,16 @@ private fun FightHud(tension: Float, distance: Float, running: Boolean) {
 }
 
 @Composable
-private fun LureRow(current: Lure, enabled: Boolean, onPick: (Lure) -> Unit) {
-    Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically) {
+private fun LureRow(progress: Progress, enabled: Boolean, onPick: (Lure) -> Unit) {
+    val owned = Lure.entries.filter { progress.owns(it) }
+    Row(
+        Modifier.fillMaxWidth().horizontalScroll(rememberScrollState()),
+        horizontalArrangement = Arrangement.Center, verticalAlignment = Alignment.CenterVertically,
+    ) {
         Text(t(S.lure), color = K.Muted, fontSize = 12.sp)
         Spacer(Modifier.width(8.dp))
-        for (l in Lure.entries) {
-            val sel = l == current
+        for (l in owned) {
+            val sel = l == progress.lure
             Box(
                 Modifier.padding(horizontal = 3.dp).clip(RoundedCornerShape(16.dp))
                     .background(if (sel) K.Amber else Color(0x99101A28))
@@ -332,10 +443,17 @@ private fun LureRow(current: Lure, enabled: Boolean, onPick: (Lure) -> Unit) {
 }
 
 @Composable
-private fun NavButton(icon: ImageVector, label: String, onClick: () -> Unit) {
-    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(84.dp).clip(RoundedCornerShape(14.dp)).clickable(onClick = onClick).padding(6.dp)) {
-        Box(Modifier.size(48.dp).clip(CircleShape).background(Color(0xB3101A28)).border(1.dp, K.Line, CircleShape), contentAlignment = Alignment.Center) {
-            Icon(icon, label, tint = K.Text, modifier = Modifier.size(24.dp))
+private fun NavButton(icon: ImageVector, label: String, onClick: () -> Unit, badge: String? = null) {
+    Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.width(84.dp).clip(RoundedCornerShape(14.dp)).clickable(onClick = onClick).padding(4.dp)) {
+        Box(Modifier.size(50.dp)) {
+            Box(Modifier.size(46.dp).align(Alignment.Center).clip(CircleShape).background(Color(0xB3101A28)).border(1.dp, K.Line, CircleShape), contentAlignment = Alignment.Center) {
+                Icon(icon, label, tint = K.Text, modifier = Modifier.size(24.dp))
+            }
+            if (badge != null) {
+                Box(Modifier.align(Alignment.TopEnd).size(18.dp).clip(CircleShape).background(K.Danger), contentAlignment = Alignment.Center) {
+                    Text(badge, color = Color.White, fontSize = 10.sp, fontWeight = FontWeight.Bold)
+                }
+            }
         }
         Spacer(Modifier.height(4.dp))
         Text(label, color = K.Text, fontSize = 11.sp, maxLines = 1, textAlign = TextAlign.Center)
@@ -385,7 +503,7 @@ private fun CastButton(charging: Boolean, chargeStart: Long, onPress: () -> Unit
 }
 
 @Composable
-private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, onNext: () -> Unit) {
+private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?, doubled: Boolean, noAds: Boolean, onDouble: () -> Unit, onNext: () -> Unit) {
     val species = Fish.byId(c.species) ?: return
     val golden = c.golden?.let { Fish.goldenById(it) }
     val time = lt.marcomultiservices.kimba.ui.scene.rememberSceneTime()
@@ -402,11 +520,7 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, onNext: () -> U
             Text(golden?.name?.let { t(it) } ?: t(species.name), style = MaterialTheme.typography.displaySmall, color = K.Text, textAlign = TextAlign.Center)
             Spacer(Modifier.height(10.dp))
             Box(Modifier.fillMaxWidth().height(170.dp).clip(RoundedCornerShape(18.dp)).background(Brush.radialGradient(listOf(if (golden != null) Color(0x55FFD27A) else Color(0x335B8BD0), Color.Transparent)))) {
-                Canvas(Modifier.fillMaxSize()) {
-                    val bob = kotlin.math.sin(time.floatValue * 1.6f) * 4f
-                    val w = size.width * 0.88f
-                    FishArt.draw(this, c.species, c.golden != null, Rect(Offset((size.width - w) / 2, size.height / 2 - w / 2 + bob), Size(w, w)), time.floatValue)
-                }
+                FishPicture(c.species, c.golden != null, time, Modifier.fillMaxSize())
             }
             Spacer(Modifier.height(12.dp))
             Row(horizontalArrangement = Arrangement.spacedBy(28.dp)) {
@@ -420,8 +534,52 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, onNext: () -> U
                 Spacer(Modifier.height(8.dp))
                 Text(t(species.habit), color = K.Muted, fontSize = 13.sp, textAlign = TextAlign.Center)
             }
-            Spacer(Modifier.height(16.dp))
+            if (reward != null) {
+                Spacer(Modifier.height(12.dp))
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    CoinIcon(Modifier.size(20.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(t(S.plusCoins, c.coins * (if (doubled) 2 else 1)), color = K.Gold, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                    Spacer(Modifier.width(14.dp))
+                    Text(t(S.plusXp, reward.xp), color = Color(0xFF8FD3FF), fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                }
+            }
+            Spacer(Modifier.height(14.dp))
+            if (reward != null && c.coins > 0) {
+                OutlinedButton(onDouble, enabled = !doubled, modifier = Modifier.fillMaxWidth().height(46.dp)) {
+                    Text(if (doubled) t(S.doubled) else if (noAds) t(S.doubleCoinsNoAds) else t(S.doubleCoins), color = K.Gold)
+                }
+                Spacer(Modifier.height(8.dp))
+            }
             Button(onNext, colors = amberButtonColors(), modifier = Modifier.fillMaxWidth().height(50.dp)) { Text(t(S.again)) }
+        }
+    }
+}
+
+@Composable
+private fun EventDialog(event: GameEvent, onClose: () -> Unit) {
+    val (title, body) = when (event) {
+        is GameEvent.StreakBonus -> t(S.streakTitle, event.day) to t(S.streakBody, event.coins, event.casts)
+        is GameEvent.LevelUp -> t(S.levelUp) to t(S.levelUpBody, event.level)
+        is GameEvent.QuestsDone -> t(S.questsDone) to (
+            event.quests.joinToString("\n") { "✓ " + it.text(LocalLang.current) + "  +" + it.coins } +
+                if (event.all) "\n\n" + t(S.allQuestsDone, Economy.ALL_QUESTS_COINS, Economy.ALL_QUESTS_CASTS) else ""
+            )
+    }
+    Box(Modifier.fillMaxSize().background(Color(0x99000000)).clickable(onClick = onClose), contentAlignment = Alignment.Center) {
+        Glass(Modifier.padding(28.dp).fillMaxWidth(), radius = 26.dp, padding = 22.dp) {
+            Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+                when (event) {
+                    is GameEvent.LevelUp -> Text("${event.level}", style = MaterialTheme.typography.displaySmall.copy(fontSize = 56.sp), color = Color(0xFF8FD3FF))
+                    else -> CoinIcon(Modifier.size(48.dp))
+                }
+                Spacer(Modifier.height(8.dp))
+                Text(title, style = MaterialTheme.typography.headlineSmall, color = K.Text, textAlign = TextAlign.Center)
+                Spacer(Modifier.height(8.dp))
+                Text(body, color = K.Muted, fontSize = 14.sp, textAlign = TextAlign.Center)
+                Spacer(Modifier.height(18.dp))
+                Button(onClose, colors = amberButtonColors(), modifier = Modifier.fillMaxWidth().height(50.dp)) { Text(t(S.great)) }
+            }
         }
     }
 }
@@ -453,7 +611,7 @@ private fun LostCard(reason: LostReason, onNext: () -> Unit) {
 }
 
 @Composable
-private fun NoCastsCard(baits: Baits?, onBonus: () -> Unit) {
+private fun NoCastsCard(baits: Baits?, noAds: Boolean, onBonus: () -> Unit) {
     Glass(Modifier.padding(28.dp).fillMaxWidth(), radius = 26.dp, padding = 22.dp) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
             Icon(Icons.Rounded.Air, null, tint = K.Amber, modifier = Modifier.size(36.dp))
@@ -463,7 +621,7 @@ private fun NoCastsCard(baits: Baits?, onBonus: () -> Unit) {
             Text(t(S.noCastsBody, formatDuration(baits?.nextIn(System.currentTimeMillis()) ?: 0)), color = K.Muted, fontSize = 14.sp, textAlign = TextAlign.Center)
             Spacer(Modifier.height(16.dp))
             OutlinedButton(onBonus, modifier = Modifier.fillMaxWidth().height(50.dp)) { Text(t(S.bonusCasts), color = K.Amber) }
-            Text(t(S.bonusNote), color = K.Muted, fontSize = 11.sp, modifier = Modifier.padding(top = 4.dp))
+            if (!noAds) Text(t(S.bonusNote), color = K.Muted, fontSize = 11.sp, modifier = Modifier.padding(top = 4.dp))
         }
     }
 }

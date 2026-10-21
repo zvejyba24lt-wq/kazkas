@@ -24,19 +24,20 @@ import kotlin.coroutines.resume
  * again at most every 45 minutes, as MET's terms ask for caching.
  */
 class WeatherRepo(private val context: Context) {
-    private val file get() = File(context.filesDir, "forecast.json")
-    private val metaFile get() = File(context.filesDir, "forecast.meta")
+    // One file per place, so trips do not throw away the home forecast.
+    private fun file(place: Place) = File(context.filesDir, "forecast_${key(place)}.json")
+    private fun metaFile(place: Place) = File(context.filesDir, "forecast_${key(place)}.meta")
 
     /** The cached forecast for [place], or null. */
     fun cached(place: Place): Forecast? {
-        val meta = runCatching { metaFile.readText().split("|") }.getOrNull() ?: return null
+        val meta = runCatching { metaFile(place).readText().split("|") }.getOrNull() ?: return null
         if (meta.size < 2 || meta[0] != key(place)) return null
-        return runCatching { Forecast.parse(file.readText()) }.getOrNull()
+        return runCatching { Forecast.parse(file(place).readText()) }.getOrNull()
     }
 
     /** Fetches a fresh forecast unless the cached one is recent; returns whatever is best available. */
     suspend fun forecast(place: Place, force: Boolean = false): Forecast? = withContext(Dispatchers.IO) {
-        val meta = runCatching { metaFile.readText().split("|") }.getOrNull()
+        val meta = runCatching { metaFile(place).readText().split("|") }.getOrNull()
         val fresh = meta != null && meta.size >= 2 && meta[0] == key(place) &&
             System.currentTimeMillis() - (meta[1].toLongOrNull() ?: 0) < 45 * 60_000L
         if (fresh && !force) cached(place)?.let { return@withContext it }
@@ -44,8 +45,8 @@ class WeatherRepo(private val context: Context) {
         if (text != null) {
             val parsed = runCatching { Forecast.parse(text) }.getOrNull()
             if (parsed != null && parsed.hours.isNotEmpty()) {
-                file.writeText(text)
-                metaFile.writeText("${key(place)}|${System.currentTimeMillis()}")
+                file(place).writeText(text)
+                metaFile(place).writeText("${key(place)}|${System.currentTimeMillis()}")
                 return@withContext parsed
             }
         }

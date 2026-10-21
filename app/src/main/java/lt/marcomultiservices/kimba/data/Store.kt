@@ -15,6 +15,7 @@ import kotlinx.serialization.json.Json
 import lt.marcomultiservices.kimba.core.Baits
 import lt.marcomultiservices.kimba.core.Catch
 import lt.marcomultiservices.kimba.core.Lure
+import lt.marcomultiservices.kimba.core.Progress
 
 private val Context.dataStore by preferencesDataStore("kimba")
 
@@ -26,7 +27,7 @@ data class Saved(
     val place: Place? = null,
     val baits: Baits = Baits(Baits.MAX, 0),
     val catches: List<Catch> = emptyList(),
-    val lure: Lure = Lure.WORM,
+    val progress: Progress = Progress(),
     val notify: Boolean = true,
     /** Golden windows already announced, as "id@startMillis", so each is notified once. */
     val notified: Set<String> = emptySet(),
@@ -34,12 +35,13 @@ data class Saved(
 
 /** Everything the game remembers, in one DataStore. */
 class Store(private val context: Context) {
-    private val json = Json { ignoreUnknownKeys = true }
+    private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
     private val kOnboarded = booleanPreferencesKey("onboarded")
     private val kPlace = stringPreferencesKey("place")
     private val kBaits = stringPreferencesKey("baits")
     private val kCatches = stringPreferencesKey("catches")
     private val kLure = stringPreferencesKey("lure")
+    private val kProgress = stringPreferencesKey("progress")
     private val kNotify = booleanPreferencesKey("notify")
     private val kNotified = stringPreferencesKey("notified")
 
@@ -54,7 +56,7 @@ class Store(private val context: Context) {
             if (s.place != null) p[kPlace] = json.encodeToString(Place.serializer(), s.place) else p.remove(kPlace)
             p[kBaits] = json.encodeToString(Baits.serializer(), s.baits)
             p[kCatches] = json.encodeToString(ListSerializer(Catch.serializer()), s.catches)
-            p[kLure] = s.lure.name
+            p[kProgress] = json.encodeToString(Progress.serializer(), s.progress)
             p[kNotify] = s.notify
             p[kNotified] = s.notified.takeLast(40).joinToString("|")
         }
@@ -67,7 +69,7 @@ class Store(private val context: Context) {
         place = p[kPlace]?.let { runCatching { json.decodeFromString(Place.serializer(), it) }.getOrNull() },
         baits = p[kBaits]?.let { runCatching { json.decodeFromString(Baits.serializer(), it) }.getOrNull() } ?: Baits(Baits.MAX, 0),
         catches = p[kCatches]?.let { runCatching { json.decodeFromString(ListSerializer(Catch.serializer()), it) }.getOrNull() } ?: emptyList(),
-        lure = p[kLure]?.let { n -> Lure.entries.firstOrNull { it.name == n } } ?: Lure.WORM,
+        progress = p[kProgress]?.let { runCatching { json.decodeFromString(Progress.serializer(), it) }.getOrNull() } ?: Progress(),
         notify = p[kNotify] ?: true,
         notified = p[kNotified]?.split("|")?.filter { it.isNotEmpty() }?.toSet() ?: emptySet(),
     )

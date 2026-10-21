@@ -13,6 +13,9 @@ import androidx.work.WorkerParameters
 import lt.marcomultiservices.kimba.MainActivity
 import lt.marcomultiservices.kimba.R
 import lt.marcomultiservices.kimba.app
+import lt.marcomultiservices.kimba.core.Fish
+import lt.marcomultiservices.kimba.core.Spot
+import lt.marcomultiservices.kimba.core.Water
 import lt.marcomultiservices.kimba.core.Windows
 import lt.marcomultiservices.kimba.ui.S
 import lt.marcomultiservices.kimba.ui.currentLang
@@ -33,7 +36,10 @@ class BiteWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         val forecast = ctx.app.weather.forecast(place) ?: return Result.retry()
         val now = System.currentTimeMillis()
         val zone = ZoneId.systemDefault()
-        val window = Windows.golden(forecast, now, place.lat, place.lon, zone, hours = 3)
+        // Home waters the player has opened (trips have their own weather and are not watched).
+        val level = saved.progress.level
+        val goldens = Fish.goldens.filter { g -> Water.entries.any { it.homeLevel <= level && g.base.livesAt(Spot(it)) } }
+        val window = Windows.golden(forecast, now, place.lat, place.lon, zone, hours = 3, goldens = goldens)
             .firstOrNull { it.startMillis <= now + 2 * 3_600_000L && "${it.golden.id}@${it.startMillis}" !in saved.notified }
             ?: return Result.success()
         if (Build.VERSION.SDK_INT >= 33 &&

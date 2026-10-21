@@ -18,7 +18,13 @@ class WaterShader {
     fun update(
         width: Float, height: Float, horizon: Float, time: Float, colors: SceneColors,
         sunX: Float, floatX: Float, floatY: Float, ripple: Float,
+        /** River current speed (0 still water). */
+        flow: Float = 0f,
+        /** Open-sea swell (0 inland). */
+        swell: Float = 0f,
     ) {
+        shader.setFloatUniform("flow", flow)
+        shader.setFloatUniform("swell", swell)
         shader.setFloatUniform("res", width, height)
         shader.setFloatUniform("horizon", horizon)
         shader.setFloatUniform("time", time)
@@ -44,6 +50,8 @@ uniform float wind;
 uniform float sunX;
 uniform float glow;
 uniform float3 floatP;
+uniform float flow;
+uniform float swell;
 layout(color) uniform half4 skyTop;
 layout(color) uniform half4 skyHor;
 layout(color) uniform half4 deep;
@@ -65,12 +73,15 @@ half4 main(float2 p) {
     float y = max(wy, 0.002);
     float z = 1.0 / (y + 0.04);
     float2 q = float2((p.x / res.x - 0.5) * z * 4.0, z * 2.2);
+    // A river carries the whole wave pattern sideways; the sea adds a long swell.
+    q.x -= time * flow;
     float t = time * (0.6 + wind * 0.08);
     float e = 0.04;
     float h0 = waves(q, t);
     float hx = waves(q + float2(e, 0.0), t) - h0;
     float hy = waves(q + float2(0.0, e), t) - h0;
-    float amp = (0.05 + wind * 0.012) * smoothstep(0.0, 0.12, y);
+    float amp = (0.05 + wind * 0.012 + swell * 0.05) * smoothstep(0.0, 0.12, y);
+    h0 += swell * 0.6 * sin(q.y * 0.9 - time * 1.1 + sin(q.x * 0.3) * 0.8);
     float2 n = float2(hx, hy) / e * amp;
 
     if (rain > 0.0) {
@@ -104,6 +115,16 @@ half4 main(float2 p) {
     // Small glints of skylight on wave crests in daylight.
     float glint = smoothstep(0.9, 1.0, h0 * 0.5 + 0.5 + n.y * 3.0) * float(lightCol.a) * 0.12 * (1.0 - y);
     col += glint;
+
+    // White caps on the sea, current streaks on the river.
+    if (swell > 0.0) {
+        float cap = smoothstep(0.82, 1.0, h0 * 0.42 + 0.5 + n.y * 2.0) * swell * smoothstep(0.02, 0.3, y);
+        col = mix(col, float3(0.92, 0.95, 0.97) * (0.5 + 0.5 * float(lightCol.a)), cap * 0.7);
+    }
+    if (flow > 0.0) {
+        float streak = smoothstep(0.93, 1.0, sin(q.x * 0.8 + sin(q.y * 3.0) * 0.6) * 0.5 + 0.5) * smoothstep(0.05, 0.4, y);
+        col += streak * 0.06 * (0.3 + float(lightCol.a));
+    }
 
     col *= 1.0 - y * 0.22;
     return half4(half3(col), 1.0);

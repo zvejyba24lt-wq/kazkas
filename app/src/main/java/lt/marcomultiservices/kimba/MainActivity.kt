@@ -9,6 +9,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import lt.marcomultiservices.kimba.ads.AdsConsent
 import lt.marcomultiservices.kimba.data.Places
 import lt.marcomultiservices.kimba.game.GameViewModel
 import lt.marcomultiservices.kimba.ui.AppRoot
@@ -26,6 +27,9 @@ class MainActivity : AppCompatActivity() {
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
         handleDemo(intent)
+        // Screenshot runs on the emulator skip the consent form so it cannot cover the game.
+        if (!(BuildConfig.DEMO_HOOKS && intent?.getBooleanExtra("noConsent", false) == true)) AdsConsent.gather(this) { app.ads.preload() }
+        app.billing.connect()
         val lang = currentLang(this)
         setContent {
             CompositionLocalProvider(LocalLang provides lang) {
@@ -41,11 +45,16 @@ class MainActivity : AppCompatActivity() {
 
     /**
      * Demo and screenshot hooks: `-e place Vilnius`, `-e scene storm|dawnfog|night|snow|rain|dusk|day|live`,
-     * `-e catch moon_pike`, `-e fight pike`, `-e screen book|forecast|settings|lake`.
+     * `-e catch moon_pike`, `-e fight pike`, `-e screen book|forecast|settings|lake|shop|map|quests`,
+     * `-e water lake|pond|river|sea`, `-e trip bodensee`, `--ei coins 50000 --ei xp 20000` (test money).
      */
     private fun handleDemo(intent: Intent?) {
+        if (!BuildConfig.DEMO_HOOKS) return
         val extras = intent?.extras ?: return
         extras.getString("place")?.let { name -> Places.cities.firstOrNull { it.name == name }?.let { vm.choosePlace(it) } }
+        if (extras.containsKey("coins") || extras.containsKey("xp")) vm.demoProgress(extras.getInt("coins", -1), extras.getInt("xp", -1))
+        extras.getString("water")?.let { w -> lt.marcomultiservices.kimba.core.Water.entries.firstOrNull { it.name.equals(w, true) }?.let { vm.goHome(it) } }
+        extras.getString("trip")?.let { id -> lt.marcomultiservices.kimba.core.Destinations.byId(id)?.let { vm.demoTrip(it) } }
         extras.getString("scene")?.let { vm.setDemo(it.takeIf { s -> s != "live" }) }
         extras.getString("catch")?.let { vm.showDemoCatch(it) }
         extras.getString("fight")?.let { vm.demoFight(it) }

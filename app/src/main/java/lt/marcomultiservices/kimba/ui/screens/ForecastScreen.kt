@@ -59,15 +59,17 @@ import kotlin.math.roundToInt
 fun ForecastScreen(vm: GameViewModel, onBack: () -> Unit) {
     val c by vm.conditions.collectAsStateWithLifecycle()
     val forecast by vm.forecast.collectAsStateWithLifecycle()
-    val windows = remember(forecast, c) { vm.goldenWindows() }
+    val saved by vm.saved.collectAsStateWithLifecycle()
+    val spot = saved?.progress?.spot ?: lt.marcomultiservices.kimba.core.Spot.HOME_LAKE
+    val windows = remember(forecast, c, spot) { vm.goldenWindows() }
     ScreenFrame(t(S.forecast), onBack) {
         val cond = c ?: return@ScreenFrame
         Column(Modifier.verticalScroll(rememberScrollState()).navigationBarsPadding().padding(16.dp, 4.dp, 16.dp, 24.dp)) {
-            NowCard(cond)
+            NowCard(cond, spot)
             Spacer(Modifier.height(18.dp))
             SectionTitle(t(S.activeNow))
             Spacer(Modifier.height(8.dp))
-            ActiveFish(cond)
+            ActiveFish(cond, spot)
             Text(t(S.nearFar), color = K.Muted, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
             Spacer(Modifier.height(18.dp))
             SectionTitle(t(S.goldenWindows))
@@ -88,7 +90,7 @@ fun ForecastScreen(vm: GameViewModel, onBack: () -> Unit) {
 }
 
 @Composable
-private fun NowCard(c: Conditions) {
+private fun NowCard(c: Conditions, spot: lt.marcomultiservices.kimba.core.Spot) {
     val shape = RoundedCornerShape(20.dp)
     Column(Modifier.fillMaxWidth().clip(shape).background(Brush.verticalGradient(listOf(Color(0x332F6FBF), Color(0x14FFFFFF)))).border(1.dp, K.Line, shape).padding(16.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
@@ -96,7 +98,7 @@ private fun NowCard(c: Conditions) {
             Spacer(Modifier.width(12.dp))
             Column {
                 Text("${c.weather.tempC.roundToInt()}° · ${t(S.sky(c.weather.sky))}", style = MaterialTheme.typography.headlineSmall, color = K.Text)
-                Text("${t(S.phase(c.phase))} · ${t(S.biteIndex)} ${Fish.biteIndex(c)}", color = K.Muted, fontSize = 13.sp)
+                Text("${t(S.phase(c.phase))} · ${t(S.biteIndex)} ${Fish.biteIndex(c, spot)}", color = K.Muted, fontSize = 13.sp)
             }
         }
         Spacer(Modifier.height(14.dp))
@@ -141,8 +143,8 @@ private fun Fact(label: String, value: String) {
 }
 
 @Composable
-private fun ActiveFish(c: Conditions) {
-    val act = remember(c) { Fish.activities(c).entries.sortedByDescending { it.value }.take(5) }
+private fun ActiveFish(c: Conditions, spot: lt.marcomultiservices.kimba.core.Spot) {
+    val act = remember(c, spot) { Fish.activities(c, spot).entries.sortedByDescending { it.value }.take(5) }
     val max = act.first().value
     act.forEach { (s, a) ->
         Row(Modifier.fillMaxWidth().padding(vertical = 4.dp), verticalAlignment = Alignment.CenterVertically) {

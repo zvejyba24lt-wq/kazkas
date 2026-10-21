@@ -96,6 +96,33 @@ class SceneGeometry(val w: Float, val h: Float) {
         Lily(w * 0.36f, h * 0.66f, w * 0.026f, 5.2f, false),
     )
 
+    /** A pond is full of lilies. */
+    val pondLilies: List<Lily> = lilies + listOf(
+        Lily(w * 0.58f, h * 0.70f, w * 0.035f, 3.0f, true),
+        Lily(w * 0.47f, h * 0.62f, w * 0.022f, 0.9f, false),
+        Lily(w * 0.28f, h * 0.62f, w * 0.02f, 2.6f, true),
+        Lily(w * 0.62f, h * 0.60f, w * 0.018f, 4.4f, false),
+        Lily(w * 0.9f, h * 0.68f, w * 0.03f, 5.6f, true),
+        Lily(w * 0.4f, h * 0.555f, w * 0.014f, 1.7f, false),
+    )
+
+    class Willow(val x: Float, val top: Float, val size: Float, val lean: Float, val depth: Float, val strands: List<Pair<Float, Float>>)
+
+    val willows: List<Willow> = listOf(
+        Triple(w * 0.04f, h * 0.17f, 0f), Triple(w * 0.97f, h * 0.15f, 0f), Triple(w * 0.22f, h * 0.09f, 0.3f), Triple(w * 0.8f, h * 0.1f, 0.3f),
+    ).map { (x, size, depth) ->
+        Willow(x, hy - size * 1.15f, size, (if (x < w / 2) 1 else -1) * size * 0.15f, depth, List(14) { (rnd.nextFloat() - 0.5f) * 2f to (0.5f + rnd.nextFloat() * 0.5f) })
+    }
+
+    class Stone(val x: Float, val y: Float, val r: Float)
+    class Leaf(val x: Float, val y: Float, val speed: Float, val phase: Float)
+
+    val stones: List<Stone> = listOf(
+        Stone(w * 0.72f, h * 0.79f, w * 0.05f), Stone(w * 0.83f, h * 0.75f, w * 0.032f), Stone(w * 0.62f, h * 0.83f, w * 0.03f),
+        Stone(w * 0.35f, h * 0.65f, w * 0.018f), Stone(w * 0.9f, h * 0.71f, w * 0.022f),
+    )
+    val leaves: List<Leaf> = List(7) { Leaf(rnd.nextFloat() * 1.2f, hy + h * (0.04f + rnd.nextFloat() * 0.3f), 0.012f + rnd.nextFloat() * 0.01f, rnd.nextFloat() * 6.28f) }
+
     val drops: List<Drop> = List(220) { Drop(rnd.nextFloat() * 1.2f - 0.1f, rnd.nextFloat(), 1.5f + rnd.nextFloat() * 1.0f, h * (0.025f + rnd.nextFloat() * 0.03f)) }
     val flakes: List<Drop> = List(160) { Drop(rnd.nextFloat(), rnd.nextFloat(), 0.05f + rnd.nextFloat() * 0.07f, 1.2f + rnd.nextFloat() * 2.4f) }
     val flies: List<Fly> = List(16) { Fly(w * (0.05f + rnd.nextFloat() * 0.9f), hy + h * (0.02f + rnd.nextFloat() * 0.25f), w * (0.02f + rnd.nextFloat() * 0.05f), h * (0.01f + rnd.nextFloat() * 0.03f), rnd.nextFloat() * 6.28f) }

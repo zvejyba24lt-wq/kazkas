@@ -45,7 +45,9 @@ import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import lt.marcomultiservices.kimba.core.Catch
+import lt.marcomultiservices.kimba.core.Destinations
 import lt.marcomultiservices.kimba.core.Fish
+import lt.marcomultiservices.kimba.core.Water
 import lt.marcomultiservices.kimba.game.GameViewModel
 import lt.marcomultiservices.kimba.ui.K
 import lt.marcomultiservices.kimba.ui.S
@@ -85,7 +87,9 @@ fun BookScreen(vm: GameViewModel, onBack: () -> Unit) {
             }
             items(Fish.all, key = { it.id }) { s ->
                 val mine = catches.filter { it.species == s.id && it.golden == null }
-                FishCard(s.id, false, t(s.name), t(s.habit), mine, time.floatValue)
+                val where = s.onlyAt?.mapNotNull { Destinations.byId(it) }?.joinToString { t(it.name) }
+                    ?: Water.entries.filter { it in s.waters }.joinToString { t(it.label) }
+                FishCard(s.id, false, t(s.name), t(s.habit), mine, time, where)
             }
             item {
                 Spacer(Modifier.height(18.dp))
@@ -94,14 +98,14 @@ fun BookScreen(vm: GameViewModel, onBack: () -> Unit) {
             }
             items(Fish.goldens, key = { it.id }) { g ->
                 val mine = catches.filter { it.golden == g.id }
-                FishCard(g.base.id, true, t(g.name), t(g.condition), mine, time.floatValue)
+                FishCard(g.base.id, true, t(g.name), t(g.condition), mine, time)
             }
         }
     }
 }
 
 @Composable
-private fun FishCard(species: String, golden: Boolean, name: String, note: String, mine: List<Catch>, time: Float) {
+private fun FishCard(species: String, golden: Boolean, name: String, note: String, mine: List<Catch>, timeState: androidx.compose.runtime.MutableFloatState, where: String? = null) {
     val known = mine.isNotEmpty()
     val shape = RoundedCornerShape(18.dp)
     Row(
@@ -111,14 +115,12 @@ private fun FishCard(species: String, golden: Boolean, name: String, note: Strin
             .padding(12.dp),
         verticalAlignment = Alignment.CenterVertically,
     ) {
-        Canvas(Modifier.width(118.dp).height(64.dp)) {
-            val w = size.width * 0.95f
-            FishArt(this, species, golden, Rect(Offset((size.width - w) / 2, size.height / 2 - w / 2), Size(w, w)), if (known) time else 0f, silhouette = !known)
-        }
+        lt.marcomultiservices.kimba.ui.fish.FishPicture(species, golden, timeState.takeIf { known }, Modifier.width(118.dp).height(64.dp), silhouette = !known)
         Spacer(Modifier.width(12.dp))
         Column(Modifier.weight(1f)) {
             Text(if (known || golden) name else "???", color = if (golden) K.Gold else K.Text, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)
             Text(note, color = K.Muted, fontSize = 12.sp, lineHeight = 16.sp)
+            if (where != null) Text(where, color = Color(0xFF8FD3FF), fontSize = 11.sp)
             Spacer(Modifier.height(4.dp))
             if (known) {
                 val best = mine.maxBy { it.cm }
@@ -131,6 +133,3 @@ private fun FishCard(species: String, golden: Boolean, name: String, note: Strin
         }
     }
 }
-
-private fun FishArt(scope: androidx.compose.ui.graphics.drawscope.DrawScope, species: String, golden: Boolean, rect: Rect, time: Float, silhouette: Boolean) =
-    lt.marcomultiservices.kimba.ui.fish.FishArt.draw(scope, species, golden, rect, time, silhouette)

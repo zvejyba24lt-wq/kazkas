@@ -20,10 +20,13 @@ import lt.marcomultiservices.kimba.game.GameViewModel
 import lt.marcomultiservices.kimba.ui.screens.BookScreen
 import lt.marcomultiservices.kimba.ui.screens.ForecastScreen
 import lt.marcomultiservices.kimba.ui.screens.LakeScreen
+import lt.marcomultiservices.kimba.ui.screens.MapScreen
+import lt.marcomultiservices.kimba.ui.screens.QuestsScreen
+import lt.marcomultiservices.kimba.ui.screens.ShopScreen
 import lt.marcomultiservices.kimba.ui.screens.SettingsScreen
 import lt.marcomultiservices.kimba.ui.screens.WelcomeScreen
 
-enum class Screen { LAKE, BOOK, FORECAST, SETTINGS }
+enum class Screen { LAKE, BOOK, FORECAST, SETTINGS, SHOP, MAP, QUESTS }
 
 @Composable
 fun AppRoot(vm: GameViewModel, startScreen: Pair<Screen, Long>?) {
@@ -39,7 +42,13 @@ fun AppRoot(vm: GameViewModel, startScreen: Pair<Screen, Long>?) {
     BackHandler(screen != Screen.LAKE) { screen = Screen.LAKE }
     AnimatedContent(screen, transitionSpec = { fadeIn() togetherWith fadeOut() }, label = "screen") { current ->
         when (current) {
-            Screen.LAKE -> LakeScreen(vm, { screen = Screen.BOOK }, { screen = Screen.FORECAST }, { screen = Screen.SETTINGS })
+            Screen.LAKE -> LakeScreen(
+                vm, { screen = Screen.BOOK }, { screen = Screen.FORECAST }, { screen = Screen.SETTINGS },
+                { screen = Screen.MAP }, { screen = Screen.SHOP }, { screen = Screen.QUESTS },
+            )
+            Screen.SHOP -> ShopScreen(vm) { screen = Screen.LAKE }
+            Screen.MAP -> MapScreen(vm, { screen = Screen.LAKE }) { screen = Screen.LAKE }
+            Screen.QUESTS -> QuestsScreen(vm) { screen = Screen.LAKE }
             Screen.BOOK -> BookScreen(vm) { screen = Screen.LAKE }
             Screen.FORECAST -> ForecastScreen(vm) { screen = Screen.LAKE }
             Screen.SETTINGS -> SettingsScreen(vm) { screen = Screen.LAKE }

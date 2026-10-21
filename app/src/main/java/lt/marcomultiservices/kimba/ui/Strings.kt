@@ -41,7 +41,7 @@ object S {
     val noCasts = L("Užmetimai baigėsi", "Keine Würfe mehr", "Out of casts")
     val noCastsBody = L("Naujas užmetimas atsiras po %s.", "Ein neuer Wurf kommt in %s.", "A new cast arrives in %s.")
     val bonusCasts = L("+3 užmetimai", "+3 Würfe", "+3 casts")
-    val bonusNote = L("Vėliau – už trumpą reklamą", "Später – für ein kurzes Werbevideo", "Later – for a short ad")
+    val bonusNote = L("Už trumpą reklamos vaizdo įrašą", "Für ein kurzes Werbevideo", "For a short video ad")
     val lure = L("Masalas", "Köder", "Bait")
 
     // Results
@@ -101,12 +101,73 @@ object S {
     val language = L("Kalba", "Sprache", "Language")
     val phoneLanguage = L("Kaip telefone", "Wie am Handy", "Phone language")
     val notifications = L("Pranešimai apie auksinių žuvų langus", "Hinweise auf Zeitfenster für goldene Fische", "Alerts for golden fish windows")
-    val prototype = L(
-        "Prototipas. Reklamos, parduotuvės ir kitų vandenų dar nėra.",
-        "Prototyp. Werbung, Shop und weitere Gewässer kommen später.",
-        "Prototype. Ads, shop and more waters come later.",
+    val noAds = L("Be reklamos", "Werbefrei", "No ads")
+    val noAdsBody = L(
+        "Vienkartinis pirkinys: jokių reklamų tarp žuvų. Papildomi užmetimai ir dvigubos monetos lieka – be vaizdo įrašų.",
+        "Einmalkauf: keine Werbung zwischen den Fängen. Extra-Würfe und doppelte Münzen gibt es weiter – ohne Video.",
+        "One-time purchase: no ads between catches. Extra casts and double coins stay – without videos.",
     )
+    val buy = L("Pirkti", "Kaufen", "Buy")
+    val bought = L("Nupirkta – ačiū!", "Gekauft – danke!", "Purchased – thank you!")
+    val notAvailable = L("Pirkimas galimas tik įdiegus iš Google Play.", "Kauf nur in der Version aus Google Play möglich.", "Purchase only available when installed from Google Play.")
+    val privacyOptions = L("Reklamos sutikimo nustatymai", "Werbe-Einwilligung ändern", "Ad consent settings")
+    val privacyPolicy = L("Privatumo politika", "Datenschutzerklärung", "Privacy policy")
     val back = L("Atgal", "Zurück", "Back")
+
+    // Progress
+    val level = L("Lygis %d", "Level %d", "Level %d")
+    val coins = L("Monetos", "Münzen", "Coins")
+    val levelUp = L("Naujas lygis!", "Neues Level!", "Level up!")
+    val levelUpBody = L("Pasiekei %d lygį. Parduotuvėje ir žemėlapyje atsirado naujų dalykų.", "Du hast Level %d erreicht. Im Shop und auf der Karte gibt es Neues.", "You reached level %d. New things are waiting in the shop and on the map.")
+    val streakTitle = L("%d diena iš eilės!", "Tag %d in Folge!", "Day %d in a row!")
+    val streakBody = L("Grįžimo dovana: +%d monetų ir +%d užmetimai. Ateik ir rytoj – dovana augs iki 7 dienos.", "Willkommensgeschenk: +%d Münzen und +%d Würfe. Komm morgen wieder – es wächst bis Tag 7.", "Welcome back gift: +%d coins and +%d casts. Come back tomorrow – it grows until day 7.")
+    val questsDone = L("Užduotis įvykdyta!", "Aufgabe erledigt!", "Quest complete!")
+    val allQuestsDone = L("Visos dienos užduotys įvykdytos: +%d monetų ir +%d užmetimai!", "Alle Tagesaufgaben erledigt: +%d Münzen und +%d Würfe!", "All daily quests done: +%d coins and +%d casts!")
+    val great = L("Puiku!", "Super!", "Great!")
+    val plusCoins = L("+%d monetų", "+%d Münzen", "+%d coins")
+    val plusXp = L("+%d patirties", "+%d EP", "+%d XP")
+    val doubleCoins = L("×2 monetos už reklamą", "×2 Münzen für ein Video", "×2 coins for a video")
+    val doubleCoinsNoAds = L("×2 monetos", "×2 Münzen", "×2 coins")
+    val doubled = L("Monetos padvigubintos!", "Münzen verdoppelt!", "Coins doubled!")
+
+    // Quests
+    val quests = L("Užduotys", "Aufgaben", "Quests")
+    val questsTitle = L("Dienos užduotys", "Tagesaufgaben", "Daily quests")
+    val questsNote = L("Naujos užduotys kasdien vidurnaktį. Įvykdžius visas tris: +300 monetų ir +3 užmetimai.", "Jeden Tag um Mitternacht neue Aufgaben. Alle drei erledigt: +300 Münzen und +3 Würfe.", "New quests every day at midnight. Finish all three: +300 coins and +3 casts.")
+    val streakNow = L("Serija: %d d.", "Serie: %d T.", "Streak: %d d")
+
+    // Shop
+    val shop = L("Parduotuvė", "Shop", "Shop")
+    val shopNote = L("Viskas perkama tik monetomis, kurias užsidirbi žvejodamas. Jokių atsitiktinių dėžių.", "Alles nur mit Münzen, die du beim Angeln verdienst. Keine Zufallskisten.", "Everything is bought only with coins you earn fishing. No random boxes.")
+    val lures = L("Masalai", "Köder", "Baits")
+    val rods = L("Meškerės", "Ruten", "Rods")
+    val reels = L("Ritės", "Rollen", "Reels")
+    val lines = L("Valai", "Schnüre", "Lines")
+    val floats = L("Plūdės", "Posen", "Floats")
+    val upgrades = L("Patobulinimai", "Verbesserungen", "Upgrades")
+    val owned = L("Turi", "Gekauft", "Owned")
+    val equipped = L("Naudojama", "Ausgerüstet", "Equipped")
+    val equip = L("Naudoti", "Ausrüsten", "Equip")
+    val needLevel = L("Nuo %d lygio", "Ab Level %d", "From level %d")
+    val strengthNote = L("Stiprumas +%d%%", "Stärke +%d%%", "Strength +%d%%")
+    val speedNote = L("Vyniojimas +%d%%", "Einholen +%d%%", "Reeling +%d%%")
+    val lineNote = L("Stipresnis +%d%%, atsargios žuvys kimba %d%% rečiau", "Stärker +%d%%, scheue Fische beißen %d%% seltener", "Stronger +%d%%, shy fish bite %d%% less")
+    val lookNote = L("Tik išvaizda", "Nur die Optik", "Looks only")
+
+    // Map
+    val map = L("Žemėlapis", "Karte", "Map")
+    val home = L("Namie", "Zuhause", "Home")
+    val homeNote = L("Namuose žvejoji pagal savo vietovės orą. Kiti vandenys atsiveria kylant lygiui.", "Zu Hause angelst du mit dem Wetter deines Ortes. Weitere Gewässer öffnen sich mit dem Level.", "At home you fish with your own local weather. More waters open as you level up.")
+    val trips = L("Kelionės", "Reisen", "Trips")
+    val tripsNote = L("Kiekviena vieta – su savo tikru oru dabar. Sumoki vieną kartą, grįžti nemokamai.", "Jeder Ort hat sein eigenes echtes Wetter. Einmal zahlen, danach kostenlos.", "Each place has its own real weather right now. Pay once, return for free.")
+    val go = L("Keliauti", "Hinfahren", "Go")
+    val here = L("Tu čia", "Du bist hier", "You are here")
+    val locked = L("Užrakinta", "Gesperrt", "Locked")
+    val onlyHere = L("Tik čia: %s", "Nur hier: %s", "Only here: %s")
+    val fishHere = L("Žuvys: %d rūšių", "Fische: %d Arten", "Fish: %d species")
+
+    // Photos
+    val photoCredit = L("Nuotrauka", "Foto", "Photo")
 
     // Notifications
     val notifyTitle = L("%s kimba dabar!", "%s beißt jetzt!", "%s is biting now!")

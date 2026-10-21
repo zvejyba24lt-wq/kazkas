@@ -35,6 +35,8 @@ import androidx.compose.ui.graphics.drawscope.withTransform
 import androidx.compose.ui.graphics.lerp
 import androidx.compose.ui.platform.LocalDensity
 import lt.marcomultiservices.kimba.core.Conditions
+import lt.marcomultiservices.kimba.core.FloatStyle
+import lt.marcomultiservices.kimba.core.Water
 import lt.marcomultiservices.kimba.game.GameViewModel
 import lt.marcomultiservices.kimba.game.LakeState
 import lt.marcomultiservices.kimba.game.Stage
@@ -47,7 +49,13 @@ import kotlin.random.Random
 
 /** The living lake: sky, forest, water, jetty, reeds, rod and float, all reacting to the real conditions. */
 @Composable
-fun LakeScene(conditions: Conditions, lake: State<LakeState>, modifier: Modifier = Modifier) {
+fun LakeScene(
+    conditions: Conditions,
+    lake: State<LakeState>,
+    modifier: Modifier = Modifier,
+    waterKind: Water = Water.LAKE,
+    floatStyle: FloatStyle = FloatStyle.CLASSIC,
+) {
     BoxWithConstraints(modifier) {
         val density = LocalDensity.current
         val w = with(density) { maxWidth.toPx() }
@@ -103,25 +111,39 @@ fun LakeScene(conditions: Conditions, lake: State<LakeState>, modifier: Modifier
                 else -> 0f
             }
 
+            val sea = waterKind == Water.SEA
             drawSky(geo, colors, conditions, t, sun, moon)
-            drawShores(geo, colors)
+            when (waterKind) {
+                Water.SEA -> drawSeaHorizon(geo, colors, t)
+                Water.POND -> { drawShores(geo, colors, ridge = false); drawWillows(geo, colors, t) }
+                else -> drawShores(geo, colors)
+            }
             if (water != null) {
-                water.update(geo.w, geo.h, geo.hy, t, colors, glowX, floatPos.x, floatPos.y, if (onWater || s.stage == Stage.FIGHT) ripple else 0f)
+                water.update(
+                    geo.w, geo.h, geo.hy, t, colors, glowX, floatPos.x, floatPos.y, if (onWater || s.stage == Stage.FIGHT) ripple else 0f,
+                    flow = if (waterKind == Water.RIVER) 0.35f else 0f,
+                    swell = if (sea) 0.6f + (colors.wind / 14f).coerceAtMost(0.6f) else 0f,
+                )
                 drawRect(ShaderBrush(water.shader), topLeft = Offset(0f, geo.hy), size = Size(geo.w, geo.h - geo.hy))
             } else {
                 drawFallbackWater(geo, colors, t, glowX)
             }
-            drawReflections(geo, colors, t)
+            if (!sea) drawReflections(geo, colors, t)
             drawMist(geo, colors, conditions)
-            drawLilies(geo, colors, t)
-            if (onWater) drawFloatOnWater(geo, floatPos, dip, t, s.stage == Stage.BITE)
+            when (waterKind) {
+                Water.LAKE -> drawLilies(geo, colors, t, geo.lilies)
+                Water.POND -> drawLilies(geo, colors, t, geo.pondLilies)
+                Water.RIVER -> drawRiverBits(geo, colors, t)
+                Water.SEA -> drawGulls(geo, colors, t)
+            }
+            if (onWater) drawFloatOnWater(geo, floatPos, dip, t, s.stage == Stage.BITE, floatStyle, colors.daylight)
             if (s.stage == Stage.FIGHT) drawFightSplash(geo, floatPos, t, s.running)
-            drawPier(geo, colors)
-            drawReeds(geo, colors, t, back = true)
+            drawPier(geo, colors, sea)
+            drawReeds(geo, colors, t, back = true, dune = sea)
             drawRod(geo, colors, tip)
             drawLine(geo, tip, floatPos, s.stage, tension)
-            if (hanging || s.stage == Stage.FLYING) drawFloatBody(floatPos, geo.h * 0.016f * geo.scaleAt(geo.h), 0f)
-            drawReeds(geo, colors, t, back = false)
+            if (hanging || s.stage == Stage.FLYING) drawFloatBody(floatPos, geo.h * 0.016f * geo.scaleAt(geo.h), 0f, floatStyle, colors.daylight)
+            drawReeds(geo, colors, t, back = false, dune = sea)
             drawWeather(geo, colors, conditions, t)
             drawVignette(geo)
         }
@@ -230,8 +252,8 @@ private val GreenFar = Color(0xFF2D4A3A)
 private val GreenMid = Color(0xFF1B3626)
 private val GreenNear = Color(0xFF14291C)
 
-private fun DrawScope.drawShores(geo: SceneGeometry, colors: SceneColors) {
-    drawPath(geo.ridge, colors.far(GreenFar, 0.62f))
+private fun DrawScope.drawShores(geo: SceneGeometry, colors: SceneColors, ridge: Boolean = true) {
+    if (ridge) drawPath(geo.ridge, colors.far(GreenFar, 0.62f))
     drawPath(geo.forestFar, colors.far(GreenMid, 0.42f))
     if (colors.fog > 0f) {
         drawRect(
@@ -286,8 +308,8 @@ private fun DrawScope.drawMist(geo: SceneGeometry, colors: SceneColors, c: Condi
     )
 }
 
-private fun DrawScope.drawLilies(geo: SceneGeometry, colors: SceneColors, t: Float) {
-    for (l in geo.lilies) {
+private fun DrawScope.drawLilies(geo: SceneGeometry, colors: SceneColors, t: Float, lilies: List<SceneGeometry.Lily>) {
+    for (l in lilies) {
         val bob = sin(t * 0.8f + l.rot) * 1.5f
         val rx = l.r
         val ry = l.r * 0.34f
@@ -314,24 +336,41 @@ private fun DrawScope.drawLilies(geo: SceneGeometry, colors: SceneColors, t: Flo
     }
 }
 
-/** A classic float: white body, red tip and antenna, sinking with [dip]. */
-private fun DrawScope.drawFloatBody(pos: Offset, u: Float, sink: Float) {
+/** Float body for each style, sinking with [sink]. The glow float shines in the dark. */
+private fun DrawScope.drawFloatBody(pos: Offset, u: Float, sink: Float, style: FloatStyle = FloatStyle.CLASSIC, daylight: Float = 1f, alpha: Float = 1f) {
     val y = pos.y + sink
+    val slim = if (style == FloatStyle.FEATHER) 0.55f else 1f
     val body = Path().apply {
         moveTo(pos.x, y - u * 1.4f)
-        cubicTo(pos.x + u * 0.75f, y - u * 0.9f, pos.x + u * 0.55f, y + u * 0.9f, pos.x, y + u * 1.6f)
-        cubicTo(pos.x - u * 0.55f, y + u * 0.9f, pos.x - u * 0.75f, y - u * 0.9f, pos.x, y - u * 1.4f)
+        cubicTo(pos.x + u * 0.75f * slim, y - u * 0.9f, pos.x + u * 0.55f * slim, y + u * 0.9f, pos.x, y + u * (if (style == FloatStyle.FEATHER) 2.4f else 1.6f))
+        cubicTo(pos.x - u * 0.55f * slim, y + u * 0.9f, pos.x - u * 0.75f * slim, y - u * 0.9f, pos.x, y - u * 1.4f)
         close()
     }
-    drawPath(body, Brush.horizontalGradient(listOf(Color(0xFFF7F3EA), Color(0xFFCFC8BA)), pos.x - u * 0.6f, pos.x + u * 0.6f))
-    clipRect(bottom = y - u * 0.35f) {
-        drawPath(body, Brush.horizontalGradient(listOf(Color(0xFFF2533F), Color(0xFFB72D24)), pos.x - u * 0.6f, pos.x + u * 0.6f))
+    val (base, base2, tip, tip2) = when (style) {
+        FloatStyle.CLASSIC -> listOf(Color(0xFFF7F3EA), Color(0xFFCFC8BA), Color(0xFFF2533F), Color(0xFFB72D24))
+        FloatStyle.FEATHER -> listOf(Color(0xFFE8DCC0), Color(0xFFA89470), Color(0xFFF0A030), Color(0xFFB86A18))
+        FloatStyle.GLOW -> listOf(Color(0xFF2A3A30), Color(0xFF141C18), Color(0xFFB8FF6A), Color(0xFF6ACC2A))
+        FloatStyle.GOLD -> listOf(Color(0xFFFFE9A0), Color(0xFFC89030), Color(0xFFFFF4D0), Color(0xFFE0A830))
     }
-    drawLine(Color(0xFFE5483B), Offset(pos.x, y - u * 1.3f), Offset(pos.x, y - u * 3.2f), strokeWidth = u * 0.22f, cap = StrokeCap.Round)
-    drawCircle(Color.White.copy(alpha = 0.6f), u * 0.16f, Offset(pos.x - u * 0.22f, y - u * 0.8f))
+    if (style == FloatStyle.GLOW) {
+        val g = 0.35f + 0.65f * (1f - daylight)
+        drawCircle(Brush.radialGradient(listOf(Color(0xAAB8FF6A), Color(0x00B8FF6A)), Offset(pos.x, y - u * 2.2f), u * 3.5f), u * 3.5f, Offset(pos.x, y - u * 2.2f), alpha = g * alpha)
+    }
+    drawPath(body, Brush.horizontalGradient(listOf(base, base2), pos.x - u * 0.6f, pos.x + u * 0.6f), alpha = alpha)
+    clipRect(bottom = y - u * 0.35f) {
+        drawPath(body, Brush.horizontalGradient(listOf(tip, tip2), pos.x - u * 0.6f, pos.x + u * 0.6f), alpha = alpha)
+    }
+    drawLine(tip, Offset(pos.x, y - u * 1.3f), Offset(pos.x, y - u * 3.2f), strokeWidth = u * 0.22f, cap = StrokeCap.Round, alpha = alpha)
+    if (style == FloatStyle.GOLD) drawCircle(Color.White.copy(alpha = 0.9f * alpha), u * 0.25f, Offset(pos.x, y - u * 3.2f))
+    drawCircle(Color.White.copy(alpha = 0.6f * alpha), u * 0.16f, Offset(pos.x - u * 0.22f, y - u * 0.8f))
 }
 
-private fun DrawScope.drawFloatOnWater(geo: SceneGeometry, pos: Offset, dip: Float, t: Float, bite: Boolean) {
+/** A float for the shop: [height] is the whole float including its antenna. */
+fun DrawScope.drawFloat(center: Offset, height: Float, style: FloatStyle, glow: Boolean = false, alpha: Float = 1f) {
+    drawFloatBody(Offset(center.x, center.y), height / 5f, 0f, style, if (glow) 0f else 1f, alpha)
+}
+
+private fun DrawScope.drawFloatOnWater(geo: SceneGeometry, pos: Offset, dip: Float, t: Float, bite: Boolean, style: FloatStyle, daylight: Float) {
     val u = geo.h * 0.016f * geo.scaleAt(pos.y)
     val bob = sin(t * 2.2f) * u * 0.12f
     // Spreading rings, stronger when something touches the bait.
@@ -341,7 +380,7 @@ private fun DrawScope.drawFloatOnWater(geo: SceneGeometry, pos: Offset, dip: Flo
         drawOval(Color.White.copy(alpha = (1f - ph) * (0.18f + dip * 0.35f)), Offset(pos.x - r, pos.y - r * 0.3f), Size(r * 2, r * 0.6f), style = Stroke(1.2f + dip * 1.5f))
     }
     val sink = dip * u * 3.2f + bob
-    clipRect(bottom = pos.y + u * 0.15f) { drawFloatBody(pos, u, sink) }
+    clipRect(bottom = pos.y + u * 0.15f) { drawFloatBody(pos, u, sink, style, daylight) }
     drawOval(Color.Black.copy(alpha = 0.15f), Offset(pos.x - u * 0.9f, pos.y - u * 0.15f), Size(u * 1.8f, u * 0.4f))
     if (bite) {
         drawOval(Color.White.copy(alpha = 0.5f), Offset(pos.x - u * 2.2f, pos.y - u * 0.5f), Size(u * 4.4f, u * 1.0f), style = Stroke(2.5f))
@@ -371,7 +410,7 @@ private fun DrawScope.drawFightSplash(geo: SceneGeometry, pos: Offset, t: Float,
     }
 }
 
-private fun DrawScope.drawPier(geo: SceneGeometry, colors: SceneColors) {
+private fun DrawScope.drawPier(geo: SceneGeometry, colors: SceneColors, sea: Boolean = false) {
     // Posts going into the water at the far end, with reflections.
     val postW = geo.w * 0.022f
     for (x in listOf(geo.pierFar.first + postW, geo.pierFar.second - postW)) {
@@ -396,6 +435,18 @@ private fun DrawScope.drawPier(geo: SceneGeometry, colors: SceneColors) {
     val (fa, fb) = geo.plank(0, n)
     val (na, nb) = geo.plank(n, n)
     drawLine(colors.lit(Color(0xFF4A3524)).copy(alpha = 0.35f), Offset((fa.x + fb.x) / 2, fa.y), Offset((na.x + nb.x) / 2, na.y), strokeWidth = 2f)
+    if (sea) {
+        // Railing along the sea pier.
+        val railCol = colors.lit(Color(0xFFD8D4CC))
+        val top = geo.h * 0.045f
+        for (i in 0..5) {
+            val (a, _) = geo.plank(i * 13 / 5, 13)
+            drawLine(railCol, a, Offset(a.x, a.y - top * (0.4f + 0.6f * i / 5f)), strokeWidth = 2f + i)
+        }
+        val (fa, _) = geo.plank(0, 13)
+        val (na, _) = geo.plank(13, 13)
+        drawLine(railCol, Offset(fa.x, fa.y - top * 0.4f), Offset(na.x, na.y - top), strokeWidth = 4f, cap = StrokeCap.Round)
+    }
     // Bait tin and landing net handle as small props.
     val tin = Offset(geo.w * 0.14f, geo.h * 0.9f)
     drawOval(Color.Black.copy(alpha = 0.3f), Offset(tin.x - geo.w * 0.035f, tin.y + geo.h * 0.008f), Size(geo.w * 0.075f, geo.h * 0.016f))
@@ -403,7 +454,7 @@ private fun DrawScope.drawPier(geo: SceneGeometry, colors: SceneColors) {
     drawOval(colors.lit(Color(0xFF6A4A32)), Offset(tin.x - geo.w * 0.03f, tin.y - geo.h * 0.026f), Size(geo.w * 0.06f, geo.h * 0.012f))
 }
 
-private fun DrawScope.drawReeds(geo: SceneGeometry, colors: SceneColors, t: Float, back: Boolean) {
+private fun DrawScope.drawReeds(geo: SceneGeometry, colors: SceneColors, t: Float, back: Boolean, dune: Boolean = false) {
     val sway = 0.012f + colors.wind * 0.004f
     for (r in geo.reeds) {
         if (r.back != back) continue
@@ -411,7 +462,9 @@ private fun DrawScope.drawReeds(geo: SceneGeometry, colors: SceneColors, t: Floa
         val bend = (r.lean + sin(t * 1.3f + r.phase) * sway) * r.height
         val top = Offset(r.x + bend, base.y - r.height)
         val ctrl = Offset(r.x + bend * 0.2f, base.y - r.height * 0.55f)
-        val col = colors.lit(if (back) Color(0xFF2E4A24) else Color(0xFF3F6230), extraDark = if (back) 0.2f else 0f)
+        if (dune && r.head) continue
+        val col = if (dune) colors.lit(if (back) Color(0xFF7A7A44) else Color(0xFFA8A060), extraDark = if (back) 0.15f else 0f)
+            else colors.lit(if (back) Color(0xFF2E4A24) else Color(0xFF3F6230), extraDark = if (back) 0.2f else 0f)
         val path = Path().apply { moveTo(base.x, base.y); quadraticTo(ctrl.x, ctrl.y, top.x, top.y) }
         drawPath(path, col, style = Stroke(r.width, cap = StrokeCap.Round))
         drawPath(path, colors.lit(Color(0xFF8DB06A)).copy(alpha = 0.25f), style = Stroke(r.width * 0.3f, cap = StrokeCap.Round))
@@ -421,6 +474,108 @@ private fun DrawScope.drawReeds(geo: SceneGeometry, colors: SceneColors, t: Floa
             drawLine(colors.lit(Color(0xFF5E3B22)), hb, ht, strokeWidth = r.width * 2.6f, cap = StrokeCap.Round)
             drawLine(colors.lit(Color(0xFF8A5C38)).copy(alpha = 0.5f), Offset(hb.x - r.width * 0.5f, hb.y), Offset(ht.x - r.width * 0.5f, ht.y), strokeWidth = r.width * 0.8f, cap = StrokeCap.Round)
         }
+    }
+}
+
+/** Open sea: a clean horizon, a far lighthouse and a ship, distant dune line on the left. */
+private fun DrawScope.drawSeaHorizon(geo: SceneGeometry, colors: SceneColors, t: Float) {
+    val far = colors.far(Color(0xFF4A5A50), 0.75f)
+    // Low dune coast fading into the distance on the left.
+    val coast = Path().apply {
+        moveTo(0f, geo.hy + 1)
+        lineTo(0f, geo.hy - geo.h * 0.022f)
+        cubicTo(geo.w * 0.08f, geo.hy - geo.h * 0.03f, geo.w * 0.16f, geo.hy - geo.h * 0.012f, geo.w * 0.3f, geo.hy - geo.h * 0.004f)
+        lineTo(geo.w * 0.42f, geo.hy + 1)
+        close()
+    }
+    drawPath(coast, far)
+    // Lighthouse on the coast.
+    val lx = geo.w * 0.07f
+    val lb = geo.hy - geo.h * 0.026f
+    val lh = geo.h * 0.05f
+    val tower = Path().apply { moveTo(lx - lh * 0.09f, lb); lineTo(lx + lh * 0.09f, lb); lineTo(lx + lh * 0.055f, lb - lh); lineTo(lx - lh * 0.055f, lb - lh); close() }
+    drawPath(tower, colors.far(Color(0xFFE8E4DC), 0.5f))
+    drawRect(colors.far(Color(0xFFB83A2A), 0.5f), Offset(lx - lh * 0.075f, lb - lh * 0.55f), Size(lh * 0.15f, lh * 0.15f))
+    drawRect(colors.far(Color(0xFF2A2A2A), 0.5f), Offset(lx - lh * 0.07f, lb - lh * 1.12f), Size(lh * 0.14f, lh * 0.12f))
+    if (colors.daylight < 0.5f) {
+        // The light sweeps round at night.
+        val beam = (sin(t * 1.2f) * 0.5f + 0.5f)
+        val c = Offset(lx, lb - lh * 1.06f)
+        drawCircle(Brush.radialGradient(listOf(Color(0xCCFFF2C0), Color(0x00FFF2C0)), c, geo.w * 0.08f), geo.w * 0.08f, c, alpha = (1f - colors.daylight * 2f) * (0.4f + 0.6f * beam))
+    }
+    // A cargo ship slowly crossing the horizon.
+    val sx = ((0.15f + t * 0.002f) % 1.3f) * geo.w
+    val sy = geo.hy - 1f
+    val ship = Path().apply {
+        moveTo(sx, sy); lineTo(sx + geo.w * 0.09f, sy); lineTo(sx + geo.w * 0.1f, sy - geo.h * 0.007f); lineTo(sx - geo.w * 0.005f, sy - geo.h * 0.007f); close()
+        addRect(Rect(sx + geo.w * 0.065f, sy - geo.h * 0.014f, sx + geo.w * 0.085f, sy - geo.h * 0.007f))
+    }
+    drawPath(ship, colors.far(Color(0xFF2A3038), 0.65f))
+    if (colors.fog > 0f) {
+        drawRect(
+            Brush.verticalGradient(listOf(colors.skyHorizon.copy(alpha = 0f), colors.skyHorizon.copy(alpha = colors.fog * 0.85f)), geo.hy - geo.h * 0.06f, geo.hy),
+            topLeft = Offset(0f, geo.hy - geo.h * 0.06f), size = Size(geo.w, geo.h * 0.06f),
+        )
+    }
+}
+
+/** Weeping willows framing the pond on both sides. */
+private fun DrawScope.drawWillows(geo: SceneGeometry, colors: SceneColors, t: Float) {
+    val sway = sin(t * 0.6f) * geo.w * 0.004f * (1f + colors.wind * 0.15f)
+    for (w in geo.willows) {
+        val trunk = colors.far(Color(0xFF2E2418), w.depth)
+        drawLine(trunk, Offset(w.x, geo.hy + geo.h * 0.004f), Offset(w.x + w.lean, w.top + w.size * 0.25f), strokeWidth = w.size * 0.07f, cap = StrokeCap.Round)
+        val crown = colors.far(if (w.depth > 0.3f) GreenFar else Color(0xFF3A5A2A), w.depth)
+        drawOval(crown, Offset(w.x + w.lean - w.size * 0.55f, w.top), Size(w.size * 1.1f, w.size * 0.55f))
+        // Hanging strands down to the water.
+        for (k in 0 until w.strands.size) {
+            val (dx, len) = w.strands[k]
+            val sx = w.x + w.lean + dx * w.size * 0.5f
+            val sy = w.top + w.size * 0.3f
+            val end = Offset(sx + sway * (1f + len), (sy + len * (geo.hy - sy)).coerceAtMost(geo.hy + geo.h * 0.003f))
+            val path = Path().apply { moveTo(sx, sy); quadraticTo(sx + dx * w.size * 0.12f, (sy + end.y) / 2, end.x, end.y) }
+            drawPath(path, crown, style = Stroke(w.size * 0.05f, cap = StrokeCap.Round))
+            drawPath(path, colors.lit(Color(0xFF9AC070)).copy(alpha = 0.18f), style = Stroke(w.size * 0.012f, cap = StrokeCap.Round))
+        }
+    }
+}
+
+/** River: stones in the shallows and leaves drifting with the current. */
+private fun DrawScope.drawRiverBits(geo: SceneGeometry, colors: SceneColors, t: Float) {
+    for (st in geo.stones) {
+        val rect = Rect(st.x - st.r, st.y - st.r * 0.45f, st.x + st.r, st.y + st.r * 0.45f)
+        // Water piling up against the stone on the upstream side.
+        val foam = (sin(t * 4f + st.x) * 0.5f + 0.5f) * 0.3f + 0.3f
+        drawOval(Color.White.copy(alpha = foam * colors.daylight.coerceAtLeast(0.3f)), Offset(rect.left - st.r * 0.25f, rect.center.y), Size(st.r * 2.3f, st.r * 0.4f), style = Stroke(2f))
+        drawOval(Brush.verticalGradient(listOf(colors.lit(Color(0xFF8A8A80)), colors.lit(Color(0xFF3A3A34))), rect.top, rect.bottom), rect.topLeft, rect.size)
+        drawOval(colors.lit(Color(0xFF4E6A3A)).copy(alpha = 0.5f), Offset(rect.left + st.r * 0.3f, rect.top), Size(st.r * 0.9f, st.r * 0.25f))
+    }
+    for (lf in geo.leaves) {
+        val x = ((lf.x + t * lf.speed) % 1.2f - 0.1f) * geo.w
+        val y = lf.y + sin(t * 1.3f + lf.phase) * geo.h * 0.002f
+        val s = geo.scaleAt(y) * geo.w * 0.018f
+        rotate(lf.phase * 57f + t * 20f * lf.speed, Offset(x, y)) {
+            drawOval(colors.lit(if (lf.phase > 3f) Color(0xFFC88A2A) else Color(0xFF9A5A22)), Offset(x - s, y - s * 0.35f), Size(s * 2, s * 0.7f))
+        }
+    }
+}
+
+/** Gulls gliding over the sea. */
+private fun DrawScope.drawGulls(geo: SceneGeometry, colors: SceneColors, t: Float) {
+    if (colors.rain > 0.6f) return
+    val col = lerp(Color(0xFF20242A), Color(0xFFF4F4F0), colors.daylight * 0.3f)
+    for (i in 0 until 4) {
+        val ph = i * 1.7f
+        val x = ((0.1f + i * 0.27f + t * (0.006f + i * 0.002f)) % 1.2f - 0.1f) * geo.w
+        val y = geo.hy * (0.35f + 0.12f * i) + sin(t * 0.5f + ph) * geo.h * 0.01f
+        val s = geo.w * (0.022f - i * 0.003f)
+        val flap = sin(t * 3f + ph) * 0.35f
+        val path = Path().apply {
+            moveTo(x - s, y - s * (0.2f + flap))
+            quadraticTo(x - s * 0.45f, y - s * (0.45f + flap * 0.5f), x, y)
+            quadraticTo(x + s * 0.45f, y - s * (0.45f + flap * 0.5f), x + s, y - s * (0.2f + flap))
+        }
+        drawPath(path, col, style = Stroke(s * 0.16f, cap = StrokeCap.Round))
     }
 }
 

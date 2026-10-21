@@ -11,17 +11,18 @@ mkdir -p "$OUT"
 # The lake animates every frame, so uiautomator never sees an idle UI: no node lookups here,
 # only intents and screen coordinates.
 shot() { sleep "${2:-2}"; timeout 30 adb exec-out screencap -p > "$OUT/$1.png"; echo "shot $1 (top: $(adb shell dumpsys activity activities | grep -m1 topResumedActivity | tr -s ' '))"; }
-demo() { timeout 30 adb shell am start -n "$ACT" "$@" > /dev/null; }
+demo() { timeout 30 adb shell am start -n "$ACT" --ez noConsent true "$@" > /dev/null; }
+tap() { timeout 20 adb shell input tap "$1" "$2"; }
 
 sleep 45
 adb install -r "$APK" || exit 1
 adb shell pm grant "$PKG" android.permission.POST_NOTIFICATIONS || true
 adb logcat -c
 # AppCompat syncs its stored app locale once on the first start, so start once, then switch to Lithuanian.
-timeout 60 adb shell am start -W -n "$ACT"; sleep 12
+timeout 60 adb shell am start -W -n "$ACT" --ez noConsent true; sleep 12
 adb shell am force-stop "$PKG"
 adb shell cmd locale set-app-locales "$PKG" --locales lt || true
-timeout 60 adb shell am start -W -n "$ACT"
+timeout 60 adb shell am start -W -n "$ACT" --ez noConsent true
 for i in 1 2 3; do sleep 3; adb shell dumpsys activity activities | grep -m1 topResumedActivity; done
 FAIL=0
 adb shell dumpsys activity activities | grep -m1 topResumedActivity | grep -q "$PKG" || { echo "App is not in the foreground after start"; FAIL=1; }
@@ -29,35 +30,49 @@ SIZE=$(adb shell wm size | grep -oE '[0-9]+x[0-9]+' | tail -1); W=${SIZE%x*}; H=
 echo "screen $W x $H"
 
 shot 01_sveiki 4
-demo -e place Vilnius; shot 02_ezeras_tikras_oras 10
+demo -e place Vilnius; shot 02_serijos_dovana 10
+tap $((W/2)) $((H/2)); shot 03_ezeras_tikras_oras 3
 # Hold the cast button (bottom centre) for ~1 s, then watch the float.
-timeout 30 adb shell input swipe $((W/2)) $((H*84/100)) $((W/2)) $((H*84/100)) 1000; shot 03_uzmesta 3
-shot 04_laukiam 4
-demo -e fight pike; shot 05_kova 1.5
+timeout 30 adb shell input swipe $((W/2)) $((H*84/100)) $((W/2)) $((H*84/100)) 1000; shot 04_uzmesta 3
+shot 05_laukiam 4
+demo -e fight pike; shot 06_kova 1.5
 
-demo -e scene storm; shot 06_perkunija 4
-demo -e scene dawnfog; shot 07_rukas_ausra 4
-demo -e scene night; shot 08_naktis 4
-demo -e scene snow; shot 09_sniegas 4
-demo -e scene rain; shot 10_lietus 4
-demo -e scene dusk; shot 11_sutemos 4
-demo -e scene day; shot 12_diena 4
-demo -e catch moon_pike; shot 13_auksine_lydeka 3
-demo -e catch perch; shot 14_eserys 3
-demo -e catch carp; shot 15_karpis 3
-demo -e catch catfish; shot 16_samas 3
-demo -e scene live -e screen book; shot 17_zuvu_knyga 4
-adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/5)) 400; shot 18_auksines_zuvys 2
-demo -e screen forecast; shot 19_prognoze 6
-demo -e screen settings; shot 20_nustatymai 3
+demo --ei coins 25000 --ei xp 11000 -e scene storm; shot 07_perkunija 4
+demo -e scene dawnfog; shot 08_rukas_ausra 4
+demo -e scene night; shot 09_naktis 4
+demo -e scene snow; shot 10_sniegas 4
+demo -e scene rain; shot 11_lietus 4
+demo -e scene dusk; shot 12_sutemos 4
+demo -e scene day -e water pond; shot 13_tvenkinys 5
+demo -e water river; shot 14_upe 5
+demo -e scene dusk -e water sea; shot 15_jura_sutemos 5
+demo -e scene day; shot 16_jura_diena 4
+demo -e scene night -e trip ruegen; shot 17_riugenas_naktis 5
+demo -e scene day -e trip bodensee; shot 18_bodensee 5
+demo -e water lake; sleep 2
+demo -e catch moon_pike; shot 19_auksine_lydeka 3
+demo -e catch trout; shot 20_upetakis 3
+demo -e catch grayling; shot 21_kirslys 3
+demo -e catch flounder; shot 22_pleksne 3
+demo -e catch cod; shot 23_menke 3
+demo -e catch huchen; shot 24_dunojaus_lasisa 3
+demo -e scene live -e screen book; shot 25_zuvu_knyga 4
+adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/5)) 400; shot 26_knyga_toliau 2
+demo -e screen shop; shot 27_parduotuve 4
+adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/5)) 400; shot 28_parduotuve_toliau 2
+demo -e screen map; shot 29_zemelapis 5
+demo -e screen quests; shot 30_uzduotys 3
+demo -e screen forecast; shot 31_prognoze 6
+demo -e screen settings; shot 32_nustatymai 3
+adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/5)) 400; shot 33_nustatymai_toliau 2
 demo -e screen lake; sleep 2
 
 adb shell am force-stop "$PKG"
 adb shell cmd locale set-app-locales "$PKG" --locales de; sleep 2
-timeout 60 adb shell am start -W -n "$ACT"; shot 21_deutsch 10
+timeout 60 adb shell am start -W -n "$ACT" --ez noConsent true; shot 34_deutsch 10
 adb shell am force-stop "$PKG"
 adb shell cmd locale set-app-locales "$PKG" --locales en; sleep 2
-timeout 60 adb shell am start -W -n "$ACT"; shot 22_english 10
+timeout 60 adb shell am start -W -n "$ACT" --ez noConsent true; shot 35_english 10
 
 timeout 60 adb logcat -d > "$OUT/logcat_full.txt"
 grep -E "$PKG|AndroidRuntime|Fatal signal|DEBUG +:|ANR in|has died|RuntimeShader|WM-" "$OUT/logcat_full.txt" | tail -n 400 > "$OUT/logcat.txt"

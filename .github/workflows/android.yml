@@ -41,18 +41,25 @@ jobs:
       - name: Unit tests
         run: ./gradlew --no-daemon :core:test
 
-      - name: Build release APK
+      - name: Build test APK and Google Play bundle
         env:
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}
           RELEASE_KEY_ALIAS: ${{ secrets.RELEASE_KEY_ALIAS }}
           RELEASE_KEY_PASSWORD: ${{ secrets.RELEASE_KEY_PASSWORD }}
+          ADMOB_APP_ID: ${{ secrets.ADMOB_APP_ID }}
+          ADMOB_INTERSTITIAL_ID: ${{ secrets.ADMOB_INTERSTITIAL_ID }}
+          ADMOB_REWARDED_ID: ${{ secrets.ADMOB_REWARDED_ID }}
+          PRIVACY_URL: ${{ secrets.PRIVACY_URL }}
         run: |
-          tasks=":app:assembleRelease"
-          if [ -n "${RELEASE_KEYSTORE_PATH:-}" ]; then tasks="$tasks :app:bundleRelease"; fi
-          ./gradlew --no-daemon $tasks
+          # Test APK: sideload key, screenshot hooks on.
+          ./gradlew --no-daemon :app:assembleRelease
           mkdir -p dist
           cp app/build/outputs/apk/release/app-release.apk dist/Kimba.apk
-          if [ -d app/build/outputs/bundle/release ]; then cp app/build/outputs/bundle/release/*.aab dist/Kimba.aab; fi
+          # Google Play bundle: only when the upload key is set up.
+          if [ -n "${RELEASE_KEYSTORE_PATH:-}" ]; then
+            PLAY_BUILD=1 ./gradlew --no-daemon :app:bundleRelease
+            cp app/build/outputs/bundle/release/*.aab dist/Kimba-GooglePlay.aab
+          fi
           ls -la dist
 
       - uses: actions/upload-artifact@v4

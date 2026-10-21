@@ -28,7 +28,16 @@ import lt.marcomultiservices.kimba.core.FightResult
 import lt.marcomultiservices.kimba.core.Fish
 import lt.marcomultiservices.kimba.core.Forecast
 import lt.marcomultiservices.kimba.core.GoldenWindow
-import lt.marcomultiservices.kimba.core.Lure
+import lt.marcomultiservices.kimba.core.Destination
+import lt.marcomultiservices.kimba.core.Destinations
+import lt.marcomultiservices.kimba.core.Economy
+import lt.marcomultiservices.kimba.core.Item
+import lt.marcomultiservices.kimba.core.Progress
+import lt.marcomultiservices.kimba.core.Quest
+import lt.marcomultiservices.kimba.core.Quests
+import lt.marcomultiservices.kimba.core.Reward
+import lt.marcomultiservices.kimba.core.Streak
+import lt.marcomultiservices.kimba.core.Water
 import lt.marcomultiservices.kimba.core.Sky
 import lt.marcomultiservices.kimba.core.Weather
 import lt.marcomultiservices.kimba.core.Windows
@@ -64,7 +73,16 @@ data class LakeState(
     val newSpecies: Boolean = false,
     val record: Boolean = false,
     val hint: Boolean = false,
+    val reward: Reward? = null,
+    val doubled: Boolean = false,
 )
+
+/** Things to celebrate in a dialog, one after another. */
+sealed class GameEvent {
+    class StreakBonus(val day: Int, val coins: Int, val casts: Int) : GameEvent()
+    class LevelUp(val level: Int) : GameEvent()
+    class QuestsDone(val quests: List<Quest>, val all: Boolean) : GameEvent()
+}
 
 class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val store = application.app.store
@@ -91,11 +109,22 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     var demoScene: String? = null
         private set
 
+    private val _events = MutableStateFlow<List<GameEvent>>(emptyList())
+    val events: StateFlow<List<GameEvent>> = _events.asStateFlow()
+
     private var job: Job? = null
     private var reeling = false
+    private var resultsSinceAd = 0
+    /** Place whose forecast is in [forecast]. */
+    private var forecastFor: Place? = null
 
     init {
-        viewModelScope.launch { store.flow.collect { _saved.value = it } }
+        viewModelScope.launch {
+            store.flow.collect {
+                _saved.value = it
+                if (it.onboarded) dailyVisit()
+            }
+        }
         viewModelScope.launch {
             // Re-evaluate the conditions every minute; refetch the forecast when it is due.
             while (isActive) {
@@ -111,9 +140,38 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch { refresh(force = false) }
     }
 
+    private fun today(): Long = LocalDate.now(zone).toEpochDay()
+
+    private var visitedDay = -1L
+
+    /** Once a day: the return bonus. */
+    private fun dailyVisit() {
+        val day = today()
+        if (visitedDay == day) return
+        visitedDay = day
+        viewModelScope.launch {
+            var bonus: Streak.Bonus? = null
+            store.update { s ->
+                val (p, b) = Streak.visit(s.progress, day)
+                bonus = b
+                if (b == null) s else s.copy(progress = p.copy(quests = Quests.today(p.quests, day)), baits = s.baits.add(b.casts, System.currentTimeMillis(), p.boxSize))
+            }
+            bonus?.let { b -> _events.update { it + GameEvent.StreakBonus(b.day, b.coins, b.casts) } }
+        }
+    }
+
+    fun consumeEvent() = _events.update { it.drop(1) }
+
+    /** Where the player fishes now: a trip destination or home. */
+    fun fishingPlace(s: Saved? = _saved.value): Place? {
+        val d = Destinations.byId(s?.progress?.trip)
+        return if (d != null) Place(d.id, d.lat, d.lon) else s?.place
+    }
+
     suspend fun refresh(force: Boolean) {
-        val place = store.current().place ?: return
+        val place = fishingPlace(store.current()) ?: return
         demoScene?.let { _conditions.value = demoConditions(it, place); return }
+        if (forecastFor != place) { _forecast.value = null; forecastFor = place }
         repo.cached(place)?.let { if (_forecast.value == null) { _forecast.value = it; recompute(place) } }
         val f = repo.forecast(place, force)
         _offline.value = f == null || f.weatherAt(System.currentTimeMillis()) == null
@@ -128,9 +186,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun goldenWindows(): List<GoldenWindow> {
-        val place = _saved.value?.place ?: return emptyList()
+        val s = _saved.value ?: return emptyList()
+        val place = fishingPlace(s) ?: return emptyList()
         val f = _forecast.value ?: return emptyList()
-        return Windows.golden(f, System.currentTimeMillis(), place.lat, place.lon, zone)
+        return Windows.golden(f, System.currentTimeMillis(), place.lat, place.lon, zone, goldens = Fish.goldensAt(s.progress.spot))
     }
 
     fun choosePlace(place: Place) {
@@ -141,19 +200,60 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
-    fun setLure(lure: Lure) = viewModelScope.launch { store.update { it.copy(lure = lure) } }
     fun setNotify(on: Boolean) = viewModelScope.launch { store.update { it.copy(notify = on) } }
 
-    /** Placeholder for the rewarded ad of the real game. */
+    private fun updateProgress(f: (Progress) -> Progress?) = viewModelScope.launch {
+        store.update { s -> f(s.progress)?.let { s.copy(progress = it) } ?: s }
+    }
+
+    fun buy(item: Item) = updateProgress { it.buy(item) }
+    fun equip(item: Item) = updateProgress { it.equip(item) }
+    fun setNoAds(on: Boolean) = updateProgress { if (it.noAds == on) null else it.copy(noAds = on) }
+
+    fun travel(d: Destination) {
+        if (_lake.value.stage == Stage.FIGHT) return
+        updateProgress { it.travel(d) }.invokeOnCompletion { afterMove() }
+    }
+
+    fun goHome(water: Water) {
+        if (_lake.value.stage == Stage.FIGHT) return
+        updateProgress { it.goHome(water) }.invokeOnCompletion { afterMove() }
+    }
+
+    private fun afterMove() {
+        job?.cancel()
+        _lake.value = LakeState(castId = _lake.value.castId)
+        viewModelScope.launch { refresh(force = false) }
+    }
+
+    /** Reward for watching an ad when the casts are used up. */
     fun bonusCasts() = viewModelScope.launch {
-        store.update { it.copy(baits = it.baits.add(3, System.currentTimeMillis())) }
+        store.update { it.copy(baits = it.baits.add(3, System.currentTimeMillis(), it.progress.boxSize)) }
+    }
+
+    /** Reward for watching an ad after a catch: the fish's coins once more. */
+    fun doubleCoins() {
+        val s = _lake.value
+        val catch = s.caught ?: return
+        if (s.doubled || s.stage != Stage.CAUGHT) return
+        _lake.update { it.copy(doubled = true) }
+        updateProgress { it.copy(coins = it.coins + catch.coins) }
+    }
+
+    /** An interstitial after every fifth result, never during play. */
+    fun interstitialDue(): Boolean {
+        if (_saved.value?.progress?.noAds == true) return false
+        resultsSinceAd++
+        if (resultsSinceAd < 5) return false
+        resultsSinceAd = 0
+        return true
     }
 
     // ---- Fishing -------------------------------------------------------------------------
 
     fun pressCast(uptime: Long) {
         if (_lake.value.stage !in setOf(Stage.IDLE, Stage.CAUGHT, Stage.LOST)) return
-        val baits = _saved.value?.baits?.now(System.currentTimeMillis()) ?: return
+        val baits = _saved.value?.baitsNow() ?: return
         if (baits.count <= 0) return
         _lake.value = LakeState(stage = Stage.CHARGING, chargeStart = uptime, castId = _lake.value.castId)
     }
@@ -167,12 +267,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         job = viewModelScope.launch {
             var ok = false
             store.update { saved ->
-                val used = saved.baits.use(System.currentTimeMillis())
+                val used = saved.baits.use(System.currentTimeMillis(), saved.progress.boxSize)
                 ok = used != null
                 if (used != null) saved.copy(baits = used) else saved
             }
             if (!ok) { _lake.value = LakeState(castId = s.castId); return@launch }
-            val bite = BiteEngine.roll(c, power, rng, _saved.value?.lure ?: Lure.WORM)
+            val p = store.current().progress
+            val bite = BiteEngine.roll(c, power, rng, p.spot, p.gear)
             _lake.value = LakeState(stage = Stage.FLYING, castDist = power, castId = s.castId + 1, bite = bite)
             delay(FLIGHT_MS)
             waitForBite(bite)
@@ -228,7 +329,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private fun startFight(bite: Bite) {
         job?.cancel()
         reeling = false
-        val fight = Fight(bite.pull, rng)
+        val gear = _saved.value?.progress?.gear
+        val fight = Fight(bite.pull, rng, gear?.strength ?: 1.0, gear?.reel?.speed ?: 1.0)
         _lake.update { it.copy(stage = Stage.FIGHT, dip = 0f, tension = 0.3f, fightDistance = 1f) }
         buzz(40)
         job = viewModelScope.launch {
@@ -254,7 +356,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private suspend fun landed(bite: Bite) {
         val c = _conditions.value ?: return
         val saved = store.current()
-        val catch = Catch(
+        val spot = saved.progress.spot
+        val base = Catch(
             species = bite.species.id,
             golden = bite.golden?.id,
             cm = bite.cm,
@@ -262,15 +365,38 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             epochMillis = System.currentTimeMillis(),
             sky = c.weather.sky,
             tempC = c.weather.tempC,
-            place = saved.place?.name ?: "",
+            place = spot.trip ?: saved.place?.name ?: "",
+            water = spot.water,
         )
-        val key = catch.golden ?: catch.species
+        val key = base.golden ?: base.species
         val previous = saved.catches.filter { (it.golden ?: it.species) == key }
         val isNew = previous.isEmpty()
-        val record = !isNew && previous.all { it.cm < catch.cm }
-        store.update { it.copy(catches = it.catches + catch) }
+        val record = !isNew && previous.all { it.cm < base.cm }
+        val catch = base.copy(coins = Economy.coins(bite.species, bite.golden, bite.grams))
+        var reward: Reward? = null
+        store.update { s ->
+            val (p, r) = Economy.land(s.progress, catch, isNew, today())
+            reward = r
+            val baits = if (r.allQuests) s.baits.add(Economy.ALL_QUESTS_CASTS, System.currentTimeMillis(), p.boxSize) else s.baits
+            // Keep the log bounded; the book only needs the best and the count per species.
+            s.copy(catches = (s.catches + catch).takeLast(600), progress = p, baits = baits)
+        }
         buzz(longArrayOf(0, 40, 60, 40))
-        _lake.update { it.copy(stage = Stage.CAUGHT, caught = catch, newSpecies = isNew, record = record) }
+        _lake.update { it.copy(stage = Stage.CAUGHT, caught = catch, newSpecies = isNew, record = record, reward = reward) }
+        reward?.let { r ->
+            if (r.quests.isNotEmpty()) _events.update { it + GameEvent.QuestsDone(r.quests, r.allQuests) }
+            r.levelUp?.let { l -> _events.update { it + GameEvent.LevelUp(l) } }
+        }
+    }
+
+    /** Test money and experience for screenshots. */
+    fun demoProgress(coins: Int, xp: Int) = updateProgress { p ->
+        p.copy(coins = if (coins >= 0) coins else p.coins, xp = if (xp >= 0) xp else p.xp)
+    }
+
+    /** Goes to a destination without paying (for screenshots). */
+    fun demoTrip(d: Destination) {
+        updateProgress { it.copy(trips = it.trips + d.id, trip = d.id) }.invokeOnCompletion { afterMove() }
     }
 
     /** Starts a fight with a mid-sized fish directly (for screenshots). */
@@ -345,4 +471,4 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 }
 
 /** Baits now, for display. */
-fun Saved.baitsNow(): Baits = baits.now(System.currentTimeMillis())
+fun Saved.baitsNow(): Baits = baits.now(System.currentTimeMillis(), progress.boxSize)

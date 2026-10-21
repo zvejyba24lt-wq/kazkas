@@ -48,6 +48,10 @@ import androidx.compose.ui.unit.sp
 import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
+import lt.marcomultiservices.kimba.BuildConfig
+import lt.marcomultiservices.kimba.ads.AdsConsent
+import lt.marcomultiservices.kimba.app
+import lt.marcomultiservices.kimba.findActivity
 import lt.marcomultiservices.kimba.data.DeviceLocation
 import lt.marcomultiservices.kimba.data.Place
 import lt.marcomultiservices.kimba.data.Places
@@ -80,10 +84,46 @@ fun SettingsScreen(vm: GameViewModel, onBack: () -> Unit) {
                 Switch(saved?.notify ?: true, { vm.setNotify(it) }, colors = SwitchDefaults.colors(checkedTrackColor = K.Amber))
             }
 
-            Spacer(Modifier.height(28.dp))
-            Text(t(S.prototype), color = K.Muted, fontSize = 13.sp)
-            Spacer(Modifier.height(6.dp))
+            Spacer(Modifier.height(22.dp))
+            SectionTitle(t(S.noAds))
+            Spacer(Modifier.height(8.dp))
+            NoAdsBox(saved?.progress?.noAds == true)
+
+            Spacer(Modifier.height(22.dp))
+            val context = LocalContext.current
+            val activity = remember(context) { context.findActivity() }
+            val privacyRequired by AdsConsent.privacyOptionsRequired.collectAsStateWithLifecycle()
+            if (privacyRequired && activity != null) {
+                OutlinedButton({ AdsConsent.showPrivacyOptions(activity) }, modifier = Modifier.fillMaxWidth().height(46.dp)) { Text(t(S.privacyOptions), color = K.Text) }
+                Spacer(Modifier.height(8.dp))
+            }
+            OutlinedButton(
+                { runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(BuildConfig.PRIVACY_URL))) } },
+                modifier = Modifier.fillMaxWidth().height(46.dp),
+            ) { Text(t(S.privacyPolicy), color = K.Text) }
+            Spacer(Modifier.height(18.dp))
             Text(t(S.metCredit), color = Color(0x88B4BCC6), fontSize = 11.sp)
+        }
+    }
+}
+
+@Composable
+private fun NoAdsBox(owned: Boolean) {
+    val context = LocalContext.current
+    val activity = remember(context) { context.findActivity() }
+    val product by context.app.billing.product.collectAsStateWithLifecycle()
+    var failed by remember { mutableStateOf(false) }
+    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0x1FFFFFFF)).border(1.dp, K.Line, RoundedCornerShape(16.dp)).padding(14.dp)) {
+        Text(t(S.noAdsBody), color = K.Muted, fontSize = 13.sp, lineHeight = 18.sp)
+        Spacer(Modifier.height(10.dp))
+        if (owned) {
+            Text(t(S.bought), color = K.Reed, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        } else {
+            androidx.compose.material3.Button(
+                { failed = activity == null || !context.app.billing.launch(activity) },
+                colors = lt.marcomultiservices.kimba.ui.amberButtonColors(), modifier = Modifier.fillMaxWidth().height(46.dp),
+            ) { Text(t(S.buy) + (product?.oneTimePurchaseOfferDetails?.formattedPrice?.let { " · $it" } ?: "")) }
+            if (failed) Text(t(S.notAvailable), color = K.Amber, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
         }
     }
 }
