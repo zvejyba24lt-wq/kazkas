@@ -146,7 +146,7 @@ fun LakeScreen(
     var noCasts by remember { mutableStateOf(false) }
     var boxOpen by remember { mutableStateOf(false) }
     val demoBox by vm.demoBox.collectAsStateWithLifecycle()
-    LaunchedEffect(demoBox) { if (demoBox) { boxOpen = true; vm.demoBox.value = false } }
+    LaunchedEffect(demoBox) { demoBox?.let { boxOpen = it; vm.demoBox.value = null } }
     val context = LocalContext.current
     val activity = remember(context) { context.findActivity() }
     val progress = saved?.progress ?: Progress()
@@ -332,7 +332,7 @@ private fun TopHud(c: Conditions, place: String, progress: Progress, baits: Bait
                     Unlocks.next(progress.level)?.let { n ->
                         val lang = LocalLang.current
                         Text(
-                            t(S.nextUnlock, n.level, n.names.take(2).joinToString(", ") { it[lang] }),
+                            t(S.nextUnlock, n.level, n.names.first()[lang] + if (n.names.size > 1) " +${n.names.size - 1}" else ""),
                             color = K.Muted, fontSize = 10.sp, textAlign = TextAlign.End, maxLines = 2, overflow = TextOverflow.Ellipsis,
                             modifier = Modifier.padding(top = 3.dp).width(120.dp),
                         )

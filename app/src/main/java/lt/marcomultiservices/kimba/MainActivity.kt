@@ -60,7 +60,9 @@ class MainActivity : AppCompatActivity() {
         extras.getString("catch")?.let { vm.showDemoCatch(it) }
         extras.getString("fight")?.let { vm.demoFight(it) }
         extras.getString("tackle")?.let { vm.demoTackle(it) }
-        if (extras.getBoolean("box", false)) vm.demoBox.value = true
+        if (extras.containsKey("box")) vm.demoBox.value = extras.getBoolean("box")
+        if (extras.keySet().any { it in setOf("scene", "water", "trip", "screen", "tackle") } && !extras.containsKey("box")) vm.demoBox.value = false
+        extras.getString("cast")?.toFloatOrNull()?.let { vm.demoCast(it) }
         extras.getString("screen")?.let { s -> Screen.entries.firstOrNull { it.name.equals(s, ignoreCase = true) }?.let { startScreen.value = it to System.nanoTime() } }
     }
 }

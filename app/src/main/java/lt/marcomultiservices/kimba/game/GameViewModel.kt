@@ -517,8 +517,16 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         updateProgress { p -> p.copy(owned = p.owned + Tackle.entries.map { it.key } + Lure.entries.map { it.key } + Upgrade.ALARM.key).equip(t) }
     }
 
-    /** Opens the tackle box on the lake (for screenshots). */
-    val demoBox = MutableStateFlow(false)
+    /** Opens (true) or closes (false) the tackle box on the lake (for screenshots); null once handled. */
+    val demoBox = MutableStateFlow<Boolean?>(null)
+
+    /** Casts with [power] 0..1 without touching the screen (for screenshots). */
+    fun demoCast(power: Float) {
+        resetLake()
+        val now = android.os.SystemClock.uptimeMillis()
+        pressCast(now - (power.coerceIn(0.05f, 1f) * 1600).toLong())
+        releaseCast(now)
+    }
 
     /** Goes to a destination without paying (for screenshots). */
     fun demoTrip(d: Destination) {
