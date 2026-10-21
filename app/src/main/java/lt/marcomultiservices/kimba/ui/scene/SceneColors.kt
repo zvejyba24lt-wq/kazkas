@@ -87,7 +87,7 @@ class SceneColors(c: Conditions) {
     }
 
     /** Overall brightness for the foreground (trees, pier, reeds). */
-    val light: Float = (0.12f + 0.88f * daylight) * (1f - overcast * 0.35f) * (if (storm) 0.7f else 1f)
+    val light: Float = (0.2f + 0.8f * daylight) * (1f - overcast * 0.35f) * (if (storm) 0.7f else 1f)
 
     /** Tints a foreground colour for the current light: darker and bluer at night, warmer at sunset. */
     fun lit(base: Color, extraDark: Float = 0f): Color {

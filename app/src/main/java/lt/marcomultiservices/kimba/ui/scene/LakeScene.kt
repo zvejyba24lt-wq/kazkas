@@ -20,6 +20,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.withFrameNanos
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.geometry.Offset
+import androidx.compose.ui.geometry.Rect
 import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.platform.LocalDensity
@@ -57,6 +58,9 @@ fun LakeScene(
         val water = remember { if (Build.VERSION.SDK_INT >= 33) runCatching { WaterShader() }.getOrNull() else null }
 
         val time = rememberSceneTime()
+        // Layers that stand still are drawn once into a picture and reused every frame.
+        val shoreCache = remember { LayerCache() }
+        val pierCache = remember { LayerCache() }
 
         val castId by remember { derivedStateOf { lake.value.castId } }
         val dipTarget by remember { derivedStateOf { lake.value.dip } }
@@ -106,8 +110,14 @@ fun LakeScene(
             // Layers, back to front.
             val sea = waterKind == Water.SEA
             drawSky(geo, colors, conditions, t, sun, moon)
-            drawShores(geo, colors, waterKind, t)
-            if (waterKind == Water.POND) drawWillows(geo, colors, t)
+            if (sea) {
+                drawShores(geo, colors, waterKind, t)
+            } else {
+                shoreCache.draw(this, Triple(geo, colors, waterKind), Rect(0f, 0f, geo.w, geo.hy + geo.h * 0.01f)) {
+                    drawShores(geo, colors, waterKind, 0f)
+                    if (waterKind == Water.POND) drawWillows(geo, colors, 0f)
+                }
+            }
             if (water != null) {
                 water.update(
                     geo.w, geo.h, geo.hy, t, colors, glowX, floatPos.x, floatPos.y, if (onWater || s.stage == Stage.FIGHT) ripple else 0f,
@@ -138,7 +148,7 @@ fun LakeScene(
                 val b = s.bite
                 if (s.running && b != null) drawFishJump(geo, floatPos, t, b.species.id, b.golden != null, (b.cm / 60.0).toFloat())
             }
-            drawPier(geo, colors, sea, t)
+            pierCache.draw(this, Triple(geo, colors, sea), pierRect(geo, sea)) { drawPier(geo, colors, sea, 0f) }
             // No reeds out on a sea pier.
             if (!sea) drawReeds(geo, colors, t, back = true)
             drawRod(geo, colors, tip)

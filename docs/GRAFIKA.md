@@ -103,7 +103,10 @@ užtenka perrašyti vieną funkciją jos faile; kitų failų liesti nereikia.
   (tolimi, blunka į horizonto miglą). Taip naktis, saulėlydis ir audra veikia automatiškai.
 - Matmenis rašyti ekrano dalimis (`geo.w * 0.1f`), ne pikseliais, ir perspektyvai naudoti
   `geo.scaleAt(y)` (toli mažiau, arti daugiau).
-- Kiekvienas kadras piešiamas iš naujo (60 FPS). Sunkius skaičiavimus dėti į `SceneGeometry`
+- Krantai (išskyrus jūrą) ir lieptas yra nejudantys: `LakeScene` juos nupiešia vieną kartą į
+  paveikslėlį (`LayerCache`) ir perpiešia tik pasikeitus šviesai (kas minutę). Todėl ten
+  nedėkite animacijos; judančius dalykus dėkite į kitus sluoksnius.
+- Kiekvienas kitas kadras piešiamas iš naujo (60 FPS). Sunkius skaičiavimus dėti į `SceneGeometry`
   (skaičiuojama vieną kartą), ne į piešimo funkcijas.
 
 ## 4. Kaip patikrinti

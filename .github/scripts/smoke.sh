@@ -50,12 +50,12 @@ demo -e scene day; shot 16_jura_diena 4
 demo -e scene night -e trip ruegen; shot 17_riugenas_naktis 5
 demo -e scene day -e trip bodensee; shot 18_bodensee 5
 demo -e water lake; sleep 5
-demo -e catch moon_pike; shot 19_auksine_lydeka 3
-demo -e catch trout; shot 20_upetakis 3
-demo -e catch grayling; shot 21_kirslys 3
-demo -e catch flounder; shot 22_pleksne 3
-demo -e catch cod; shot 23_menke 3
-demo -e catch huchen; shot 24_dunojaus_lasisa 3
+demo -e catch moon_pike; shot 19_auksine_lydeka 5
+demo -e catch trout; shot 20_upetakis 5
+demo -e catch grayling; shot 21_kirslys 5
+demo -e catch flounder; shot 22_pleksne 5
+demo -e catch cod; shot 23_menke 5
+demo -e catch huchen; shot 24_dunojaus_lasisa 5
 demo -e water lake; sleep 3
 demo -e scene live -e screen book; shot 25_zuvu_knyga 4
 adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/5)) 400; shot 26_knyga_toliau 2
