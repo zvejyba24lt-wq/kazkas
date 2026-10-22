@@ -137,6 +137,7 @@ object Palette {
     /** Feeder rod: the bright quiver tip, the cage, the rod rest and the bite alarm. */
     val QuiverTip = Color(0xFFFF7A2E)
     val QuiverBand = Color(0xFFF4F1E8)
+    val Starlight = Color(0xFF8CFF6A)
     val FeederCage = Color(0xFF6E7781)
     val FeederLead = Color(0xFF3A3F45)
     val RodRest = Color(0xFF5C4128)

@@ -47,8 +47,8 @@ data class Progress(
         )
     }
     val boxSize: Int get() = when {
-        Upgrade.BOX_10.key in owned -> 10
-        Upgrade.BOX_7.key in owned -> 7
+        Upgrade.BOX_10.key in owned -> 20
+        Upgrade.BOX_7.key in owned -> 15
         else -> Baits.MAX
     }
     val spot: Spot get() = Destinations.byId(trip)?.spot ?: Spot(water)

@@ -165,8 +165,8 @@ data class Baits(val count: Int, val sinceMillis: Long) {
     }
 
     companion object {
-        const val MAX = 5
-        const val REFILL_MS = 30 * 60_000L
+        const val MAX = 10
+        const val REFILL_MS = 15 * 60_000L
     }
 }
 

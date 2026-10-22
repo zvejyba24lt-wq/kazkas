@@ -148,9 +148,9 @@ enum class FloatStyle(override val label: L, override val price: Int, override v
 /** One-off upgrades. */
 enum class Upgrade(override val label: L, override val price: Int, override val level: Int, val note: L) : Item {
     BOX_7(L("Didesnė masalų dėžė", "Größere Köderdose", "Bigger bait box"), 2000, 3,
-        L("7 užmetimai vietoj 5", "7 Würfe statt 5", "7 casts instead of 5")),
+        L("15 užmetimų vietoj 10", "15 Würfe statt 10", "15 casts instead of 10")),
     BOX_10(L("Didžiausia masalų dėžė", "Größte Köderdose", "Largest bait box"), 8000, 8,
-        L("10 užmetimų", "10 Würfe", "10 casts")),
+        L("20 užmetimų", "20 Würfe", "20 casts")),
     BOAT(L("Valtis", "Boot", "Boat"), 10000, 8,
         L("Pasieki gilumą, kimba greičiau", "Erreicht die Tiefe, Bisse kommen schneller", "Reach deep water, bites come faster")),
     ALARM(L("Elektroninis signalizatorius", "Elektronischer Bissanzeiger", "Electronic bite alarm"), 3500, 7,

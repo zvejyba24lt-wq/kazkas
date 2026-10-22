@@ -168,7 +168,8 @@ internal fun DrawScope.drawRod(geo: SceneGeometry, colors: SceneColors, tip: Off
         drawLine(Color.Black.copy(alpha = 0.16f), c - nn, c + nn, strokeWidth = 1.2f)
     }
     drawPath(band(handleEnd, tipStart), colors.lit(Palette.RodBlank))
-    if (quiver) drawPath(band(tipStart, n), colors.lit(Palette.QuiverTip))
+    // Fluorescent paint still reads in poor light, so the quiver tip darkens less than the blank.
+    if (quiver) drawPath(band(tipStart, n), lerp(colors.lit(Palette.QuiverTip), Palette.QuiverTip, 0.55f))
     // Light along the upper edge of the blank.
     val shine = Path().apply {
         for (i in handleEnd..n) {
@@ -193,6 +194,15 @@ internal fun DrawScope.drawRod(geo: SceneGeometry, colors: SceneColors, tip: Off
         val i = (u * n).toInt()
         val nn = normal(i) * (width(u) / 2 + 0.5f)
         drawLine(colors.lit(Palette.QuiverBand), pts[i] - nn, pts[i] + nn, strokeWidth = geo.w * 0.006f)
+    }
+    // After dark a feeder angler clips a glowing starlight onto the tip to see the bites.
+    val dark = ((0.55f - colors.light) / 0.35f).coerceIn(0f, 1f)
+    if (quiver && dark > 0f) {
+        val at = pts[n - 1]
+        val r = geo.w * 0.03f
+        drawCircle(Brush.radialGradient(listOf(Palette.Starlight.copy(alpha = 0.55f * dark), Color.Transparent), at, r), r, at)
+        drawLine(Palette.Starlight.copy(alpha = dark), pts[n - 3], pts[n], strokeWidth = geo.w * 0.009f, cap = StrokeCap.Round)
+        drawLine(Color.White.copy(alpha = 0.7f * dark), pts[n - 3], pts[n], strokeWidth = geo.w * 0.003f, cap = StrokeCap.Round)
     }
     drawReel(geo, colors, pts[(n * 0.13f).toInt()], pts[(n * 0.16f).toInt()] - pts[(n * 0.1f).toInt()])
 }

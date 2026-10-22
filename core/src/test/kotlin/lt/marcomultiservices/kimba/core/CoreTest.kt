@@ -128,12 +128,12 @@ class CoreTest {
     fun baitsRefill() {
         val t0 = 1_000_000_000L
         var b = Baits(Baits.MAX, t0)
-        repeat(5) { b = b.use(t0)!! }
+        repeat(Baits.MAX) { b = b.use(t0)!! }
         assertEquals(0, b.count)
         assertEquals(null, b.use(t0))
         assertEquals(1, b.now(t0 + Baits.REFILL_MS).count)
-        assertEquals(Baits.MAX, b.now(t0 + 10 * Baits.REFILL_MS).count)
-        assertEquals(8, Baits(Baits.MAX, t0).add(3, t0).count)
+        assertEquals(Baits.MAX, b.now(t0 + 2 * Baits.MAX * Baits.REFILL_MS).count)
+        assertEquals(Baits.MAX + 3, Baits(Baits.MAX, t0).add(3, t0).count)
     }
 
     @Test

@@ -178,7 +178,8 @@ fun LakeScreen(
     }
     LifecycleResumeEffect(ambient) {
         context.app.sfx.ambient(ambient)
-        onPauseOrDispose { context.app.sfx.ambient(null) }
+        vm.setPaused(false)
+        onPauseOrDispose { context.app.sfx.ambient(null); vm.setPaused(true) }
     }
 
     Box(Modifier.fillMaxSize().background(K.Night)) {

@@ -8,7 +8,7 @@ enum class Achievement(val title: L, val text: L, val target: Int, val coins: In
     FISH_500(L("Ežerų legenda", "Legende der Seen", "Legend of the lakes"), L("Sugauk 500 žuvų", "Fange 500 Fische", "Catch 500 fish"), 500, 2500),
     SPECIES_5(L("Smalsuolis", "Neugierig", "Curious"), L("Sugauk 5 skirtingas rūšis", "Fange 5 verschiedene Arten", "Catch 5 different species"), 5, 250),
     SPECIES_12(L("Gamtininkas", "Naturkundler", "Naturalist"), L("Sugauk 12 skirtingų rūšių", "Fange 12 verschiedene Arten", "Catch 12 different species"), 12, 800),
-    SPECIES_ALL(L("Visa knyga", "Das ganze Buch", "The whole book"), L("Sugauk visas rūšis", "Fange alle Arten", "Catch every species"), Fish.all.size, 5000),
+    SPECIES_ALL(L("Visos rūšys", "Alle Arten", "Every species"), L("Sugauk visas rūšis", "Fange alle Arten", "Catch every species"), Fish.all.size, 5000),
     KILO(L("Kilogramas", "Ein Kilo", "One kilo"), L("Sugauk žuvį, sveriančią bent 1 kg", "Fange einen Fisch ab 1 kg", "Catch a fish of 1 kg or more"), 1000, 150),
     FIVE_KILO(L("Stambi žuvis", "Großfisch", "Big one"), L("Sugauk žuvį, sveriančią bent 5 kg", "Fange einen Fisch ab 5 kg", "Catch a fish of 5 kg or more"), 5000, 700),
     TEN_KILO(L("Pabaisa", "Monster", "Monster"), L("Sugauk žuvį, sveriančią bent 10 kg", "Fange einen Fisch ab 10 kg", "Catch a fish of 10 kg or more"), 10000, 2000),

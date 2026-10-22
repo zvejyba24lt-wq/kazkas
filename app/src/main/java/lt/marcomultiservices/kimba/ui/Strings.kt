@@ -41,7 +41,7 @@ object S {
     val fishRuns = L("Tempia!", "Er zieht!", "It runs!")
     val noCasts = L("Užmetimai baigėsi", "Keine Würfe mehr", "Out of casts")
     val noCastsBody = L("Naujas užmetimas atsiras po %s.", "Ein neuer Wurf kommt in %s.", "A new cast arrives in %s.")
-    val bonusCasts = L("+3 užmetimai", "+3 Würfe", "+3 casts")
+    val bonusCasts = L("+5 užmetimai", "+5 Würfe", "+5 casts")
     val bonusNote = L("Už trumpą reklamos vaizdo įrašą", "Für ein kurzes Werbevideo", "For a short video ad")
     val lure = L("Masalas", "Köder", "Bait")
 

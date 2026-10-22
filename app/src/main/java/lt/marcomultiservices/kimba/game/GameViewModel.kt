@@ -138,6 +138,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private var job: Job? = null
     private var reeling = false
+    /** The app is in the background: a fight waits instead of going on without the player. */
+    @Volatile private var paused = false
     private var resultsSinceAd = 0
     /** Place whose forecast is in [forecast]. */
     private var forecastFor: Place? = null
@@ -280,7 +282,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     /** Reward for watching an ad when the casts are used up. */
     fun bonusCasts() = viewModelScope.launch {
-        store.update { it.copy(baits = it.baits.add(3, System.currentTimeMillis(), it.progress.boxSize)) }
+        store.update { it.copy(baits = it.baits.add(5, System.currentTimeMillis(), it.progress.boxSize)) }
     }
 
     /** Reward for watching an ad after a catch: the fish's coins once more. */
@@ -434,6 +436,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             while (fight.result == null) {
                 delay(16)
                 val now = System.nanoTime()
+                if (paused) {
+                    sfx.hold(Sfx.Fx.REEL, false); sfx.hold(Sfx.Fx.DRAG, false)
+                    last = now
+                    continue
+                }
                 fight.step(((now - last) / 1e9).coerceAtMost(0.05), reeling)
                 last = now
                 if (fight.runStarted) {
@@ -463,6 +470,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setReeling(on: Boolean) { reeling = on }
 
+    fun setPaused(on: Boolean) {
+        paused = on
+        if (on) reeling = false
+    }
+
     private suspend fun landed(bite: Bite) {
         val c = _conditions.value ?: return
         val saved = store.current()
@@ -488,8 +500,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         store.update { s ->
             val (landed, r) = Economy.land(s.progress, catch, isNew, today())
             reward = r
-            // Keep the log bounded; the book only needs the best and the count per species.
-            val catches = (s.catches + catch).takeLast(600)
+            // Keep the log bounded, but never drop the best fish of a kind: the book and trophies need it.
+            val all = s.catches + catch
+            val best = all.groupBy { it.golden ?: it.species }.values.map { l -> l.maxBy { it.cm } }.toSet()
+            val catches = if (all.size <= 600) all else all.filterIndexed { i, it -> i >= all.size - 600 || it in best }
             val (p, got) = Achievements.check(landed, catches)
             achieved = got
             val baits = if (r.allQuests) s.baits.add(Economy.ALL_QUESTS_CASTS, System.currentTimeMillis(), p.boxSize) else s.baits
