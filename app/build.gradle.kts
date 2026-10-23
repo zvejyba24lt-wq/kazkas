@@ -37,7 +37,7 @@ android {
         buildConfigField("String", "ADMOB_REWARDED_ID", "\"${env("ADMOB_REWARDED_ID", "ca-app-pub-3940256099942544/5224354917")}\"")
         // Screenshot and test hooks (launch extras) only in builds not signed for Google Play.
         buildConfigField("boolean", "DEMO_HOOKS", (!playBuild).toString())
-        buildConfigField("String", "PRIVACY_URL", "\"${env("PRIVACY_URL", "https://zvejyba24.lt/kimba/privatumas.html")}\"")
+        buildConfigField("String", "PRIVACY_URL", "\"${env("PRIVACY_URL", "")}\"")
     }
 
     signingConfigs {
