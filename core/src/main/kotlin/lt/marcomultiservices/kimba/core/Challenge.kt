@@ -19,13 +19,18 @@ object Challenge {
 
     fun number(day: Long): Int = (day - START + 1).toInt()
 
-    /** Common fish of every home lake; in winter only those that bite under the ice. */
+    /**
+     * Common fish of every home lake that really bite in that month: warm-water fish (tench,
+     * crucian carp, rudd, bleak) only in summer, bream not in the winter, so each day's kind can
+     * be caught with a worm or maggots in a few casts.
+     */
     fun species(day: Long, month: Int): Species {
-        val summer = listOf(Fish.roach, Fish.perch, Fish.bream, Fish.pike, Fish.rudd, Fish.tench, Fish.crucian, Fish.bleak)
-        val winter = listOf(Fish.roach, Fish.perch, Fish.bream, Fish.pike, Fish.bleak, Fish.rudd)
-        // Tench, crucian carp and rudd hardly feed in cold water: spring and autumn leave them out.
-        val cold = listOf(Fish.roach, Fish.perch, Fish.bream, Fish.pike, Fish.bleak)
-        val list = when (month) { 12, 1, 2 -> winter; 3, 4, 10, 11 -> cold; else -> summer }
+        val list = when (month) {
+            12, 1, 2 -> listOf(Fish.roach, Fish.perch, Fish.pike)
+            3, 4, 10, 11 -> listOf(Fish.roach, Fish.perch, Fish.bream, Fish.pike)
+            5, 9 -> listOf(Fish.roach, Fish.perch, Fish.bream, Fish.pike, Fish.bleak)
+            else -> listOf(Fish.roach, Fish.perch, Fish.bream, Fish.pike, Fish.rudd, Fish.tench, Fish.crucian, Fish.bleak)
+        }
         val h = (day * 2654435761L) ushr 7
         return list[(h % list.size).toInt()]
     }

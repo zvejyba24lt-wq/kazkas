@@ -15,6 +15,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
+import androidx.compose.foundation.layout.widthIn
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -143,6 +144,9 @@ private fun ShopRow(item: Item, p: Progress, onBuy: () -> Unit, onEquip: () -> U
         when {
             equipped -> Text(t(S.equipped), color = K.Amber, fontSize = 12.sp, fontWeight = FontWeight.Bold)
             owned && item is Upgrade -> Text(t(S.owned), color = K.Reed, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+            // A lure for a rod the player has not got yet can't be put on.
+            owned && item is Lure && item.tackle.none { p.owns(it) } ->
+                Text(t(S.needRod, t(item.tackle.first().label)), color = K.Muted, fontSize = 12.sp, textAlign = androidx.compose.ui.text.style.TextAlign.End, modifier = Modifier.widthIn(max = 110.dp))
             owned -> OutlinedButton(onEquip, contentPadding = PaddingValues(horizontal = 12.dp)) { Text(t(S.equip), color = K.Text, fontSize = 13.sp) }
             lockedByLevel -> Row(verticalAlignment = Alignment.CenterVertically) {
                 Icon(Icons.Rounded.Lock, null, tint = K.Muted, modifier = Modifier.size(14.dp))
@@ -317,7 +321,7 @@ internal fun DrawScope.drawItemIcon(item: Item, dim: Boolean) {
             else -> {
                 drawRoundRect(Brush.verticalGradient(listOf(Color(0xFF5A7A4A).copy(alpha = a), Color(0xFF3A5030).copy(alpha = a))), Offset(w * 0.12f, h * 0.35f), Size(w * 0.76f, h * 0.45f), androidx.compose.ui.geometry.CornerRadius(w * 0.08f))
                 drawRoundRect(Color(0xFF7A9A6A).copy(alpha = a), Offset(w * 0.08f, h * 0.25f), Size(w * 0.84f, h * 0.14f), androidx.compose.ui.geometry.CornerRadius(w * 0.05f))
-                val n = if (item == Upgrade.BOX_10) "10" else "7"
+                val n = if (item == Upgrade.BOX_10) "20" else "15"
                 drawContext.canvas.nativeCanvas.drawText(n, w * 0.5f, h * 0.7f, android.graphics.Paint().apply { color = android.graphics.Color.WHITE; alpha = (255 * a).toInt(); textSize = h * 0.32f; textAlign = android.graphics.Paint.Align.CENTER; isFakeBoldText = true })
             }
         }

@@ -81,7 +81,9 @@ fun ForecastScreen(vm: GameViewModel, onBack: () -> Unit) {
                     color = K.Muted, fontSize = 14.sp,
                 )
             } else {
-                windows.take(8).forEach { WindowCard(it) }
+                // Each fish once, at its next window, with how many more follow.
+                windows.groupBy { it.golden }.values.map { it.first() to it.size - 1 }.sortedBy { it.first.startMillis }
+                    .take(8).forEach { (w, more) -> WindowCard(w, more) }
             }
             Spacer(Modifier.height(24.dp))
             Text(t(S.metCredit), color = Color(0x88B4BCC6), fontSize = 11.sp)
@@ -166,7 +168,7 @@ private fun ActiveFish(c: Conditions, spot: lt.marcomultiservices.kimba.core.Spo
 }
 
 @Composable
-private fun WindowCard(w: GoldenWindow) {
+private fun WindowCard(w: GoldenWindow, more: Int = 0) {
     val lang = LocalLang.current
     val locale = when (lang) { lt.marcomultiservices.kimba.core.Lang.LT -> Locale("lt"); lt.marcomultiservices.kimba.core.Lang.DE -> Locale.GERMAN; else -> Locale.ENGLISH }
     val zone = ZoneId.systemDefault()
@@ -196,6 +198,7 @@ private fun WindowCard(w: GoldenWindow) {
         Column(horizontalAlignment = Alignment.End) {
             if (active) Text(t(S.activeWindow), color = K.Gold, fontSize = 11.sp, fontWeight = FontWeight.Black)
             Text("${if (active) t(S.now) else fmt(w.startMillis)} – ${fmt(w.endMillis)}", color = K.Text, fontSize = 13.sp)
+            if (more > 0) Text(t(S.moreTimes(more)), color = K.Muted, fontSize = 11.sp)
         }
     }
 }

@@ -458,7 +458,8 @@ private fun ChallengeCard(p: Progress) {
             FishPicture(species.id, false, null, Modifier.width(92.dp).height(46.dp))
         }
         Spacer(Modifier.height(4.dp))
-        Text(t(S.challengeGoal, t(species.name).lowercase()), color = K.Muted, fontSize = 12.sp, lineHeight = 17.sp)
+        // German nouns keep their capital letter.
+        Text(t(S.challengeGoal, t(species.name).let { if (lang == lt.marcomultiservices.kimba.core.Lang.DE) it else it.lowercase() }), color = K.Muted, fontSize = 12.sp, lineHeight = 17.sp)
         Spacer(Modifier.height(8.dp))
         Row(verticalAlignment = Alignment.CenterVertically) {
             if (log == null) {

@@ -77,14 +77,14 @@ fun TackleBoxButton(progress: Progress, enabled: Boolean, onOpen: () -> Unit) {
                 Modifier.size(46.dp).align(Alignment.Center).clip(CircleShape).background(Plastic).border(1.dp, Rim, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Canvas(Modifier.size(32.dp)) { drawItemIcon(progress.gear.lure, false) }
+                Canvas(Modifier.size(32.dp)) { drawItemIcon(progress.gearHere.lure, false) }
             }
             // Which rod is in hand.
             Box(
                 Modifier.align(Alignment.BottomEnd).size(22.dp).clip(CircleShape).background(Color(0xFF0F1D16)).border(1.dp, Rim, CircleShape),
                 contentAlignment = Alignment.Center,
             ) {
-                Canvas(Modifier.size(17.dp)) { drawItemIcon(progress.tackle, false) }
+                Canvas(Modifier.size(17.dp)) { drawItemIcon(progress.gearHere.tackle, false) }
             }
         }
         Spacer(Modifier.height(4.dp))
@@ -134,16 +134,18 @@ fun TackleBox(open: Boolean, progress: Progress, onTackle: (Tackle) -> Unit, onB
                     Spacer(Modifier.height(8.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         for (k in Tackle.entries) {
-                            val owned = progress.owns(k)
-                            val sel = progress.tackle == k
+                            // Through the ice only the short winter float rod is fished.
+                            val iceBlocked = progress.onIce && k != Tackle.FLOAT
+                            val owned = progress.owns(k) && !iceBlocked
+                            val sel = progress.gearHere.tackle == k
                             Slot(
                                 Modifier.weight(1f), sel, owned,
-                                onClick = { sfx.play(Sfx.Fx.TAP, 0.6f); if (owned) onTackle(k) else onShop() },
+                                onClick = { sfx.play(Sfx.Fx.TAP, 0.6f); if (owned) onTackle(k) else if (!iceBlocked) onShop() },
                             ) {
                                 Canvas(Modifier.size(48.dp)) { drawItemIcon(k, !owned) }
                                 Spacer(Modifier.height(4.dp))
                                 Text(t(k.label).substringBefore(" ("), color = if (owned) K.Text else K.Muted, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, maxLines = 2)
-                                if (!owned) Locked(if (progress.level < k.level) t(S.needLevel, k.level) else t(S.inShop))
+                                if (iceBlocked) Locked(t(S.notOnIce)) else if (!owned) Locked(if (progress.level < k.level) t(S.needLevel, k.level) else t(S.inShop))
                             }
                         }
                     }
@@ -151,16 +153,17 @@ fun TackleBox(open: Boolean, progress: Progress, onTackle: (Tackle) -> Unit, onB
                     Text(t(S.baitsTitle), color = Color(0xFFBFD8C6), fontSize = 12.sp, fontWeight = FontWeight.Bold)
                     Spacer(Modifier.height(8.dp))
                     // Baits for the rod in hand first, then the rest of the box.
-                    val baits = Lure.entries.sortedBy { if (progress.tackle in it.tackle) 0 else 1 }
+                    val rod = progress.gearHere.tackle
+                    val baits = Lure.entries.sortedBy { if (rod in it.tackle) 0 else 1 }
                     for (row in baits.chunked(3)) {
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             for (l in row) {
                                 val owned = progress.owns(l)
-                                val fits = progress.tackle in l.tackle
+                                val fits = rod in l.tackle
                                 // A bait for another rod can be picked when that rod is owned: the rod changes with it.
-                                val usable = owned && (fits || l.tackle.any { progress.owns(it) })
+                                val usable = owned && (fits || (!progress.onIce && l.tackle.any { progress.owns(it) }))
                                 Slot(
-                                    Modifier.weight(1f), progress.gear.lure == l, owned && fits,
+                                    Modifier.weight(1f), progress.gearHere.lure == l, owned && fits,
                                     onClick = {
                                         sfx.play(Sfx.Fx.TAP, 0.6f)
                                         when {

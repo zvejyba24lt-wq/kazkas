@@ -215,6 +215,87 @@ class CoreTest {
     }
 
     @Test
+    fun trimmedLogKeepsRecordsAndStamps() {
+        val rainy = Catch("roach", null, 20.0, 100, 1_000L, Sky.RAIN, 10.0, "x")
+        val big = Catch("pike", null, 110.0, 9000, 2_000L, Sky.PARTLY, 10.0, "x")
+        val all = listOf(rainy, big) + (1..700).map { Catch("perch", null, 15.0, 60, 10_000L + it, Sky.PARTLY, 10.0, "x") }
+        val log = CatchLog.trim(all)
+        assertTrue(rainy in log && big in log)
+        assertEquals(Stamp.collected(all), Stamp.collected(log))
+        assertTrue(log.size <= CatchLog.MAX + 10)
+    }
+
+    @Test
+    fun tournamentFishBitesThatWeek() {
+        for (w in 0 until 120) {
+            val month = java.time.LocalDate.of(2026, 10, 5).plusWeeks(w.toLong()).plusDays(3).monthValue
+            val id = Tournament.species(w).id
+            if (month !in 5..9) assertTrue(id !in setOf("tench", "crucian", "rudd"), "week $w month $month: $id")
+        }
+    }
+
+    @Test
+    fun sunkenRodComesWithItsRodWhenNeeded() {
+        // Without a rod for the found lure the rod is kept too; with one, only the lure.
+        repeat(20) { seed ->
+            val (p, lure) = Surprise.apply(Progress(), Surprise.SUNKEN_ROD, Random(seed))
+            assertTrue(lure != null && lure.tackle.any { p.owns(it) }, "seed $seed: $lure")
+            assertEquals(p, p.migrated())
+        }
+        val spinner = Progress(owned = Shop.starter + Tackle.SPIN.key + Tackle.FEEDER.key)
+        val (p, lure) = Surprise.apply(spinner, Surprise.SUNKEN_ROD, Random(1))
+        assertEquals(spinner.owned + lure!!.key, p.owned)
+    }
+
+    @Test
+    fun dailyFishCanBeCaughtEveryMonth() {
+        // A mid-month morning of typical Lithuanian weather: every kind the challenge or a quest
+        // can ask for must come to a worm, maggots or a spinner often enough to be caught on the day.
+        val temps = listOf(-4.0, -3.0, 2.0, 8.0, 14.0, 18.0, 20.0, 19.0, 14.0, 8.0, 3.0, -2.0)
+        for (m in 1..12) {
+            val millis = java.time.LocalDate.of(2026, m, 15).atTime(10, 0).atZone(vilnius).toInstant().toEpochMilli()
+            val c = Conditions(Weather(temps[m - 1], 1013.0, 0.0, 0.5, 3.0, 0.0, Sky.PARTLY), millis, 54.69, 25.28, vilnius)
+            fun share(lure: Lure, tackle: Tackle = Tackle.FLOAT): Map<String, Double> {
+                val rng = Random(m)
+                val n = 3000
+                return (1..n).map { BiteEngine.roll(c, 0.6, rng, gear = Gear(lure = lure, tackle = tackle)).species.id }.groupingBy { it }.eachCount().mapValues { it.value.toDouble() / n }
+            }
+            val worm = share(Lure.WORM)
+            val maggot = share(Lure.MAGGOT)
+            // Pike are fished for with a spinner.
+            val spinner = share(Lure.SPINNER, Tackle.SPIN)
+            fun best(id: String) = maxOf(worm[id] ?: 0.0, maggot[id] ?: 0.0, spinner[id] ?: 0.0)
+            val days = (0L until 40L).map { java.time.LocalDate.of(2026, m, 1).toEpochDay() + it }
+            for (s in days.map { Challenge.species(it, m) }.toSet()) assertTrue(best(s.id) >= 0.015, "challenge ${s.id} in month $m: ${best(s.id)}")
+            for (s in Quests.questSpecies(1, m)) assertTrue(best(s.id) >= 0.05, "quest ${s.id} in month $m: ${best(s.id)}")
+        }
+    }
+
+    @Test
+    fun feederLineTakesLongerButStillLands() {
+        // A careful player against a middling bream: the 60 m feeder fight lasts longer than the
+        // 25 m float one, but is still won as often.
+        fun play(metres: Int): Pair<Int, Double> {
+            var won = 0
+            var time = 0.0
+            for (seed in 1..30) {
+                val f = Fight(0.5, Random(seed), metres = metres, netAt = 2.5 / metres)
+                var t = 0.0
+                while (f.result == null && t < 120) { f.step(0.016, f.tension < 0.85 && !f.running, -f.heading); t += 0.016 }
+                if (f.result == FightResult.LANDED) won++
+                time += t
+            }
+            return won to time / 30
+        }
+        val (floatWon, floatTime) = play(25)
+        val (feederWon, feederTime) = play(60)
+        println("float $floatWon/30 in ${floatTime}s, feeder $feederWon/30 in ${feederTime}s")
+        assertTrue(feederTime > floatTime * 1.3)
+        assertTrue(feederWon >= floatWon - 3)
+        assertTrue(feederTime < 60)
+    }
+
+    @Test
     fun levelsCoinsAndShop() {
         assertEquals(1, Levels.levelOf(0))
         assertEquals(2, Levels.levelOf(100))

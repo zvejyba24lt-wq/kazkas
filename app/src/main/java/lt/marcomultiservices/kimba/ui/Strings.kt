@@ -192,6 +192,7 @@ object S {
     val questsDone = L("Užduotis įvykdyta!", "Aufgabe erledigt!", "Quest complete!")
     val allQuestsDone = L("Visos dienos užduotys įvykdytos: +%d monetų ir +%d užmetimai!", "Alle Tagesaufgaben erledigt: +%d Münzen und +%d Würfe!", "All daily quests done: +%d coins and +%d casts!")
     val great = L("Puiku!", "Super!", "Great!")
+    fun moreTimes(n: Int) = L("ir dar $n ${Plural.lt(n, "kartą", "kartus", "kartų")}", "und noch ${n}×", "and $n more ${if (n == 1) "time" else "times"}")
     fun plusCoins(n: Int) = L("+$n ${Plural.lt(n, "moneta", "monetos", "monetų")}", "+$n ${if (n == 1) "Münze" else "Münzen"}", "+$n ${if (n == 1) "coin" else "coins"}")
     val plusXp = L("+%d patirties", "+%d EP", "+%d XP")
     val doubleCoins = L("×2 monetos už reklamą", "×2 Münzen für ein Video", "×2 coins for a video")
@@ -311,6 +312,9 @@ object S {
     // Surprises and the secret cove
     val surpriseHeader = L("Netikėtas laimikis", "Überraschungsfang", "Surprise catch")
     val foundLure = L("Radai masalą: %s!", "Köder gefunden: %s!", "You found a lure: %s!")
+    val notOnIce = L("Ne ant ledo", "Nicht auf dem Eis", "Not on the ice")
+    val needRod = L("Reikia: %s", "Benötigt: %s", "Needs: %s")
+    val foundRodLure = L("Meškerė dar tinka! Gauni: %s ir %s.", "Die Rute ist noch gut! Du bekommst: %s und %s.", "The rod still works! You get: %s and %s.")
     val foundCove = L("Atsivėrė Slaptoji įlanka! Ją rasi žemėlapyje.", "Die Geheime Bucht ist offen! Du findest sie auf der Karte.", "The Secret cove is open! You'll find it on the map.")
     val goCove = L("🗺 Plaukti į įlanką", "🗺 Zur Bucht", "🗺 Go to the cove")
     val secretNote = L("Iš butelio žemėlapio · žuvys didesnės", "Von der Flaschenpost-Karte · größere Fische", "From the bottle's map · bigger fish")

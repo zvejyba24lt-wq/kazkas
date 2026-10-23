@@ -32,10 +32,10 @@ object BiteEngine {
     /** Chance that a bite of a species whose golden form is active is the golden one. */
     const val GOLDEN_CHANCE = 0.3
 
-    /** [cast] is the cast distance 0..1: near casts reach reed fish, far casts the deep-water predators. */
     /** Chance that a bite at a legend's water, while its conditions hold, is the legend. */
     const val LEGEND_CHANCE = 0.06
 
+    /** [cast] is the cast distance 0..1: near casts reach reed fish, far casts the deep-water predators. */
     fun roll(c: Conditions, cast: Double, rng: Random, spot: Spot = Spot.HOME_LAKE, gear: Gear = Gear(), legendsCaught: Set<String> = emptySet()): Bite {
         // A legend of this home water, if its three conditions meet right now.
         val legend = Fish.legends.firstOrNull { it.legendOf == spot.water && spot.trip == null && it.id !in legendsCaught && it.active(c) }
@@ -115,9 +115,14 @@ class Fight(
     start: Double = 1.0,
     /** How close (0..1 of a full cast) the landing net reaches: about 2.5 m from the angler. */
     private val netAt: Double = 0.1,
+    /** Metres of a full cast ([Reach]): 60 m of feeder line takes longer to wind than 25 m of float line. */
+    metres: Int = 25,
 ) {
-    /** Remaining distance to the landing net, 0..1 of a full cast. */
-    var distance = start.coerceIn(netAt + 0.02, 1.0); private set
+    /** Line won or lost per second scales with the real length, softened so long casts stay playable. */
+    private val pace = Math.pow(25.0 / metres.coerceAtLeast(1), 0.6)
+
+    /** Remaining distance to the landing net, 0..1 of a full cast. Hooked right at the bank, it starts at the net. */
+    var distance = start.coerceIn(0.02, 1.0); private set
     /** Line tension 0..1+, snaps when held above ~1. */
     var tension = 0.3; private set
     var stamina = 1.0; private set
@@ -179,8 +184,8 @@ class Fight(
         val p = currentPull
         val target = ((if (reeling) 0.28 + p * 0.42 else 0.04 + p * 0.18) + with * 0.14 - against * 0.05) / strength
         tension += (target - tension) * min(1.0, dt * 4)
-        distance += if (reeling) -dt * 0.16 * reelSpeed * (1 - min(0.85, p * 0.45)) * (1 - 0.5 * with) else dt * 0.05 * p
-        if (with > 0) distance += dt * 0.03 * p * with
+        distance += pace * (if (reeling) -dt * 0.16 * reelSpeed * (1 - min(0.85, p * 0.45)) * (1 - 0.5 * with) else dt * 0.05 * p)
+        if (with > 0) distance += pace * dt * 0.03 * p * with
         distance = distance.coerceIn(0.0, 1.0)
         stamina = (stamina - dt * (if (running) 0.06 else 0.025) * (if (reeling) 1.4 else 0.8) * (1 + 1.2 * against)).coerceAtLeast(0.0)
         overload = if (tension > 0.97) overload + dt else 0.0
@@ -274,5 +279,23 @@ enum class Stamp(val label: L) {
         /** Every (kind, stamp) pair collected, golden fish counted under their own name. */
         fun collected(catches: List<Catch>): Set<Pair<String, Stamp>> =
             catches.flatMap { c -> of(c).map { (c.golden ?: c.species) to it } }.toSet()
+    }
+}
+
+/** The catch log is kept bounded without losing anything the fish book or the trophies show. */
+object CatchLog {
+    const val MAX = 600
+
+    /**
+     * The last [max] catches, plus the biggest of each kind and the first catch that earned
+     * each weather stamp, so records and stamps stay in the book however long the player fishes.
+     */
+    fun trim(all: List<Catch>, max: Int = MAX): List<Catch> {
+        if (all.size <= max) return all
+        val keep = HashSet<Catch>()
+        all.groupBy { it.golden ?: it.species }.values.forEach { l -> keep += l.maxBy { it.cm } }
+        val stamps = HashSet<Pair<String, Stamp>>()
+        for (c in all) if (Stamp.of(c).any { stamps.add((c.golden ?: c.species) to it) }) keep += c
+        return all.filterIndexed { i, c -> i >= all.size - max || c in keep }
     }
 }

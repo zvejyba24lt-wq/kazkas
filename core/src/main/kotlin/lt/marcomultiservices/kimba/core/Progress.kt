@@ -269,10 +269,18 @@ data class Quests(val day: Long, val list: List<Quest>) {
         /** Waters open at home for a player of [level]. */
         fun watersFor(level: Int): List<Water> = Water.entries.filter { it.homeLevel <= level }
 
-        /** Common, widespread fish of the waters open to the player: always catchable at home. */
-        fun questSpecies(level: Int): List<Species> = Fish.all.filter { s ->
-            s.onlyAt == null && s.abundance >= 0.6 && s.waters.any { it in watersFor(level) }
-        }
+        /**
+         * Common, widespread fish of the waters open to the player that bite often enough in
+         * [month] to catch two or three: bream only in the warm half of the year, bleak (small
+         * and choosy) only in high summer.
+         */
+        fun questSpecies(level: Int, month: Int = 7): List<Species> = Fish.all.filter { s ->
+            s.onlyAt == null && s.abundance >= 0.6 && s.waters.any { it in watersFor(level) } && when (s.id) {
+                "bleak" -> month in 6..8
+                "bream" -> month in 5..9
+                else -> true
+            }
+        }.ifEmpty { listOf(Fish.roach, Fish.perch) }
 
         fun today(current: Quests?, epochDay: Long, level: Int = 1): Quests =
             if (current != null && current.day == epochDay) current else generate(epochDay, level)
@@ -281,13 +289,13 @@ data class Quests(val day: Long, val list: List<Quest>) {
         fun generate(epochDay: Long, level: Int = 1): Quests {
             val rng = Random(epochDay * 7919 + 17)
             val kinds = listOf(QuestKind.SPECIES, QuestKind.BIG, QuestKind.TOTAL_KG, QuestKind.GOLDEN_OR_RARE, QuestKind.WATER).shuffled(rng).take(2)
-            val species = questSpecies(level)
+            val species = questSpecies(level, java.time.LocalDate.ofEpochDay(epochDay).monthValue)
             val waters = watersFor(level)
             val list = listOf(Quest(QuestKind.COUNT, 5 + rng.nextInt(4), coins = 100)) + kinds.map { k ->
                 when (k) {
                     QuestKind.SPECIES -> Quest(k, 2 + rng.nextInt(2), species = species[rng.nextInt(species.size)].id, coins = 150)
                     QuestKind.BIG -> Quest(k, listOf(800, 1000, 1500)[rng.nextInt(3)], coins = 200)
-                    QuestKind.TOTAL_KG -> Quest(k, 3000 + 1000 * rng.nextInt(3), coins = 150)
+                    QuestKind.TOTAL_KG -> Quest(k, 2000 + 1000 * rng.nextInt(2), coins = 150)
                     QuestKind.GOLDEN_OR_RARE -> Quest(k, 1, coins = 200)
                     else -> Quest(QuestKind.WATER, 3, water = waters[rng.nextInt(waters.size)], coins = 120)
                 }

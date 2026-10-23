@@ -128,6 +128,8 @@ data class LakeState(
     val surprise: lt.marcomultiservices.kimba.core.Surprise? = null,
     /** The lure found on a sunken rod. */
     val foundLure: Lure? = null,
+    /** The rod that came up with it, when the player had none for that lure. */
+    val foundRod: Tackle? = null,
 )
 
 /** Things to celebrate in a dialog, one after another. */
@@ -520,9 +522,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         if (s.stage != Stage.CHARGING) return
         // Through the ice the bait is simply lowered into the hole.
         val power = if (_saved.value?.progress?.onIce == true) ICE_DIST else castPower(uptime - s.chargeStart).toDouble()
-        val c = _conditions.value ?: return
+        // Without the weather (or the save) there is nothing to cast into: never leave the rod drawn back.
+        val c = _conditions.value ?: run { _lake.value = LakeState(castId = s.castId); return }
         job?.cancel()
-        val p = _saved.value?.progress ?: return
+        val p = _saved.value?.progress ?: run { _lake.value = LakeState(castId = s.castId); return }
         // The cast flies at once; the bait is taken from the box meanwhile (pressCast checked there is one).
         viewModelScope.launch {
             store.update { saved -> saved.baits.use(System.currentTimeMillis(), saved.progress.boxSize)?.let { saved.copy(baits = it) } ?: saved }
@@ -706,12 +709,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         rodAim = 0f
         val gear = _saved.value?.progress?.gearHere
         // The fish is played in from where it took the bait: a short cast, or a spinner taken
-        // near the bank, leaves less line to wind in. A little room stays for the fight itself.
+        // near the bank, leaves less line to wind in: the fight starts where the fish really is.
         val st = _lake.value
-        val out = (st.castDist * (1.0 - (if (st.tackle == Tackle.SPIN) st.takenAt.toDouble() else 0.0))).coerceIn(0.12, 1.0)
+        val out = (st.castDist * (1.0 - (if (st.tackle == Tackle.SPIN) st.takenAt.toDouble() else 0.0))).coerceIn(0.04, 1.0)
         // The net reaches about two and a half metres out, whatever rod it is.
-        val netAt = 2.5 / lt.marcomultiservices.kimba.core.Reach.metres(st.tackle)
-        val fight = Fight(bite.pull, rng, gear?.strength ?: 1.0, gear?.reel?.speed ?: 1.0, out, netAt)
+        val reach = lt.marcomultiservices.kimba.core.Reach.metres(st.tackle)
+        val netAt = 2.5 / reach
+        val fight = Fight(bite.pull, rng, gear?.strength ?: 1.0, gear?.reel?.speed ?: 1.0, out, netAt, reach)
         _lake.update { it.copy(stage = Stage.FIGHT, dip = 0f, tension = 0.3f, fightDistance = out.toFloat(), fightStart = out.toFloat(), alarm = false) }
         learn(Tip.STRIKE)
         thump(45, bite.pull)
@@ -799,10 +803,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     /** Something other than a fish came out: its reward and its own card. */
     private suspend fun landedSurprise(found: lt.marcomultiservices.kimba.core.Surprise) {
         var lure: Lure? = null
+        var rod: Tackle? = null
         var achieved: List<Achievement> = emptyList()
         store.update { s ->
             val (p, l) = lt.marcomultiservices.kimba.core.Surprise.apply(s.progress, found, rng)
             lure = l
+            rod = Tackle.entries.firstOrNull { !s.progress.owns(it) && p.owns(it) }
             val (p2, got) = Achievements.check(p, s.catches)
             achieved = got
             s.copy(progress = p2)
@@ -812,7 +818,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         _lake.update { it.copy(stage = Stage.LANDING, tension = 0f) }
         delay(LANDING_MS)
         sfx.play(Sfx.Fx.COIN, 0.8f)
-        _lake.update { it.copy(stage = Stage.CAUGHT, caught = null, foundLure = lure) }
+        _lake.update { it.copy(stage = Stage.CAUGHT, caught = null, foundLure = lure, foundRod = rod) }
         if (achieved.isNotEmpty()) _events.update { it + GameEvent.Achieved(achieved) }
         reportToPlay(store.current())
     }
@@ -850,10 +856,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         store.update { s ->
             val (landed, r) = Economy.land(s.progress, catch, isNew, today())
             reward = r
-            // Keep the log bounded, but never drop the best fish of a kind: the book and trophies need it.
-            val all = s.catches + catch
-            val best = all.groupBy { it.golden ?: it.species }.values.map { l -> l.maxBy { it.cm } }.toSet()
-            val catches = if (all.size <= 600) all else all.filterIndexed { i, it -> i >= all.size - 600 || it in best }
+            val catches = lt.marcomultiservices.kimba.core.CatchLog.trim(s.catches + catch)
             val (p, got) = Achievements.check(landed, catches)
             achieved = got
             val baits = if (r.allQuests) s.baits.add(Economy.ALL_QUESTS_CASTS, System.currentTimeMillis(), p.boxSize) else s.baits
@@ -908,7 +911,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         p.achieved.forEach { play.unlock(it) }
     }
 
-    /** Test money and experience for screenshots. */
     /** Builds the whole camp for free (for screenshots). */
     fun demoCamp() = updateProgress { p -> p.copy(owned = p.owned + lt.marcomultiservices.kimba.core.CampItem.entries.map { it.key }) }
 
@@ -918,6 +920,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         updateProgress { it.copy(stand = stand, trip = null, owned = it.owned + Upgrade.BOAT.key) }.invokeOnCompletion { afterMove() }
     }
 
+    /** Test money and experience for screenshots. */
     fun demoProgress(coins: Int, xp: Int) = updateProgress { p ->
         p.copy(coins = if (coins >= 0) coins else p.coins, xp = if (xp >= 0) xp else p.xp)
     }
@@ -1101,10 +1104,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         /** How long the landed fish is lifted out of the water before its card shows. */
         const val LANDING_MS = 1600L
 
-        /** Power meter: rises and falls every 3.2 s while the button is held. */
         /** Where the hole in the ice is, on the cast-distance scale. */
         const val ICE_DIST = 0.42
 
+        /** Power meter: rises and falls every 3.2 s while the button is held. */
         fun castPower(heldMs: Long): Float {
             val p = (heldMs % 3200L) / 1600f
             return (if (p <= 1f) p else 2f - p).coerceIn(0.05f, 1f)

@@ -46,7 +46,7 @@ enum class Lure(
     WORM(
         L("Sliekas", "Wurm", "Worm"), 0, 1,
         L("Viskam po truputį", "Ein bisschen für alles", "A bit of everything"), 1.0,
-        mapOf("eel" to 1.6, "perch" to 1.3, "tench" to 1.3, "burbot" to 1.4, "catfish" to 1.2, "flounder" to 2.0, "barbel" to 1.4,
+        mapOf("eel" to 1.6, "perch" to 1.3, "pike" to 0.4, "tench" to 1.3, "burbot" to 1.4, "catfish" to 1.2, "flounder" to 2.0, "barbel" to 1.4,
             "garfish" to 0.3, "herring" to 0.5, "asp" to 0.1, "huchen" to 0.1, "grass_carp" to 0.3, "turbot" to 0.6),
     ),
     MAGGOT(

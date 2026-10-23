@@ -51,7 +51,7 @@ enum class Surprise(val label: L, val note: L, val chance: Double, val coins: In
 
         /**
          * Applies [s] to [p]: coins and XP; the sunken rod gives a lure not yet owned (else its
-         * coins), the bottle opens the secret cove (a second bottle pays coins instead).
+         * coins), and the rod itself when the player has no rod that lure can be fished on, the bottle opens the secret cove (a second bottle pays coins instead).
          * Returns the new progress and the lure found, if any.
          */
         fun apply(p: Progress, s: Surprise, rng: Random): Pair<Progress, Lure?> {
@@ -61,7 +61,9 @@ enum class Surprise(val label: L, val note: L, val chance: Double, val coins: In
             when (s) {
                 SUNKEN_ROD -> {
                     lure = rodLures.filter { it.key !in p.owned }.randomOrNull(rng)
-                    next = if (lure != null) next.copy(owned = next.owned + lure.key) else next.copy(coins = next.coins + s.coins)
+                    // With no rod for the lure, the found rod is kept too, so the lure can be used.
+                    val rod = lure?.tackle?.takeIf { t -> t.none { p.owns(it) } }?.first()
+                    next = if (lure != null) next.copy(owned = next.owned + lure.key + listOfNotNull(rod?.key)) else next.copy(coins = next.coins + s.coins)
                 }
                 BOTTLE -> next = if (Destinations.secret.id !in p.trips) next.copy(trips = next.trips + Destinations.secret.id) else next.copy(coins = next.coins + 600)
                 else -> next = next.copy(coins = next.coins + s.coins)

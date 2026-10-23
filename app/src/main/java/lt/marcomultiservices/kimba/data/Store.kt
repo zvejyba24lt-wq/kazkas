@@ -41,7 +41,9 @@ data class Saved(
 
 /** Everything the game remembers, in one DataStore. */
 class Store(private val context: Context) {
-    private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true }
+    // An unknown value (from a newer or older version) falls back to its default instead of
+    // failing the whole save.
+    private val json = Json { ignoreUnknownKeys = true; encodeDefaults = true; coerceInputValues = true }
     private val kOnboarded = booleanPreferencesKey("onboarded")
     private val kPlace = stringPreferencesKey("place")
     private val kBaits = stringPreferencesKey("baits")
@@ -60,6 +62,10 @@ class Store(private val context: Context) {
 
     suspend fun update(transform: (Saved) -> Saved) {
         context.dataStore.edit { p ->
+            // A save that can't be read is kept aside before anything is written over it, so a
+            // bad update can never silently wipe the player's progress or fish book.
+            keepUnreadable(p, kProgress, Progress.serializer())
+            keepUnreadable(p, kCatches, ListSerializer(Catch.serializer()))
             val s = transform(read(p))
             p[kOnboarded] = s.onboarded
             if (s.place != null) p[kPlace] = json.encodeToString(Place.serializer(), s.place) else p.remove(kPlace)
@@ -75,6 +81,13 @@ class Store(private val context: Context) {
     }
 
     private fun <T> Set<T>.takeLast(n: Int): List<T> = toList().takeLast(n)
+
+    private fun <T> keepUnreadable(p: androidx.datastore.preferences.core.MutablePreferences, key: Preferences.Key<String>, serializer: kotlinx.serialization.KSerializer<T>) {
+        val raw = p[key] ?: return
+        if (runCatching { json.decodeFromString(serializer, raw) }.isSuccess) return
+        val backup = stringPreferencesKey(key.name + "_unreadable")
+        if (p[backup] == null) p[backup] = raw
+    }
 
     private fun read(p: Preferences): Saved = Saved(
         onboarded = p[kOnboarded] ?: false,

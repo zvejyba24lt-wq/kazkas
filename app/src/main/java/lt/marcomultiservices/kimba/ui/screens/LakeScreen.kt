@@ -316,7 +316,7 @@ fun LakeScreen(
                 if (lake.caught != null && stage == Stage.CAUGHT) {
                     CatchCard(lake.caught, lake.newSpecies, lake.record, lake.reward, lake.doubled, progress.noAds, lake.returnedFrom, onDouble = { rewarded { vm.doubleCoins() } }, onShare = { shareCatch(lake.caught) }, onRelease = { vm.releaseCatch() }) { next() }
                 } else if (lake.surprise != null && stage == Stage.CAUGHT) {
-                    SurpriseCard(lake.surprise, lake.foundLure, onCove = { vm.travel(lt.marcomultiservices.kimba.core.Destinations.secret); next() }) { next() }
+                    SurpriseCard(lake.surprise, lake.foundLure, lake.foundRod, onCove = { vm.travel(lt.marcomultiservices.kimba.core.Destinations.secret); next() }) { next() }
                 } else if (lake.lost != null) LostCard(lake.lost) { next() }
             }
         }
@@ -954,10 +954,14 @@ private fun Stat(label: String, value: String) {
 }
 
 @Composable
-private fun SurpriseCard(s: lt.marcomultiservices.kimba.core.Surprise, lure: lt.marcomultiservices.kimba.core.Lure?, onCove: () -> Unit, onNext: () -> Unit) {
+private fun SurpriseCard(s: lt.marcomultiservices.kimba.core.Surprise, lure: lt.marcomultiservices.kimba.core.Lure?, rod: Tackle?, onCove: () -> Unit, onNext: () -> Unit) {
     val time = lt.marcomultiservices.kimba.ui.scene.rememberSceneTime()
     val reward = when (s) {
-        lt.marcomultiservices.kimba.core.Surprise.SUNKEN_ROD -> if (lure != null) t(S.foundLure, t(lure.label)) else t(S.plusCoins(s.coins))
+        lt.marcomultiservices.kimba.core.Surprise.SUNKEN_ROD -> when {
+            lure == null -> t(S.plusCoins(s.coins))
+            rod != null -> t(S.foundRodLure, t(rod.label), t(lure.label))
+            else -> t(S.foundLure, t(lure.label))
+        }
         lt.marcomultiservices.kimba.core.Surprise.BOTTLE -> t(S.foundCove)
         else -> listOfNotNull(if (s.coins > 0) t(S.plusCoins(s.coins)) else null, "+${s.xp} XP").joinToString("   ")
     }

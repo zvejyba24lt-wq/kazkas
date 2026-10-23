@@ -30,7 +30,7 @@ enum class StoryStep(val talk: L, val task: L, val target: Int, val coins: Int, 
         L("Sugauk 3 žuvis upėje", "Fange 3 Fische im Fluss", "Catch 3 fish in the river"), 3, 300, revealsClues = true,
     ),
     PIKE(
-        L("Dabar žinai legendų paslaptis. Bet pirma sugauk tikrą lydeką, kad ranka priprastų.", "Jetzt kennst du die Geheimnisse der Legenden. Aber fang erst einen richtigen Hecht, damit die Hand sich gewöhnt.", "Now you know the legends' secrets. But first catch a real pike, so your hand gets used to it."),
+        L("Dabar žinai legendų paslaptis. Bet pirma sugauk tikrą lydeką, kad ranka priprastų. Sliekas jai mažai rūpi – imk spiningą su blizge.", "Jetzt kennst du die Geheimnisse der Legenden. Aber fang erst einen richtigen Hecht, damit die Hand sich gewöhnt. Ein Wurm reizt ihn kaum, nimm die Spinnrute mit dem Blinker.", "Now you know the legends' secrets. But first catch a real pike, so your hand gets used to it. A worm hardly tempts it: take the spinning rod and a spinner."),
         L("Sugauk bent 2 kg lydeką", "Fange einen Hecht ab 2 kg", "Catch a pike of 2 kg or more"), 2000, 400,
     ),
     RELEASE(

@@ -36,7 +36,15 @@ object Tournament {
 
     fun week(day: Long): Int = Math.floorDiv(day - START.toEpochDay(), 7L).toInt()
 
-    fun species(week: Int): Species = Fish.byId(pool[Math.floorMod(week, pool.size)]) ?: Fish.all.first()
+    /** Warm-water fish that hardly feed from October to April. */
+    private val warmOnly = setOf("tench", "crucian", "rudd")
+
+    /** The week's kind: one that really bites in that week's month, the same for everybody. */
+    fun species(week: Int): Species {
+        val month = START.plusWeeks(week.toLong()).plusDays(3).monthValue
+        val list = if (month in 5..9) pool else pool.filterNot { it in warmOnly }
+        return Fish.byId(list[Math.floorMod(week, list.size)]) ?: Fish.all.first()
+    }
 
     /** Days left in the week of [day], counting today. */
     fun daysLeft(day: Long): Int = 7 - Math.floorMod(day - START.toEpochDay(), 7L).toInt()
