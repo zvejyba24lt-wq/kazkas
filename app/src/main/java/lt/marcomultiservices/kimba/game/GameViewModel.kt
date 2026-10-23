@@ -103,6 +103,9 @@ data class LakeState(
     val steer: Float = 0f,
     /** The fish is at the bank, to be led into the landing net. */
     val atNet: Boolean = false,
+    /** A jolt of the view (uptime ms and strength 0..1): the strike, a run, the fish out of the water. */
+    val shakeAt: Long = 0,
+    val shake: Float = 0f,
     val netReady: Boolean = false,
     val running: Boolean = false,
     val bite: Bite? = null,
@@ -516,7 +519,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val fight = Fight(bite.pull, rng, gear?.strength ?: 1.0, gear?.reel?.speed ?: 1.0, out)
         _lake.update { it.copy(stage = Stage.FIGHT, dip = 0f, tension = 0.3f, fightDistance = out.toFloat(), fightStart = out.toFloat(), alarm = false) }
         learn(Tip.STRIKE)
-        buzz(40)
+        thump(45, bite.pull)
+        jolt(0.35f + 0.4f * bite.pull.toFloat())
         sfx.play(Sfx.Fx.SPLASH, 0.45f, rate = 1.2f)
         job = viewModelScope.launch {
             // The reel and drag loops stop however the fight ends, also when it is cancelled.
@@ -534,7 +538,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 last = now
                 if (fight.turned) buzz(12)
                 if (fight.runStarted) {
-                    buzz(longArrayOf(0, 30, 40, 30, 40, 30))
+                    thump(60, bite.pull)
+                    jolt(0.25f + 0.5f * bite.pull.toFloat())
                     sfx.play(Sfx.Fx.SPLASH, 0.55f, rate = 1.1f + 0.2f * rng.nextFloat())
                 }
                 // The reel whirrs while it is wound; a running fish pulls line off against the drag, which screams.
@@ -606,6 +611,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         buzz(longArrayOf(0, 40, 60, 40))
         sfx.play(Sfx.Fx.SPLASH)
         _lake.update { it.copy(stage = Stage.LANDING, tension = 0f) }
+        jolt(0.3f)
         delay(LANDING_MS)
         sfx.play(Sfx.Fx.COIN, 0.8f)
         _lake.update { it.copy(stage = Stage.CAUGHT, caught = catch, newSpecies = isNew, record = record, reward = reward) }
@@ -685,6 +691,25 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         if (now - lastTick < 250) return
         lastTick = now
         buzz(8)
+    }
+
+    /** Shakes the view a little, harder for a stronger [power]. */
+    private fun jolt(power: Float) = _lake.update { it.copy(shakeAt = android.os.SystemClock.uptimeMillis(), shake = power.coerceIn(0.15f, 1f)) }
+
+    /** A buzz that is stronger for a heavier fish, where the phone can vary its strength. */
+    private fun thump(ms: Long, power: Double) {
+        val ctx = getApplication<Application>()
+        val vib: Vibrator? = if (Build.VERSION.SDK_INT >= 31) {
+            ctx.getSystemService(VibratorManager::class.java)?.defaultVibrator
+        } else {
+            @Suppress("DEPRECATION")
+            ctx.getSystemService(Vibrator::class.java)
+        }
+        val amp = (90 + 165 * power.coerceIn(0.0, 1.0)).toInt()
+        runCatching {
+            if (vib?.hasAmplitudeControl() == true) vib.vibrate(VibrationEffect.createWaveform(longArrayOf(0, ms, 50, ms / 2), intArrayOf(0, amp, 0, amp / 2), -1))
+            else vib?.vibrate(VibrationEffect.createWaveform(longArrayOf(0, ms, 50, ms / 2), -1))
+        }
     }
 
     private fun buzz(pattern: LongArray) {

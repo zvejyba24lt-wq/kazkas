@@ -60,6 +60,8 @@ fun LakeScene(
         val h = with(density) { maxHeight.toPx() }
         val geo = remember(w, h) { SceneGeometry(w, h) }
         val colors = remember(conditions) { SceneColors(conditions) }
+        // How eagerly fish feed right now, from the real conditions: the lake shows it with rises.
+        val activity = remember(conditions, waterKind) { lt.marcomultiservices.kimba.core.Fish.biteIndex(conditions, lt.marcomultiservices.kimba.core.Spot(waterKind)).toFloat() }
         val water = remember { if (Build.VERSION.SDK_INT >= 33) runCatching { WaterShader() }.getOrNull() else null }
 
         val time = rememberSceneTime()
@@ -209,7 +211,15 @@ fun LakeScene(
             // Looking down at the bank the view closes in further around the bottom edge, so
             // nothing past the picture ever shows.
             val pivot = Offset(geo.w * (0.55f + 0.02f * lookDown), geo.h * (0.78f + 0.22f * lookDown))
-            val cam = zoom + 0.3f * lookDown
+            var cam = zoom + 0.3f * lookDown
+            // A jolt on the strike, a run and the landing, dying away quickly.
+            val shakeAge = (android.os.SystemClock.uptimeMillis() - s.shakeAt).toFloat()
+            val jolt = if (s.shakeAt > 0 && shakeAge < 420f) s.shake * (1f - shakeAge / 420f) else 0f
+            val jx = jolt * geo.w * 0.011f * sin(shakeAge * 0.11f)
+            val jy = jolt * geo.w * 0.008f * kotlin.math.cos(shakeAge * 0.13f)
+            // A touch of extra zoom so a jolt never shows past the edge of the picture.
+            cam *= 1f + jolt * 0.03f
+            drawContext.transform.translate(jx, jy)
             drawContext.transform.scale(cam, cam, pivot)
             drawSky(geo, colors, conditions, t, sun, moon)
             if (sea) {
@@ -231,6 +241,9 @@ fun LakeScene(
                 drawFallbackWater(geo, colors, t, glowX)
             }
             drawReflections(geo, colors, t, waterKind)
+            drawWindStreaks(geo, colors, t)
+            drawRises(geo, colors, t, activity)
+            if (!sea) drawSwallows(geo, colors, t)
             drawMist(geo, colors, conditions)
             when (waterKind) {
                 Water.LAKE -> drawLilies(geo, colors, t, geo.lilies)
@@ -279,6 +292,7 @@ fun LakeScene(
             if (!sea) drawReeds(geo, colors, t, back = false)
             drawWeather(geo, colors, conditions, t)
             drawContext.transform.scale(1f / cam, 1f / cam, pivot)
+            drawContext.transform.translate(-jx, -jy)
             drawVignette(geo)
         }
     }
