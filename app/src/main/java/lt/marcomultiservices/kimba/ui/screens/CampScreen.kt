@@ -187,7 +187,7 @@ private fun DrawScope.drawPiece(item: CampItem, base: Offset, height: Float, col
         drawArt(art, Rect(base.x - wd / 2, base.y - height, base.x + wd / 2, base.y), colors?.lit(Color.White) ?: Color.White)
         // The picture is still; fire, smoke and light are alive in code on top of it.
         when (item) {
-            CampItem.FIRE -> drawFire(Offset(base.x, base.y - height * 0.3f), height * 0.9f, t)
+            CampItem.FIRE -> drawFire(Offset(base.x, base.y - height * 0.32f), height * 0.85f, t, smoke = colors != null)
             CampItem.SMOKER -> drawSmoke(Offset(base.x + wd * 0.2f, base.y - height), height, t)
             CampItem.LANTERN -> drawGlow(Offset(base.x, base.y - height * 0.75f), height, colors)
             else -> Unit
@@ -310,43 +310,51 @@ private fun DrawScope.drawKeepPond(fish: List<lt.marcomultiservices.kimba.core.C
  * A living campfire at [base] (where the flames start), [u] tall: a warm glow on the ground,
  * three flame tongues licking at their own pace, sparks rising and a thin smoke above.
  */
-private fun DrawScope.drawFire(base: Offset, u: Float, t: Float) {
+private fun DrawScope.drawFire(base: Offset, u: Float, t: Float, smoke: Boolean = true) {
     val flicker = 0.85f + 0.1f * sin(t * 11f) + 0.05f * sin(t * 23f + 1f)
-    drawCircle(Brush.radialGradient(listOf(Color(0x77FFB040).copy(alpha = 0.45f * flicker), Color.Transparent), base, u * 1.8f), u * 1.8f, base)
-    for (i in 0 until 3) {
-        val x = base.x + (i - 1) * u * 0.18f
-        val hgt = u * (0.75f + 0.25f * sin(t * (7f + i * 2.3f) + i * 1.7f)) * (if (i == 1) 1.25f else 0.9f)
-        val lean = sin(t * (3.1f + i) + i) * u * 0.1f
-        val w = u * (if (i == 1) 0.34f else 0.24f)
-        val tongue = Path().apply {
-            moveTo(x - w, base.y)
-            quadraticTo(x - w * 0.9f, base.y - hgt * 0.6f, x + lean, base.y - hgt)
-            quadraticTo(x + w * 0.9f, base.y - hgt * 0.55f, x + w, base.y)
-            close()
+    // Warm light on the stones and the ground.
+    drawCircle(Brush.radialGradient(listOf(Color(0xFFFFA040).copy(alpha = 0.32f * flicker), Color.Transparent), base, u * 1.6f), u * 1.6f, base)
+    // The flame is many soft glowing tongues rising from the logs: each starts wide and
+    // white-yellow low down, and narrows, reddens and fades as it climbs, so the edges stay soft.
+    for (k in 0 until 18) {
+        val ph = (t * (0.9f + 0.07f * (k % 5)) + k * 0.618f) % 1f
+        val x = base.x + sin(k * 2.39f) * u * 0.2f * (1f - ph) + sin(t * 3f + k) * u * 0.05f * ph
+        val y = base.y - u * 0.72f * ph
+        val r = u * (0.2f - 0.13f * ph) * (if (k % 3 == 0) 1.25f else 1f)
+        val col = when {
+            ph < 0.25f -> Color(0xFFFFF0B8)
+            ph < 0.55f -> Color(0xFFFFB648)
+            else -> Color(0xFFF2602A)
         }
-        drawPath(tongue, Brush.verticalGradient(listOf(Color(0xFFFF6A1A).copy(alpha = 0.85f), Color(0xFFFFD27A)), base.y - hgt, base.y))
-        val core = Path().apply {
-            moveTo(x - w * 0.45f, base.y)
-            quadraticTo(x - w * 0.4f, base.y - hgt * 0.35f, x + lean * 0.5f, base.y - hgt * 0.55f)
-            quadraticTo(x + w * 0.4f, base.y - hgt * 0.3f, x + w * 0.45f, base.y)
-            close()
+        val a = (if (ph < 0.15f) ph / 0.15f else 1f - (ph - 0.15f) / 0.85f) * 0.55f
+        val c = Offset(x, y)
+        withTransform({ scale(0.62f, 1.25f, pivot = c) }) {
+            drawCircle(Brush.radialGradient(listOf(col.copy(alpha = a), col.copy(alpha = a * 0.4f), Color.Transparent), c, r), r, c, blendMode = androidx.compose.ui.graphics.BlendMode.Screen)
         }
-        drawPath(core, Color(0xFFFFF2C4).copy(alpha = 0.9f))
+    }
+    // The hot bright heart of the fire on the embers.
+    val heart = Offset(base.x, base.y - u * 0.08f)
+    withTransform({ scale(1.6f, 0.7f, pivot = heart) }) {
+        drawCircle(Brush.radialGradient(listOf(Color(0xFFFFF6D8).copy(alpha = 0.8f * flicker), Color(0xFFFF9A30).copy(alpha = 0.35f), Color.Transparent), heart, u * 0.16f), u * 0.16f, heart)
     }
     // Sparks.
-    for (k in 0 until 7) {
-        val ph = (t * (0.5f + 0.13f * k) + k * 0.37f) % 1f
-        val sx = base.x + sin(k * 2.7f + t * 1.5f) * u * 0.3f * ph
-        drawCircle(Color(0xFFFFC46B).copy(alpha = 1f - ph), u * 0.025f, Offset(sx, base.y - u * (0.5f + 1.6f * ph)))
+    for (k in 0 until 6) {
+        val ph = (t * (0.4f + 0.11f * k) + k * 0.37f) % 1f
+        val sx = base.x + sin(k * 2.7f + t * 1.5f) * u * 0.25f * ph
+        drawCircle(Color(0xFFFFC46B).copy(alpha = (1f - ph) * 0.9f), u * 0.018f, Offset(sx, base.y - u * (0.4f + 0.9f * ph)))
     }
-    drawSmoke(Offset(base.x, base.y - u * 1.2f), u * 0.8f, t)
+    if (smoke) drawSmoke(Offset(base.x, base.y - u * 1.0f), u * 0.7f, t)
 }
 
 /** Grey smoke curling up from [top], drifting a little with the wind. */
 private fun DrawScope.drawSmoke(top: Offset, u: Float, t: Float) {
     for (k in 0 until 5) {
         val ph = (t * 0.35f + k * 0.2f) % 1f
-        drawCircle(Color(0xFFD8D8D8).copy(alpha = 0.3f * (1f - ph)), u * (0.08f + 0.2f * ph), Offset(top.x + u * 0.3f * ph + u * 0.06f * sin(t + k), top.y - u * 1.0f * ph))
+        // Soft puffs that spread and thin out as they rise.
+        val c = Offset(top.x + u * 0.3f * ph + u * 0.06f * sin(t + k), top.y - u * 1.0f * ph)
+        val r = u * (0.1f + 0.24f * ph)
+        val a = 0.22f * (1f - ph) * (ph / 0.15f).coerceAtMost(1f)
+        drawCircle(Brush.radialGradient(listOf(Color(0xFFD8D8D8).copy(alpha = a), Color(0xFFD8D8D8).copy(alpha = a * 0.4f), Color.Transparent), c, r), r, c)
     }
 }
 

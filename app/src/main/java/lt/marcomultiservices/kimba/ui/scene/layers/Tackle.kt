@@ -43,8 +43,10 @@ internal fun DrawScope.drawFloatBody(pos: Offset, u: Float, sink: Float, style: 
     val y = pos.y + sink
     val pal = Palette.Floats.getValue(style)
     if (style == FloatStyle.GLOW) {
-        val g = 0.35f + 0.65f * (1f - daylight)
-        drawCircle(Brush.radialGradient(listOf(Palette.GlowFloatHalo, Palette.GlowFloatHalo.copy(alpha = 0f)), Offset(pos.x, y - u * 2.2f), u * 3.5f), u * 3.5f, Offset(pos.x, y - u * 2.2f), alpha = g * alpha)
+        // Only the glowing tip lights up a little around itself, as a real starlight does.
+        val g = (0.15f + 0.85f * (1f - daylight)) * 0.55f
+        val tip = Offset(pos.x, y - u * 2.95f)
+        drawCircle(Brush.radialGradient(listOf(Palette.GlowFloatHalo, Palette.GlowFloatHalo.copy(alpha = 0f)), tip, u * 1.1f), u * 1.1f, tip, alpha = g * alpha)
     }
     ArtPack["float_" + style.name.lowercase()]?.let { img ->
         drawArt(img, Rect(pos.x - u, y - u * 3.4f, pos.x + u, y + u * 1.8f), alpha = alpha)

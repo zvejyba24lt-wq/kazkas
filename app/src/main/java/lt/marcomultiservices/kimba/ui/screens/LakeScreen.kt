@@ -33,9 +33,6 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import lt.marcomultiservices.kimba.ui.scene.layers.drawSurprise
-import androidx.compose.foundation.layout.offset
-import androidx.compose.ui.graphics.nativeCanvas
-import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -295,7 +292,7 @@ fun LakeScreen(
 
         // The fight: the tension meter at the right edge, the rod's steer track above the thumbs.
         if (stage == Stage.FIGHT) {
-            TensionGauge(lake.tension, lake.fightDistance, lake.running, lake.atNet, lake.tackle, Modifier.align(androidx.compose.ui.BiasAlignment(1f, 0.32f)).padding(end = 10.dp))
+            TensionGauge(lake.tension, lake.fightDistance, lake.running, lake.atNet, lake.tackle, progress.onIce, Modifier.align(androidx.compose.ui.BiasAlignment(1f, 0.32f)).padding(end = 10.dp))
             SteerBar(lake.rodAim, lake.fishHeading, lake.atNet, lake.fishSide, lake.running, Modifier.align(androidx.compose.ui.BiasAlignment(0f, 1f)).navigationBarsPadding().padding(bottom = 18.dp))
         }
 
@@ -593,14 +590,18 @@ private fun FightCue(running: Boolean, atNet: Boolean, side: Float, heading: Flo
  * The line-tension meter standing at the right edge: it fills from the bottom, green while
  * safe, red in the top band where the line snaps; above it, the line still out in metres.
  */
+/** Line under the ice at the start of a fight, in metres. */
+private const val ICE_DEPTH_M = 8f
+
 @Composable
-private fun TensionGauge(tension: Float, distance: Float, running: Boolean, atNet: Boolean, tackle: Tackle, modifier: Modifier = Modifier) {
+private fun TensionGauge(tension: Float, distance: Float, running: Boolean, atNet: Boolean, tackle: Tackle, ice: Boolean, modifier: Modifier = Modifier) {
     val pulse by rememberInfiniteTransition(label = "gauge").animateFloat(0.4f, 1f, infiniteRepeatable(tween(260), RepeatMode.Reverse), label = "p")
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Glass(radius = 14.dp, padding = 8.dp) {
             // At the bank the fish is under the rod tip: no more metres to wind, it goes into the net.
-            val m = lt.marcomultiservices.kimba.core.Reach.metres(distance.toDouble(), tackle)
-            Text(if (atNet || m == 0) t(S.atBank) else "$m m", color = if (atNet) Color(0xFF8DC26F) else K.Amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            // Through the ice the line goes straight down: metres of depth, a few at most.
+            val m = if (ice) kotlin.math.round(distance.coerceIn(0f, 1f) * ICE_DEPTH_M).toInt() else lt.marcomultiservices.kimba.core.Reach.metres(distance.toDouble(), tackle)
+            Text(if (atNet || m == 0) t(if (ice) S.atHole else S.atBank) else "$m m", color = if (atNet) Color(0xFF8DC26F) else K.Amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(Modifier.height(8.dp))
         Canvas(Modifier.size(30.dp, 250.dp)) {
@@ -781,26 +782,10 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?
             // A glint runs once along the wet fish.
             val shine = remember(c.epochMillis) { androidx.compose.animation.core.Animatable(0f) }
             LaunchedEffect(c.epochMillis) { shine.animateTo(1f, tween(900, delayMillis = 650)) }
-            // The trophy photo: the angler lifts the fish out across both hands.
-            val context = LocalContext.current
-            androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth().height(230.dp).clip(RoundedCornerShape(18.dp)).background(Brush.radialGradient(listOf(if (golden != null) Color(0x55FFD27A) else Color(0x335B8BD0), Color.Transparent)))) {
-                val density = androidx.compose.ui.platform.LocalDensity.current
-                val wPx = with(density) { maxWidth.toPx() }
-                val hPx = with(density) { maxHeight.toPx() }
-                val boxH = hPx * 1.25f
-                val boxW = boxH * 0.8f
-                val figure = android.graphics.RectF(wPx / 2 - boxW / 2, hPx * 0.04f, wPx / 2 + boxW / 2, hPx * 0.04f + boxH)
-                val (hl, hr, hy) = lt.marcomultiservices.kimba.share.Angler.hands(figure)
-                val fishW = ((hr - hl) / 0.7f * (c.cm / 50.0).toFloat().coerceIn(0.85f, 1.3f)).coerceAtMost(wPx * 0.98f)
-                Canvas(Modifier.fillMaxSize()) {
-                    drawIntoCanvas { lt.marcomultiservices.kimba.share.Angler.body(context, it.nativeCanvas, figure) }
-                }
+            Box(Modifier.fillMaxWidth().height(170.dp).clip(RoundedCornerShape(18.dp)).background(Brush.radialGradient(listOf(if (golden != null) Color(0x55FFD27A) else Color(0x335B8BD0), Color.Transparent)))) {
                 FishPicture(
                     c.species, Fish.gold(c.golden), time,
-                    Modifier
-                        .offset { androidx.compose.ui.unit.IntOffset((wPx / 2 - fishW / 2).roundToInt(), (hy - fishW * 0.27f).roundToInt()) }
-                        .size(with(density) { fishW.toDp() }, with(density) { (fishW * 0.5f).toDp() })
-                        .graphicsLayer {
+                    Modifier.fillMaxSize().graphicsLayer {
                         val p = enter.value
                         translationY = (1f - p) * 140f
                         rotationZ = kotlin.math.sin(p * 9f) * (1f - p.coerceAtMost(1f)) * 14f
@@ -809,16 +794,6 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?
                         alpha = p.coerceIn(0f, 1f)
                     },
                 )
-                Canvas(Modifier.fillMaxSize()) {
-                    // Hands lift with the fish as it swings up.
-                    val lift = (1f - enter.value) * 140f
-                    drawIntoCanvas { cv ->
-                        cv.nativeCanvas.save()
-                        cv.nativeCanvas.translate(0f, lift)
-                        lt.marcomultiservices.kimba.share.Angler.hands(context, cv.nativeCanvas, figure)
-                        cv.nativeCanvas.restore()
-                    }
-                }
                 Canvas(Modifier.fillMaxSize()) {
                     val g = shine.value
                     if (g > 0f && g < 1f) {

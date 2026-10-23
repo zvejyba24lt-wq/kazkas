@@ -365,12 +365,12 @@ fun LakeScene(
             drawAutumn(geo, colors, t, month, onWater = !frozen && waterKind != Water.SEA && waterKind != Water.RIVER)
             drawFluff(geo, colors, t, month, java.time.Instant.ofEpochMilli(conditions.epochMillis).atZone(java.time.ZoneId.systemDefault()).dayOfMonth)
             drawWeather(geo, colors, conditions, t)
-            // The headlamp follows the float; with nothing out it lights the water in front.
-            drawHeadlamp(geo, colors, when {
-                onWater || s.stage == Stage.FIGHT || s.stage == Stage.LANDING -> floatPos
-                frozen -> target
-                else -> Offset(geo.w * 0.5f, geo.h * 0.68f)
-            }, t)
+            // The headlamp follows the bait in the water; with the float still on the rod it is not needed.
+            when {
+                onWater || s.stage == Stage.FIGHT || s.stage == Stage.LANDING -> drawHeadlamp(geo, colors, floatPos, t)
+                frozen -> drawHeadlamp(geo, colors, target, t)
+                else -> Unit
+            }
             if (boat) drawContext.transform.rotate(-rock * 0.9f, Offset(geo.w * 0.5f, geo.h * 0.6f))
             drawContext.transform.scale(1f / cam, 1f / cam, pivot)
             drawContext.transform.translate(-jx, -jy)

@@ -40,19 +40,23 @@ fun DrawScope.drawHeadlamp(geo: SceneGeometry, colors: SceneColors, target: Offs
     val at = Offset(target.x + sway, target.y)
     val from = Offset(geo.w * 0.6f, geo.h * 1.04f)
     val s = geo.scaleAt(at.y)
-    val spread = geo.w * 0.16f * s
-    val cone = Path().apply {
-        moveTo(from.x - geo.w * 0.02f, from.y)
-        lineTo(at.x - spread, at.y)
-        lineTo(at.x + spread, at.y)
-        lineTo(from.x + geo.w * 0.02f, from.y)
-        close()
+    // In clear night air the beam itself barely shows: a faint shaft, feathered at the edges by
+    // drawing it several times wider and fainter, strongest out where it meets the water.
+    for (i in 0 until 4) {
+        val spread = geo.w * (0.035f + 0.03f * i) * s
+        val cone = Path().apply {
+            moveTo(from.x - geo.w * 0.01f, from.y)
+            lineTo(at.x - spread, at.y)
+            lineTo(at.x + spread, at.y)
+            lineTo(from.x + geo.w * 0.01f, from.y)
+            close()
+        }
+        drawPath(
+            cone,
+            Brush.linearGradient(listOf(Beam.copy(alpha = 0f), Beam.copy(alpha = 0.022f * k)), from, at),
+            blendMode = BlendMode.Screen,
+        )
     }
-    drawPath(
-        cone,
-        Brush.linearGradient(listOf(Beam.copy(alpha = 0.16f * k), Beam.copy(alpha = 0.05f * k)), from, at),
-        blendMode = BlendMode.Screen,
-    )
     // The pool on the water, flattened by the angle.
     val r = geo.w * 0.2f * s
     withTransform({ scale(1f, 0.36f, pivot = at) }) {
