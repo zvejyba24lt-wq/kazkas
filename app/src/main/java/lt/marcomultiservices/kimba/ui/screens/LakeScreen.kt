@@ -340,6 +340,10 @@ private fun TopHud(c: Conditions, place: String, progress: Progress, baits: Bait
                     Spacer(Modifier.width(8.dp))
                     Icon(Icons.Rounded.Insights, t(S.forecast), tint = K.Amber, modifier = Modifier.size(18.dp))
                 }
+                // The fish the weather suits best right now, worth double.
+                Fish.hotSpecies(c, progress.spot)?.let { h ->
+                    Text(t(S.hotNow, t(h.name)), color = K.Gold, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp).width(190.dp))
+                }
                 if (offline) Text(t(S.offline), color = K.Muted, fontSize = 10.sp, modifier = Modifier.padding(top = 4.dp).width(190.dp))
             }
         }
@@ -592,6 +596,14 @@ private fun SteerBar(aim: Float, heading: Float, atNet: Boolean, side: Float, ru
     }
 }
 
+/** A small coloured label on the catch card. */
+@Composable
+private fun Tag(text: String, color: Color) {
+    Box(Modifier.clip(RoundedCornerShape(12.dp)).background(color.copy(alpha = 0.16f)).border(1.dp, color.copy(alpha = 0.6f), RoundedCornerShape(12.dp)).padding(horizontal = 10.dp, vertical = 3.dp)) {
+        Text(text, color = color, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
 @Composable
 private fun NavButton(icon: ImageVector, label: String, onClick: () -> Unit, badge: String? = null) {
     val sfx = LocalContext.current.app.sfx
@@ -676,12 +688,29 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?
             Text(header, color = if (golden != null) K.Gold else K.Amber, fontSize = 13.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
             Spacer(Modifier.height(6.dp))
             Text(golden?.name?.let { t(it) } ?: t(species.name), style = MaterialTheme.typography.displaySmall, color = K.Text, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(8.dp))
+            // How rare the kind is, and a trophy mark for a fish near the top of its size range.
+            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                val (rarity, rc) = when {
+                    golden != null -> t(S.rarityVeryRare) to K.Gold
+                    species.abundance >= 0.8 -> t(S.rarityCommon) to Color(0xFF9FB3C2)
+                    species.abundance >= 0.5 -> t(S.rarityUncommon) to Color(0xFF8DC26F)
+                    species.abundance >= 0.25 -> t(S.rarityRare) to Color(0xFF6FB6FF)
+                    else -> t(S.rarityVeryRare) to Color(0xFFC79BFF)
+                }
+                Tag(rarity, rc)
+                val frac = (c.cm - species.minCm) / (species.maxCm - species.minCm).toDouble()
+                if (frac >= 0.75) Tag(t(S.trophy), K.Gold)
+            }
             Spacer(Modifier.height(10.dp))
             // The fish swings up into view, dripping, and the numbers count up.
             val enter = remember(c) { androidx.compose.animation.core.Animatable(0f) }
             LaunchedEffect(c) { enter.animateTo(1f, androidx.compose.animation.core.spring(dampingRatio = 0.5f, stiffness = 120f)) }
             val drip = remember(c) { androidx.compose.animation.core.Animatable(0f) }
             LaunchedEffect(c) { drip.animateTo(1f, tween(1400)) }
+            // A glint runs once along the wet fish.
+            val shine = remember(c) { androidx.compose.animation.core.Animatable(0f) }
+            LaunchedEffect(c) { shine.animateTo(1f, tween(900, delayMillis = 650)) }
             Box(Modifier.fillMaxWidth().height(170.dp).clip(RoundedCornerShape(18.dp)).background(Brush.radialGradient(listOf(if (golden != null) Color(0x55FFD27A) else Color(0x335B8BD0), Color.Transparent)))) {
                 FishPicture(
                     c.species, c.golden != null, time,
@@ -695,6 +724,11 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?
                     },
                 )
                 Canvas(Modifier.fillMaxSize()) {
+                    val g = shine.value
+                    if (g > 0f && g < 1f) {
+                        val x = size.width * (-0.3f + 1.6f * g)
+                        drawRect(Brush.linearGradient(listOf(Color.Transparent, Color.White.copy(alpha = 0.28f), Color.Transparent), Offset(x - 60f, 0f), Offset(x + 60f, size.height)))
+                    }
                     val d = drip.value
                     if (d < 1f) for (i in 0 until 14) {
                         val start = (i * 0.07f) % 0.6f
@@ -721,6 +755,10 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?
                 Spacer(Modifier.height(8.dp))
                 Text(t(species.habit), color = K.Muted, fontSize = 13.sp, textAlign = TextAlign.Center)
             }
+            // The real weather it was caught in: the story of this fish.
+            Spacer(Modifier.height(6.dp))
+            val clock = java.time.Instant.ofEpochMilli(c.epochMillis).atZone(java.time.ZoneId.systemDefault()).toLocalTime()
+            Text(t(S.caughtIn, t(S.sky(c.sky)), c.tempC.roundToInt(), "%02d:%02d".format(clock.hour, clock.minute)), color = Color(0xFF8FB4D0), fontSize = 12.sp, textAlign = TextAlign.Center)
             if (reward != null) {
                 Spacer(Modifier.height(12.dp))
                 Row(verticalAlignment = Alignment.CenterVertically) {

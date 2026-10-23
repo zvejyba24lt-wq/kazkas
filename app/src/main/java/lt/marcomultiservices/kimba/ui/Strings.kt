@@ -240,6 +240,14 @@ object S {
     val notifyTitle = L("%s kimba dabar!", "%s beißt jetzt!", "%s is biting now!")
     val notifyBody = L("%s. Langas baigsis apie %s.", "%s. Das Zeitfenster endet gegen %s.", "%s. The window closes around %s.")
 
+    val hotNow = L("Dabar kimba: %s ×2", "Beißt jetzt: %s ×2", "Biting now: %s ×2")
+    val rarityCommon = L("Įprasta", "Häufig", "Common")
+    val rarityUncommon = L("Retesnė", "Seltener", "Uncommon")
+    val rarityRare = L("Reta", "Selten", "Rare")
+    val rarityVeryRare = L("Labai reta", "Sehr selten", "Very rare")
+    val trophy = L("Trofėjus", "Trophäe", "Trophy")
+    val caughtIn = L("Pagauta: %s, %d°, %s", "Gefangen: %s, %d°, %s", "Caught: %s, %d°, %s")
+
     fun sky(s: Sky) = when (s) {
         Sky.CLEAR -> L("Giedra", "Klar", "Clear")
         Sky.PARTLY -> L("Mažai debesuota", "Wolkig", "Partly cloudy")

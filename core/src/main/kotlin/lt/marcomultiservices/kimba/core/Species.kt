@@ -301,6 +301,13 @@ object Fish {
         }
     }
 
+    /**
+     * The fish of the moment: the kind the real conditions suit best at [spot] right now. It
+     * changes with the weather and the hour, and pays double, so the player fishes for it.
+     */
+    fun hotSpecies(c: Conditions, spot: Spot = Spot.HOME_LAKE): Species? =
+        all.filter { it.livesAt(spot) && it.abundance >= 0.3 }.maxByOrNull { it.activity(c) }
+
     /** Golden fish that can be caught at [spot] (their base species lives there). */
     fun goldensAt(spot: Spot): List<Golden> = goldens.filter { it.base.livesAt(spot) }
 

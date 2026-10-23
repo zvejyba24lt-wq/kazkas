@@ -592,7 +592,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val previous = saved.catches.filter { (it.golden ?: it.species) == key }
         val isNew = previous.isEmpty()
         val record = !isNew && previous.all { it.cm < base.cm }
-        val catch = base.copy(coins = Economy.coins(bite.species, bite.golden, bite.grams))
+        // The fish of the moment pays double.
+        val hot = Fish.hotSpecies(c, spot) == bite.species
+        val catch = base.copy(coins = Economy.coins(bite.species, bite.golden, bite.grams) * (if (hot) 2 else 1))
         var reward: Reward? = null
         var achieved: List<Achievement> = emptyList()
         store.update { s ->
@@ -650,11 +652,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /** Starts a fight with a mid-sized fish directly (for screenshots). */
-    fun demoFight(id: String) {
+    fun demoFight(id: String, net: Boolean = false) {
+        resetLake()
         val species = Fish.byId(id) ?: return
         val bite = Bite(species, null, (species.minCm + species.maxCm) / 2.0, 1.0, emptyList())
         _lake.value = LakeState(castDist = 0.7, castId = _lake.value.castId, bite = bite)
-        startFight(bite)
+        // A fight held still mid-play (or at the net) so the screenshot shows its controls.
+        job = viewModelScope.launch {
+            delay(300)
+            _lake.value = _lake.value.copy(
+                stage = Stage.FIGHT, tension = 0.62f, fightDistance = if (net) 0.03f else 0.55f, fightStart = 0.7f,
+                fishSide = if (net) 0.5f else 0.35f, fishHeading = 1f, rodAim = -0.2f, steer = 0.2f, atNet = net, tackle = Tackle.FLOAT,
+            )
+        }
     }
 
     /** Shows a catch card directly (for screenshots of the fish art). */

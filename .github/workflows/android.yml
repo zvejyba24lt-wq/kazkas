@@ -41,6 +41,18 @@ jobs:
       - name: Unit tests
         run: ./gradlew --no-daemon :core:test
 
+      - name: Music (CC0, see docs/MUSIC.md)
+        run: |
+          # The track is public domain (CC0); it is fetched here rather than kept in git.
+          mkdir -p app/src/main/assets/music
+          if curl -fsSL --retry 3 -o "$RUNNER_TEMP/lake.wav" https://opengameart.org/sites/default/files/sunset_plains.wav; then
+            command -v ffmpeg >/dev/null || (sudo apt-get update -qq && sudo apt-get install -y -qq ffmpeg)
+            ffmpeg -loglevel error -y -i "$RUNNER_TEMP/lake.wav" -ac 2 -ar 44100 -c:a libvorbis -q:a 3 app/src/main/assets/music/lake.ogg
+            ls -la app/src/main/assets/music
+          else
+            echo "Music download failed; building without music."
+          fi
+
       - name: Build test APK and Google Play bundle
         env:
           RELEASE_KEYSTORE_PASSWORD: ${{ secrets.RELEASE_KEYSTORE_PASSWORD }}

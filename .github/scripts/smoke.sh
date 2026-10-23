@@ -36,6 +36,7 @@ tap $((W/2)) $((H/2)); shot 03_ezeras_tikras_oras 3
 timeout 30 adb shell input swipe $((W/2)) $((H*84/100)) $((W/2)) $((H*84/100)) 1000; shot 04_uzmesta 3
 shot 05_laukiam 6
 demo -e fight pike; shot 06_kova 3
+demo -e fight pike --ez net true; shot 06d_graibstas 3
 # The other rods: a feeder on its rest watching the tip, the tackle box, a spinning lure coming back.
 demo -e screen lake -e tackle feeder; sleep 6
 demo -e cast 0.6; shot 06a_fideris 9

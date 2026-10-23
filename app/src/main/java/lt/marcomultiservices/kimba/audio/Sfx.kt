@@ -22,7 +22,7 @@ import kotlin.random.Random
  * short effects for casting, bites, the reel and the catch, and seamless ambient loops for the
  * lake by day, at night, in the rain, on the river and by the sea.
  */
-class Sfx(context: Context) {
+class Sfx(private val context: Context) {
     enum class Fx { CAST, PLOP, NIBBLE, BITE, REEL, STRAIN, SNAP, SPLASH, COIN, LEVEL, TAP, ALARM, DRAG }
     enum class Amb { DAY, CALM, NIGHT, RAIN, RIVER, SEA }
 
@@ -118,18 +118,45 @@ class Sfx(context: Context) {
         } else if (enabled) startAmbient(a)
     }
 
+    // Quiet music under the lake sounds: a CC0 track (docs/MUSIC.md) that CI puts into
+    // assets/music when it builds. Without the file the lake simply has no music.
+    private var music: android.media.MediaPlayer? = null
+
+    private fun startMusic() {
+        if (music != null) return
+        music = runCatching {
+            context.assets.openFd("music/lake.ogg").use { fd ->
+                android.media.MediaPlayer().apply {
+                    setAudioAttributes(AudioAttributes.Builder().setUsage(AudioAttributes.USAGE_GAME).setContentType(AudioAttributes.CONTENT_TYPE_MUSIC).build())
+                    setDataSource(fd.fileDescriptor, fd.startOffset, fd.length)
+                    isLooping = true
+                    setVolume(MUSIC_VOLUME, MUSIC_VOLUME)
+                    prepare()
+                    start()
+                }
+            }
+        }.getOrNull()
+    }
+
+    private fun stopMusic() {
+        music?.let { runCatching { it.stop() }; it.release() }
+        music = null
+    }
+
     @Synchronized
     private fun startAmbient(a: Amb) {
+        startMusic()
         if (ambPlaying == a && ambStream != 0) return
         val id = ambIds[a] ?: return
         if (id !in loaded) return
-        stopAmbient()
+        stopAmbient(music = false)
         ambStream = pool.play(id, AMB_VOLUME, AMB_VOLUME, 0, -1, 1f)
         ambPlaying = a
     }
 
     @Synchronized
-    private fun stopAmbient() {
+    private fun stopAmbient(music: Boolean = true) {
+        if (music) stopMusic()
         if (ambStream != 0) pool.stop(ambStream)
         ambStream = 0
         ambPlaying = null
@@ -137,6 +164,7 @@ class Sfx(context: Context) {
 
     companion object {
         const val AMB_VOLUME = 0.32f
+        const val MUSIC_VOLUME = 0.16f
     }
 }
 
