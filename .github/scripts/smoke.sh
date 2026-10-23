@@ -42,8 +42,8 @@ tap $((W/2)) $((H/2)); shot 03_ezeras_tikras_oras 3
 # Hold the cast button (bottom centre) for ~1 s, then watch the float.
 timeout 30 adb shell input swipe $((W/2)) $((H*84/100)) $((W/2)) $((H*84/100)) 1000; shot 04_uzmesta 3
 shot 05_laukiam 6
-demo -e fight pike; shot 06_kova 3
-demo -e fight pike --ez net true; shot 06d_graibstas 3
+demo -e fight pike; shot 06_kova 6
+demo -e fight pike --ez net true; shot 06d_graibstas 6
 # The other rods: a feeder on its rest watching the tip, the tackle box, a spinning lure coming back.
 demo -e screen lake -e tackle feeder; sleep 6
 demo -e cast 0.6; shot 06a_fideris 9
@@ -57,7 +57,7 @@ demo -e screen lake -e tackle float; sleep 2
 demo -e scene snow -e screen lake -e ice 16; shot 06e_ezeras_uzsalo 5
 tap $((W/2)) $((H*62/100)); sleep 2
 demo -e cast 0.5; shot 06f_ekete 9
-demo -e fight perch; shot 06g_ledo_kova 3
+demo -e fight perch; shot 06g_ledo_kova 6
 demo -e screen lake -e ice 5 -e scene day; shot 06h_ledas_formuojasi 5
 demo -e ice 0; sleep 2
 # The other places to stand: the reed bank and, with the boat (test money buys it), out on the water.

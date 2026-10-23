@@ -326,10 +326,10 @@ private fun DrawScope.drawFire(base: Offset, u: Float, t: Float, smoke: Boolean 
             ph < 0.55f -> Color(0xFFFFB648)
             else -> Color(0xFFF2602A)
         }
-        val a = (if (ph < 0.15f) ph / 0.15f else 1f - (ph - 0.15f) / 0.85f) * 0.55f
+        val a = (if (ph < 0.15f) ph / 0.15f else 1f - (ph - 0.15f) / 0.85f) * 0.85f
         val c = Offset(x, y)
         withTransform({ scale(0.62f, 1.25f, pivot = c) }) {
-            drawCircle(Brush.radialGradient(listOf(col.copy(alpha = a), col.copy(alpha = a * 0.4f), Color.Transparent), c, r), r, c, blendMode = androidx.compose.ui.graphics.BlendMode.Screen)
+            drawCircle(Brush.radialGradient(listOf(col.copy(alpha = a), col.copy(alpha = a * 0.5f), Color.Transparent), c, r), r, c)
         }
     }
     // The hot bright heart of the fire on the embers.
