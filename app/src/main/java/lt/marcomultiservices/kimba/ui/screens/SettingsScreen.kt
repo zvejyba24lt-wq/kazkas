@@ -4,6 +4,7 @@ import android.Manifest
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.appcompat.app.AppCompatDelegate
+import androidx.compose.animation.AnimatedVisibility
 import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
@@ -21,10 +22,19 @@ import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.Icons
+import androidx.compose.material.icons.rounded.Block
+import androidx.compose.material.icons.rounded.ChevronRight
 import androidx.compose.material.icons.rounded.MyLocation
+import androidx.compose.material.icons.rounded.NotificationsActive
+import androidx.compose.material.icons.rounded.Place
+import androidx.compose.material.icons.rounded.Shield
+import androidx.compose.material.icons.rounded.Translate
+import androidx.compose.material.icons.rounded.Tune
+import androidx.compose.material.icons.rounded.VolumeUp
 import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.Icon
 import androidx.compose.material3.OutlinedButton
@@ -40,9 +50,13 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.draw.clip
+import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
+import androidx.compose.ui.graphics.vector.ImageVector
 import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.font.FontFamily
 import androidx.compose.ui.text.font.FontWeight
+import androidx.compose.ui.text.style.TextAlign
 import androidx.compose.ui.unit.dp
 import androidx.compose.ui.unit.sp
 import androidx.core.os.LocaleListCompat
@@ -67,62 +81,110 @@ import lt.marcomultiservices.kimba.ui.t
 @Composable
 fun SettingsScreen(vm: GameViewModel, onBack: () -> Unit) {
     val saved by vm.saved.collectAsStateWithLifecycle()
+    val ctx = LocalContext.current
+    val activity = remember(ctx) { ctx.findActivity() }
     ScreenFrame(t(S.settings), onBack) {
-        Column(Modifier.verticalScroll(rememberScrollState()).navigationBarsPadding().padding(16.dp, 4.dp, 16.dp, 24.dp)) {
-            SectionTitle(t(S.place))
-            Spacer(Modifier.height(8.dp))
-            Text(saved?.place?.name ?: "–", color = K.Text, fontSize = 18.sp, fontWeight = FontWeight.SemiBold)
-            Spacer(Modifier.height(10.dp))
-            PlacePicker(selected = saved?.place) { vm.choosePlace(it) }
+        Column(
+            Modifier.verticalScroll(rememberScrollState()).navigationBarsPadding().padding(16.dp, 4.dp, 16.dp, 24.dp),
+            verticalArrangement = Arrangement.spacedBy(14.dp),
+        ) {
+            // Where the weather comes from: the current place up top, the list folded away until asked for.
+            var choosing by remember { mutableStateOf(false) }
+            Card(Icons.Rounded.Place, t(S.place)) {
+                Row(verticalAlignment = Alignment.CenterVertically) {
+                    Text(saved?.place?.name ?: "–", color = K.Text, fontSize = 20.sp, fontFamily = FontFamily.Serif, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
+                    Text(
+                        if (choosing) t(S.close) else t(S.change), color = K.Amber, fontSize = 14.sp, fontWeight = FontWeight.SemiBold,
+                        modifier = Modifier.clip(RoundedCornerShape(10.dp)).clickable { choosing = !choosing }.padding(10.dp, 6.dp),
+                    )
+                }
+                AnimatedVisibility(choosing) {
+                    Column(Modifier.padding(top = 10.dp)) { PlacePicker(selected = saved?.place) { vm.choosePlace(it); choosing = false } }
+                }
+            }
 
-            Spacer(Modifier.height(22.dp))
-            SectionTitle(t(S.language))
-            Spacer(Modifier.height(8.dp))
-            LanguagePicker()
+            Card(Icons.Rounded.Translate, t(S.language)) { LanguagePicker() }
 
-            Spacer(Modifier.height(22.dp))
             // Turned on without the phone's permission it would stay silent: ask for it then.
-            val ctx = LocalContext.current
             val notifyPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(t(S.notifications), color = K.Text, fontSize = 15.sp, modifier = Modifier.weight(1f))
-                Switch(saved?.notify ?: true, { on ->
+            Card(Icons.Rounded.Tune, null) {
+                ToggleRow(Icons.Rounded.NotificationsActive, t(S.notifications), saved?.notify ?: true) { on ->
                     vm.setNotify(on)
                     if (on && android.os.Build.VERSION.SDK_INT >= 33 &&
                         ctx.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
                     ) notifyPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
-                }, colors = SwitchDefaults.colors(checkedTrackColor = K.Amber))
-            }
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(t(S.sound), color = K.Text, fontSize = 15.sp, modifier = Modifier.weight(1f))
-                Switch(saved?.sound ?: true, { vm.setSound(it) }, colors = SwitchDefaults.colors(checkedTrackColor = K.Amber))
+                }
+                Box(Modifier.fillMaxWidth().padding(vertical = 4.dp).height(1.dp).background(K.Line))
+                ToggleRow(Icons.Rounded.VolumeUp, t(S.sound), saved?.sound ?: true) { vm.setSound(it) }
             }
 
-            Spacer(Modifier.height(22.dp))
-            SectionTitle(t(S.noAds))
-            Spacer(Modifier.height(8.dp))
-            NoAdsBox(saved?.progress?.noAds == true)
+            Card(Icons.Rounded.Block, t(S.noAds)) { NoAdsBox(saved?.progress?.noAds == true) }
 
-            Spacer(Modifier.height(22.dp))
-            val context = LocalContext.current
-            val activity = remember(context) { context.findActivity() }
             val privacyRequired by AdsConsent.privacyOptionsRequired.collectAsStateWithLifecycle()
-            if (privacyRequired && activity != null) {
-                OutlinedButton({ AdsConsent.showPrivacyOptions(activity) }, modifier = Modifier.fillMaxWidth().height(46.dp)) { Text(t(S.privacyOptions), color = K.Text) }
-                Spacer(Modifier.height(8.dp))
+            Card(Icons.Rounded.Shield, null) {
+                if (privacyRequired && activity != null) {
+                    LinkRow(t(S.privacyOptions)) { AdsConsent.showPrivacyOptions(activity) }
+                    Box(Modifier.fillMaxWidth().height(1.dp).background(K.Line))
+                }
+                LinkRow(t(S.privacyPolicy)) {
+                    runCatching { ctx.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(BuildConfig.PRIVACY_URL))) }
+                }
             }
-            OutlinedButton(
-                { runCatching { context.startActivity(android.content.Intent(android.content.Intent.ACTION_VIEW, android.net.Uri.parse(BuildConfig.PRIVACY_URL))) } },
-                modifier = Modifier.fillMaxWidth().height(46.dp),
-            ) { Text(t(S.privacyPolicy), color = K.Text) }
-            Spacer(Modifier.height(18.dp))
-            Text(t(S.metCredit), color = Color(0x88B4BCC6), fontSize = 11.sp)
+
+            Text(
+                "Kimba ${BuildConfig.VERSION_NAME}  ·  " + t(S.metCredit), color = Color(0x88B4BCC6), fontSize = 11.sp,
+                modifier = Modifier.fillMaxWidth(), textAlign = TextAlign.Center,
+            )
             // Only in test builds: never part of the Play build.
-            if (BuildConfig.DEMO_HOOKS) {
-                Spacer(Modifier.height(26.dp))
-                AdminPanel(vm, saved?.progress?.level ?: 1)
-            }
+            if (BuildConfig.DEMO_HOOKS) AdminPanel(vm, saved?.progress?.level ?: 1)
         }
+    }
+}
+
+/** One settings group: a paper-edged card with a round badge, like a page in a tackle notebook. */
+@Composable
+private fun Card(icon: ImageVector, title: String?, content: @Composable () -> Unit) {
+    val shape = RoundedCornerShape(topStart = 4.dp, topEnd = 18.dp, bottomEnd = 4.dp, bottomStart = 18.dp)
+    Column(
+        Modifier.fillMaxWidth().clip(shape)
+            .background(Brush.verticalGradient(listOf(Color(0x2EF2B25C), Color(0x14FFFFFF))))
+            .border(1.dp, Color(0x40F2B25C), shape).padding(14.dp),
+    ) {
+        if (title != null) {
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Badge(icon)
+                Spacer(Modifier.width(10.dp))
+                SectionTitle(title)
+            }
+            Spacer(Modifier.height(10.dp))
+        }
+        content()
+    }
+}
+
+@Composable
+private fun Badge(icon: ImageVector) {
+    Box(Modifier.size(30.dp).clip(CircleShape).background(Color(0x33F2B25C)), contentAlignment = Alignment.Center) {
+        Icon(icon, null, tint = K.Amber, modifier = Modifier.size(17.dp))
+    }
+}
+
+@Composable
+private fun ToggleRow(icon: ImageVector, label: String, on: Boolean, onChange: (Boolean) -> Unit) {
+    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).clickable { onChange(!on) }.padding(vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
+        Badge(icon)
+        Spacer(Modifier.width(12.dp))
+        Text(label, color = K.Text, fontSize = 15.sp, lineHeight = 19.sp, modifier = Modifier.weight(1f))
+        Spacer(Modifier.width(8.dp))
+        Switch(on, onChange, colors = SwitchDefaults.colors(checkedTrackColor = K.Amber, checkedThumbColor = Color(0xFF2A1A06)))
+    }
+}
+
+@Composable
+private fun LinkRow(label: String, onClick: () -> Unit) {
+    Row(Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp)).clickable(onClick = onClick).padding(vertical = 12.dp, horizontal = 4.dp), verticalAlignment = Alignment.CenterVertically) {
+        Text(label, color = K.Text, fontSize = 15.sp, modifier = Modifier.weight(1f))
+        Icon(Icons.Rounded.ChevronRight, null, tint = K.Muted)
     }
 }
 
@@ -132,7 +194,7 @@ private fun NoAdsBox(owned: Boolean) {
     val activity = remember(context) { context.findActivity() }
     val product by context.app.billing.product.collectAsStateWithLifecycle()
     var failed by remember { mutableStateOf(false) }
-    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0x1FFFFFFF)).border(1.dp, K.Line, RoundedCornerShape(16.dp)).padding(14.dp)) {
+    Column(Modifier.fillMaxWidth()) {
         Text(t(S.noAdsBody), color = K.Muted, fontSize = 13.sp, lineHeight = 18.sp)
         Spacer(Modifier.height(10.dp))
         if (owned) {

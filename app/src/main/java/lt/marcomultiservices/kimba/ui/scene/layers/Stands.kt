@@ -29,6 +29,13 @@ private fun standRandom(k: Int, salt: Int): Float {
     return ((x xor (x ushr 16)) and 0xFFFFFF) / 16777215f
 }
 
+/** Where a lantern stands on the reed bank: in the grass among the stones, left of the cast button. */
+fun bankLanternBase(geo: SceneGeometry): Offset {
+    val art = ArtPack["bank"] ?: return Offset(geo.w * 0.16f, geo.h * 0.87f)
+    val h = geo.w * art.height / art.width
+    return Offset(geo.w * 0.22f, geo.h - h * 0.2f)
+}
+
 /** The reed bank: a grassy slope with stones at the water's edge, along the bottom of the view. */
 fun DrawScope.drawBank(geo: SceneGeometry, colors: SceneColors, snow: Boolean) {
     val top = geo.h * 0.8f
@@ -74,6 +81,19 @@ fun DrawScope.drawBank(geo: SceneGeometry, colors: SceneColors, snow: Boolean) {
  * The bow of the rowing boat, pointing out over the water, with an oar resting on each side.
  * [rock] is the boat's sway (-1..1) so it rides the swell with the camera.
  */
+/** Where a lantern stands on the boat's seat, riding the swell with the boat. */
+fun boatLanternBase(geo: SceneGeometry, rock: Float): Offset {
+    val lift = rock * geo.h * 0.006f
+    val art = ArtPack["boat"]
+    if (art != null) {
+        // The seat's top edge in the picture, about three quarters down and right of centre.
+        val w = geo.w * 1.1f
+        val h = w * art.height / art.width
+        return Offset(-geo.w * 0.05f + w * 0.64f, geo.h - h * (1f - 0.745f) + lift)
+    }
+    return Offset(geo.w * 0.66f, geo.h * 0.9f + lift)
+}
+
 fun DrawScope.drawBoat(geo: SceneGeometry, colors: SceneColors, rock: Float) {
     val art = ArtPack["boat"]
     val lift = rock * geo.h * 0.006f

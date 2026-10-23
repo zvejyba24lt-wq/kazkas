@@ -40,6 +40,12 @@ internal fun pierRect(geo: SceneGeometry, sea: Boolean): Rect {
     return Rect(p.near.first, p.farY - geo.h * (if (sea) 0.2f else 0.12f), p.near.second, geo.h)
 }
 
+/** Where a lantern stands on the small jetty: on the boards, right of centre, never over the water. */
+internal fun pierLanternBase(geo: SceneGeometry): Offset {
+    val r = pierRect(geo, sea = false)
+    return Offset(r.left + r.width * 0.62f, r.top + r.height * 0.62f)
+}
+
 internal fun DrawScope.drawPier(geo: SceneGeometry, colors: SceneColors, sea: Boolean, t: Float) {
     val art = ArtPack[if (sea) "pier_sea" else "pier"]
     if (art != null) {
@@ -197,10 +203,10 @@ private fun DrawScope.drawBaitTin(geo: SceneGeometry, colors: SceneColors) {
 internal fun DrawScope.drawReeds(geo: SceneGeometry, colors: SceneColors, t: Float, back: Boolean) {
     val sway = 0.012f + colors.wind * 0.004f
     // Art slot `reeds` (about 1:1.85 portrait, stems standing on the bottom edge) replaces both
-    // rows with one painted clump in the bottom right corner, swaying with the wind.
+    // rows with one painted clump at the water's edge on the left, away from the rod on the right.
     ArtPack["reeds"]?.let { img ->
         if (back) return
-        val r = Rect(geo.w * 0.62f, geo.h * 0.66f, geo.w * 1.04f, geo.h * 1.01f)
+        val r = Rect(-geo.w * 0.1f, geo.h * 0.56f, geo.w * 0.15f, geo.h * 0.86f)
         val lean = sin(t * 1.1f) * (1.2f + colors.wind * 0.4f)
         rotate(lean, pivot = Offset(r.center.x, r.bottom)) {
             drawArt(img, r, light = colors.lit(Color.White))

@@ -256,13 +256,13 @@ fun LakeScreen(
                 // The very first cast: how the cast button works.
                 Stage.IDLE, Stage.CHARGING -> if (tip(Tip.CAST) && !boxOpen) Coach(Tip.CAST, arrow = true)
                 Stage.WAITING -> when {
-                    !lake.hint && tip(Tip.WAIT) -> Coach(Tip.WAIT, tackle = lake.tackle)
-                    lake.hint -> Hint(t(if (lake.tackle == Tackle.FLOAT) S.tooEarly else S.tooEarlyTip), warn = true)
-                    lake.tackle == Tackle.SPIN && !lake.winding -> Hint(t(S.waitSpin), warn = false)
+                    !lake.hint && tip(Tip.WAIT) -> Coach(Tip.WAIT, tackle = lake.tackle, ice = progress.onIce)
+                    lake.hint -> Hint(t(if (progress.onIce) S.tooEarlyIce else if (lake.tackle == Tackle.FLOAT) S.tooEarly else S.tooEarlyTip), warn = true)
+                    lake.tackle == Tackle.SPIN && !lake.winding -> Hint(t(if (progress.onIce) S.waitSpinIce else S.waitSpin), warn = false)
                     else -> Unit
                 }
                 Stage.BITE -> if (tip(Tip.STRIKE)) Coach(Tip.STRIKE)
-                Stage.FIGHT -> if (tip(Tip.REEL)) Coach(Tip.REEL) else FightCue(lake.running, lake.atNet, lake.fishSide, lake.fishHeading, lake.steer, progress.onIce)
+                Stage.FIGHT -> if (tip(Tip.REEL)) Coach(Tip.REEL) else FightCue(lake.running, lake.atNet, lake.fishSide, lake.fishHeading, lake.steer, progress.onIce, boat = progress.trip == null && progress.standHere == lt.marcomultiservices.kimba.core.Stand.BOAT)
                 else -> Unit
             }
             Spacer(Modifier.weight(1f))
@@ -319,7 +319,7 @@ fun LakeScreen(
                         CatchCard(lake.caught, lake.newSpecies, lake.record, lake.reward, lake.doubled, progress.noAds, lake.returnedFrom, onDouble = { rewarded { vm.doubleCoins() } }, onShare = { shareCatch(lake.caught) }, onRelease = { vm.releaseCatch() }) { next() }
                     } else if (lake.surprise != null && stage == Stage.CAUGHT) {
                         SurpriseCard(lake.surprise, lake.foundLure, lake.foundRod, onCove = { vm.travel(lt.marcomultiservices.kimba.core.Destinations.secret); next() }) { next() }
-                    } else if (lake.lost != null) LostCard(lake.lost) { next() }
+                    } else if (lake.lost != null) LostCard(lake.lost, progress.onIce) { next() }
                 }
             }
         }
@@ -529,10 +529,16 @@ private fun Hint(text: String, warn: Boolean) {
 
 /** A first-play tip card; [arrow] points down at the cast button. */
 @Composable
-private fun Coach(tip: Tip, arrow: Boolean = false, tackle: Tackle = Tackle.FLOAT) {
+private fun Coach(tip: Tip, arrow: Boolean = false, tackle: Tackle = Tackle.FLOAT, ice: Boolean = false) {
     val (title, body) = when (tip) {
         Tip.CAST -> S.tipCastTitle to S.tipCast
-        Tip.WAIT -> S.tipWaitTitle to when (tackle) { Tackle.FEEDER -> S.tipWaitFeeder; Tackle.SPIN -> S.tipWaitSpin; else -> S.tipWait }
+        Tip.WAIT -> S.tipWaitTitle to when {
+            ice && tackle == Tackle.SPIN -> S.tipWaitSpinIce
+            ice -> S.tipWaitIce
+            tackle == Tackle.FEEDER -> S.tipWaitFeeder
+            tackle == Tackle.SPIN -> S.tipWaitSpin
+            else -> S.tipWait
+        }
         Tip.STRIKE -> S.tipStrikeTitle to S.tipStrike
         Tip.REEL -> S.tipReelTitle to S.tipReel
     }
@@ -576,11 +582,11 @@ private fun StrikeBanner() {
 
 /** One line high on the screen during the fight: what the fish does and which way to lead the rod. */
 @Composable
-private fun FightCue(running: Boolean, atNet: Boolean, side: Float, heading: Float, steer: Float, ice: Boolean = false) {
+private fun FightCue(running: Boolean, atNet: Boolean, side: Float, heading: Float, steer: Float, ice: Boolean = false, boat: Boolean = false) {
     val (cue, color) = when {
         running -> t(S.fishRuns) to K.Danger
         atNet && kotlin.math.abs(side) >= 0.4f -> t(if (side > 0f) S.steerLeft else S.steerRight) to K.Amber
-        atNet -> t(if (ice) S.holeLead else S.netLead) to Color(0xFF8DC26F)
+        atNet -> t(if (ice) S.holeLead else if (boat) S.boatLead else S.netLead) to Color(0xFF8DC26F)
         steer > 0.35f -> t(S.steerGood) to Color(0xFF8DC26F)
         heading > 0f -> t(S.steerLeft) to K.Amber
         else -> t(S.steerRight) to K.Amber
@@ -971,12 +977,12 @@ private fun SurpriseCard(s: lt.marcomultiservices.kimba.core.Surprise, lure: lt.
 }
 
 @Composable
-private fun LostCard(reason: LostReason, onNext: () -> Unit) {
+private fun LostCard(reason: LostReason, ice: Boolean, onNext: () -> Unit) {
     val (title, hint) = when (reason) {
         LostReason.SNAPPED -> S.snapped to S.snappedHint
         LostReason.ESCAPED -> S.escaped to S.escapedHint
-        LostReason.MISSED, LostReason.EARLY -> S.missed to S.missedHint
-        LostReason.EMPTY -> S.empty to S.emptyHint
+        LostReason.MISSED, LostReason.EARLY -> S.missed to (if (ice) S.missedHintIce else S.missedHint)
+        LostReason.EMPTY -> if (ice) S.emptyIce to S.emptyIceHint else S.empty to S.emptyHint
     }
     Glass(Modifier.padding(28.dp).fillMaxWidth(), radius = 26.dp, padding = 22.dp) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {

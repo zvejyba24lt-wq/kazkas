@@ -67,19 +67,11 @@ fun DrawScope.drawIce(geo: SceneGeometry, colors: SceneColors) {
         }
         drawPath(p, colors.lit(Color(0xFF6E8799)).copy(alpha = 0.5f), style = Stroke(1.2f + 1.5f * geo.scaleAt(y0), cap = StrokeCap.Round))
     }
-    // Old holes, frozen over and dusted with snow.
+    // Old holes, frozen over and dusted with snow (out in the distance, clear of the player's own).
     for (k in 0 until 9) {
         val y = top + (geo.h - top) * (0.06f + 0.55f * iceRandom(k, 23))
         val x = geo.w * (0.06f + 0.88f * iceRandom(k, 29))
         drawOldHole(geo, colors, Offset(x, y))
-    }
-    // A footpath from the jetty out to the hole.
-    for (k in 0 until 16) {
-        val f = k / 15f
-        val x = geo.w * (0.24f + 0.25f * f) + (if (k % 2 == 0) -1f else 1f) * geo.w * 0.008f
-        val y = geo.h * (0.84f - 0.15f * f)
-        val s = geo.scaleAt(y)
-        drawOval(colors.lit(Color(0xFFB9C8D4)).copy(alpha = 0.6f), Offset(x - 5f * s, y - 2.2f * s), Size(10f * s, 4.4f * s))
     }
 }
 

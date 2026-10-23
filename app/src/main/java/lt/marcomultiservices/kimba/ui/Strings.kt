@@ -98,6 +98,7 @@ object S {
     val floatOrFeeder = L("Plūdinei ar dugninei", "Pose oder Grund", "Float or bottom rod")
     val inShop = L("Parduotuvėje", "Im Shop", "In the shop")
     val close = L("Uždaryti", "Schließen", "Close")
+    val change = L("Keisti", "Ändern", "Change")
     val rodKinds = L("Meškerių tipai", "Rutenarten", "Rod types")
 
     // Goals
@@ -294,6 +295,24 @@ object S {
     val holeLead = L("Eketė! Įvesk galvą į eketę", "Eisloch! Kopf ins Loch führen", "The hole! Lead its head into the hole")
     val lower = L("Nuleisti", "Ablassen", "Lower")
     val winterRod = L("Žieminė meškerėlė", "Eisangel", "Ice rod")
+    val iceJig = L("Mormyškė su linktuku", "Mormyschka mit Nicker", "Mormyshka and nod")
+    val iceSpoon = L("Vertikali blizgė", "Eisblinker", "Ice spoon")
+    val tipWaitIce = L(
+        "Stebėk linktuką ant meškerėlės galo. Kai jis tik krusteli, žuvis dar uostinėja. Kai staigiai nusilenkia arba pakyla aukštyn, kirsk!",
+        "Beobachte den Nicker an der Rutenspitze. Zuckt er nur, knabbert der Fisch erst. Biegt er sich plötzlich oder schnellt hoch, schlag an!",
+        "Watch the nod on the rod tip. A twitch is only a nibble. When it suddenly dips or springs up, strike!",
+    )
+    val tipWaitSpinIce = L(
+        "Laikyk pirštą: blizgė šokinėja po ledu. Atleisk, ir ji plazdėdama krenta žemyn: tada ešerys ir puola.",
+        "Finger halten: der Blinker springt unter dem Eis. Lass los, und er taumelt ab: dann packt der Barsch zu.",
+        "Hold your finger to jig the spoon under the ice. Let go and it flutters down: that is when perch strike.",
+    )
+    val waitSpinIce = L("Laikyk – žaisk blizge, atleisk – krenta", "Halten – zupfen, loslassen – absinken", "Hold to jig, let go to let it fall")
+    val tooEarlyIce = L("Per anksti! Palauk, kol linktukas staigiai nusilenks.", "Zu früh! Warte, bis der Nicker kräftig ausschlägt.", "Too early! Wait until the nod dips hard.")
+    val emptyIce = L("Niekas nepuolė", "Kein Biss", "Nothing took it")
+    val emptyIceHint = L("Žaisk blizge su pauzėmis: plėšrūnas puola krentančią.", "Mit Pausen zupfen: Räuber packen den absinkenden Blinker.", "Jig with pauses: predators take the falling spoon.")
+    val missedHintIce = L("Kai linktukas nusilenkia – kirsk iškart.", "Schlägt der Nicker aus – sofort anschlagen.", "When the nod dips, strike at once.")
+    val boatLead = L("Kelk žuvį į valtį", "Fisch ins Boot heben", "Lift the fish into the boat")
     val frozenTitle = L("Ežeras užšalo!", "Der See ist zugefroren!", "The lake has frozen!")
     val frozenBody = L(
         "Pas tave kelias dienas šalo, ir ledas jau %d cm storio. Dabar žvejoji iš eketės su žiemine meškerėle: geriausiai kimba ešeriai, kuojos ir vėgėlės, o karpiai ir lynai miega dumble.\n\nTikrame gyvenime ant ledo eik tik tada, kai jis storesnis nei 10 cm, ir niekada vienas.",

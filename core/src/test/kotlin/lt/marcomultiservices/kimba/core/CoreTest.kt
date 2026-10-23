@@ -733,4 +733,21 @@ class CoreTest {
         assertEquals(25, Reach.metres(1.0, Tackle.FLOAT))
         assertEquals(3, Reach.metres(0.05, Tackle.FEEDER))
     }
+
+    @Test
+    fun throughTheIceOnlyWinterTackle() {
+        val all = Shop.starter + Tackle.entries.map { it.key } + Lure.entries.map { it.key }
+        val frozen = Progress(owned = all, ice = IceLog(16.0, 1))
+        assertTrue(frozen.onIce)
+        // A feeder with boilies becomes the mormyshka with a worm.
+        val feeder = frozen.copy(tackle = Tackle.FEEDER, lure = Lure.BOILIE).gearHere
+        assertEquals(Tackle.FLOAT, feeder.tackle)
+        assertEquals(Lure.WORM, feeder.lure)
+        assertEquals(Lure.MAGGOT, frozen.copy(lure = Lure.MAGGOT).gearHere.lure)
+        // The spinning rod jigs a spoon in the hole.
+        val spoon = frozen.copy(tackle = Tackle.SPIN, lure = Lure.WOBBLER).gearHere
+        assertEquals(Tackle.SPIN, spoon.tackle)
+        assertEquals(Lure.SPINNER, spoon.lure)
+        assertTrue(spoon.ice)
+    }
 }

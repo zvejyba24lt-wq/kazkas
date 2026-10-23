@@ -123,12 +123,12 @@ internal fun DrawScope.drawHookedFish(geo: SceneGeometry, mouth: Offset, t: Floa
  * across. Picture slot `landing_net` (see docs/GRAFIKA.md): the net seen from above and behind,
  * hoop at the top right, handle running out of the bottom left corner.
  */
-internal fun DrawScope.drawLandingNet(geo: SceneGeometry, colors: SceneColors, t: Float, fish: Offset) {
+internal fun DrawScope.drawLandingNet(geo: SceneGeometry, colors: SceneColors, t: Float, fish: Offset, atY: Float = geo.h * 0.88f) {
     // At night the net is in the headlamp's light, so it never sinks into the dark water.
     val lamp = nightStrength(colors) * 0.7f
     fun c(col: Color) = lerp(colors.lit(col), col, lamp)
     val reach = ((fish.x - geo.w * 0.56f) * 0.45f).coerceIn(-geo.w * 0.12f, geo.w * 0.12f)
-    val hoop = Offset(geo.w * 0.56f + reach, geo.h * 0.88f + sin(t * 2.2f) * geo.h * 0.003f)
+    val hoop = Offset(geo.w * 0.56f + reach, atY + sin(t * 2.2f) * geo.h * 0.003f)
     val rx = geo.w * 0.15f
     val ry = rx * 0.32f
     ArtPack["landing_net"]?.let { img ->
@@ -163,17 +163,25 @@ internal fun DrawScope.drawLandingNet(geo: SceneGeometry, colors: SceneColors, t
     drawOval(c(Color(0xFFC4CCD4)).copy(alpha = 0.7f), Offset(hoop.x - rx, hoop.y - ry * 1.06f), Size(rx * 2, ry * 2), style = Stroke(geo.w * 0.0018f))
 }
 
-/** During a run the fish leaps clear of the water now and then. */
-internal fun DrawScope.drawFishJump(geo: SceneGeometry, pos: Offset, t: Float, species: String, golden: Boolean, size: Float) {
-    val period = 2.6f
-    val ph = (t % period) / period
-    if (ph > 0.32f) return
-    val f = ph / 0.32f
+private const val JUMP_PERIOD = 2.6f
+private const val JUMP_SHARE = 0.32f
+
+/** Whether the running fish is in the air right now (it is not drawn under the water meanwhile). */
+internal fun fishAirborne(t: Float): Boolean = (t % JUMP_PERIOD) / JUMP_PERIOD <= JUMP_SHARE
+
+/**
+ * During a run the hooked fish itself leaps clear of the water now and then: the same size as
+ * under the water, out of where it swims and on the way it [heading]s.
+ */
+internal fun DrawScope.drawFishJump(geo: SceneGeometry, pos: Offset, t: Float, species: String, golden: Boolean, size: Float, heading: Float = 1f) {
+    val ph = (t % JUMP_PERIOD) / JUMP_PERIOD
+    if (ph > JUMP_SHARE) return
+    val f = ph / JUMP_SHARE
     val s = geo.scaleAt(pos.y)
-    val len = geo.w * 0.12f * s * size.coerceIn(0.5f, 2f)
-    val dir = if (((t / period).toInt() % 2) == 0) 1f else -1f
-    val x = pos.x + dir * (f - 0.5f) * len * 1.4f
-    val y = pos.y - sin(f * PI.toFloat()) * len * 0.9f
+    val len = geo.w * 0.26f * s * size.coerceIn(0.5f, 2f)
+    val dir = if (heading >= 0f) 1f else -1f
+    val x = pos.x + dir * (f - 0.5f) * len * 0.9f
+    val y = pos.y - sin(f * PI.toFloat()) * len * 0.6f
     // Head up on the way out, down on the way back in.
     val angle = dir * (f - 0.5f) * 80f
     rotate(angle, Offset(x, y)) {

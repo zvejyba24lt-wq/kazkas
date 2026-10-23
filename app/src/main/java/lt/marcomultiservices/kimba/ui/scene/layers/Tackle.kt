@@ -142,9 +142,11 @@ internal fun DrawScope.drawAim(geo: SceneGeometry, at: Offset, t: Float) {
  * a cork handle, a spinning reel hanging below it, guides with thread whippings, and on a
  * feeder rod ([quiver]) a bright orange quiver tip with white bands that shows the bite.
  */
-internal fun DrawScope.drawRod(geo: SceneGeometry, colors: SceneColors, tip: Offset, quiver: Boolean = false) {
-    val base = geo.rodBase
-    val ctrl = Offset(geo.w * 0.92f, geo.h * 0.70f)
+internal fun DrawScope.drawRod(geo: SceneGeometry, colors: SceneColors, tip: Offset, quiver: Boolean = false, winter: Boolean = false) {
+    // A winter rod is short and slim, held low over the hole, with a small inline reel.
+    val base = if (winter) Offset(geo.w * 0.9f, geo.h * 1.04f) else geo.rodBase
+    val ctrl = if (winter) Offset(geo.w * 0.8f, geo.h * 0.8f) else Offset(geo.w * 0.92f, geo.h * 0.70f)
+    val slim = if (winter) 0.7f else 1f
     val n = 48
     val pts = Array(n + 1) { i ->
         val u = i / n.toFloat()
@@ -161,7 +163,7 @@ internal fun DrawScope.drawRod(geo: SceneGeometry, colors: SceneColors, tip: Off
         val l = kotlin.math.sqrt(dx * dx + dy * dy).coerceAtLeast(0.001f)
         return Offset(-dy / l, dx / l)
     }
-    fun width(u: Float): Float = geo.w * (if (u < 0.2f) 0.034f - 0.01f * u else 0.022f - 0.0195f * ((u - 0.2f) / 0.8f))
+    fun width(u: Float): Float = slim * geo.w * (if (u < 0.2f) 0.034f - 0.01f * u else 0.022f - 0.0195f * ((u - 0.2f) / 0.8f))
     // The blank as one smooth filled shape: down one edge and back up the other.
     fun band(from: Int, to: Int): Path = Path().apply {
         for (i in from..to) {
@@ -220,7 +222,45 @@ internal fun DrawScope.drawRod(geo: SceneGeometry, colors: SceneColors, tip: Off
         drawLine(Palette.Starlight.copy(alpha = dark), pts[n - 3], pts[n], strokeWidth = geo.w * 0.009f, cap = StrokeCap.Round)
         drawLine(Color.White.copy(alpha = 0.7f * dark), pts[n - 3], pts[n], strokeWidth = geo.w * 0.003f, cap = StrokeCap.Round)
     }
-    drawReel(geo, colors, pts[(n * 0.13f).toInt()], pts[(n * 0.16f).toInt()] - pts[(n * 0.1f).toInt()])
+    if (winter) {
+        val at = pts[(n * 0.24f).toInt()] - normal((n * 0.24f).toInt()) * (geo.w * 0.022f)
+        drawCircle(colors.lit(Palette.ReelBody), geo.w * 0.026f, at)
+        drawCircle(colors.lit(Palette.ReelSpool), geo.w * 0.017f, at)
+        drawCircle(colors.lit(Palette.ReelRim), geo.w * 0.026f, at, style = Stroke(1.5f))
+    } else drawReel(geo, colors, pts[(n * 0.13f).toInt()], pts[(n * 0.16f).toInt()] - pts[(n * 0.1f).toInt()])
+}
+
+/**
+ * The nod on a winter rod: a thin springy strip off the tip with a bright bead at its end. It
+ * dips under a bite ([dip]) and trembles at a nibble. Returns where the line hangs from.
+ */
+internal fun DrawScope.drawNod(geo: SceneGeometry, colors: SceneColors, tip: Offset, dip: Float, tremble: Float, t: Float): Offset {
+    val len = geo.w * 0.07f
+    val down = (dip.coerceIn(-0.3f, 1f) + tremble * sin(t * 46f) * 0.25f) * geo.h * 0.035f
+    val end = Offset(tip.x - len, tip.y + geo.h * 0.004f + down)
+    val ctrl = Offset(tip.x - len * 0.55f, tip.y - geo.h * 0.002f + down * 0.2f)
+    val path = Path().apply { moveTo(tip.x, tip.y); quadraticTo(ctrl.x, ctrl.y, end.x, end.y) }
+    drawPath(path, colors.lit(Color(0xFF2B2F35)), style = Stroke(geo.w * 0.0045f, cap = StrokeCap.Round))
+    // Fluorescent bead: it still reads at dusk.
+    val bead = lerp(colors.lit(Color(0xFFFF4A2E)), Color(0xFFFF4A2E), 0.6f)
+    drawCircle(bead, geo.w * 0.007f, end)
+    return end
+}
+
+/** A mormyshka: a little lead teardrop with a brass bead, hanging on the line. */
+internal fun DrawScope.drawMormyshka(pos: Offset, u: Float, colors: SceneColors) {
+    drawCircle(colors.lit(Color(0xFFC9A040)), u * 0.35f, Offset(pos.x, pos.y + u * 0.2f))
+    val body = Path().apply {
+        moveTo(pos.x, pos.y + u * 0.4f)
+        cubicTo(pos.x + u * 0.75f, pos.y + u * 0.7f, pos.x + u * 0.6f, pos.y + u * 1.9f, pos.x, pos.y + u * 2f)
+        cubicTo(pos.x - u * 0.6f, pos.y + u * 1.9f, pos.x - u * 0.75f, pos.y + u * 0.7f, pos.x, pos.y + u * 0.4f)
+        close()
+    }
+    drawPath(body, colors.lit(Color(0xFF3A3F46)))
+    drawCircle(Color.White.copy(alpha = 0.35f), u * 0.18f, Offset(pos.x - u * 0.2f, pos.y + u * 1f))
+    // The hook with a maggot on it.
+    drawArc(colors.lit(Color(0xFF9AA4AE)), 0f, 180f, false, Offset(pos.x - u * 0.35f, pos.y + u * 1.7f), Size(u * 0.7f, u * 0.7f), style = Stroke(u * 0.12f))
+    drawOval(colors.lit(Color(0xFFFFF4D8)), Offset(pos.x - u * 0.55f, pos.y + u * 2.1f), Size(u * 0.45f, u * 0.25f))
 }
 
 /** A spinning reel hanging under the rod at [at]; [along] points up the rod. */

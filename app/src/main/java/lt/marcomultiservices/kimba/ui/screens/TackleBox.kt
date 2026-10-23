@@ -1,5 +1,7 @@
 package lt.marcomultiservices.kimba.ui.screens
 
+import lt.marcomultiservices.kimba.core.ICE_BAITS
+import lt.marcomultiservices.kimba.core.L
 import androidx.compose.foundation.Canvas
 import androidx.activity.compose.BackHandler
 import androidx.compose.animation.AnimatedVisibility
@@ -134,8 +136,8 @@ fun TackleBox(open: Boolean, progress: Progress, onTackle: (Tackle) -> Unit, onB
                     Spacer(Modifier.height(8.dp))
                     Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                         for (k in Tackle.entries) {
-                            // Through the ice only the short winter float rod is fished.
-                            val iceBlocked = progress.onIce && k != Tackle.FLOAT
+                            // Through the ice: the winter rod with a mormyshka, or the spinning rod jigging a spoon; no feeder.
+                            val iceBlocked = progress.onIce && (k == Tackle.FEEDER || (k == Tackle.SPIN && !progress.owns(Lure.SPINNER)))
                             val owned = progress.owns(k) && !iceBlocked
                             val sel = progress.gearHere.tackle == k
                             Slot(
@@ -144,7 +146,7 @@ fun TackleBox(open: Boolean, progress: Progress, onTackle: (Tackle) -> Unit, onB
                             ) {
                                 Canvas(Modifier.size(48.dp)) { drawItemIcon(k, !owned) }
                                 Spacer(Modifier.height(4.dp))
-                                Text(t(k.label).substringBefore(" ("), color = if (owned) K.Text else K.Muted, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, maxLines = 2)
+                                Text(if (progress.onIce) t(iceLabel(k)) else t(k.label).substringBefore(" ("), color = if (owned) K.Text else K.Muted, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, maxLines = 2)
                                 if (iceBlocked) Locked(t(S.notOnIce)) else if (!owned) Locked(if (progress.level < k.level) t(S.needLevel, k.level) else t(S.inShop))
                             }
                         }
@@ -159,9 +161,10 @@ fun TackleBox(open: Boolean, progress: Progress, onTackle: (Tackle) -> Unit, onB
                         Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                             for (l in row) {
                                 val owned = progress.owns(l)
-                                val fits = rod in l.tackle
+                                val iceOk = l in ICE_BAITS || (l == Lure.SPINNER && progress.owns(Tackle.SPIN))
+                                val fits = if (progress.onIce) (rod == Tackle.FLOAT && l in ICE_BAITS) || (rod == Tackle.SPIN && l == Lure.SPINNER) else rod in l.tackle
                                 // A bait for another rod can be picked when that rod is owned: the rod changes with it.
-                                val usable = owned && (fits || (!progress.onIce && l.tackle.any { progress.owns(it) }))
+                                val usable = owned && if (progress.onIce) iceOk else fits || l.tackle.any { progress.owns(it) }
                                 Slot(
                                     Modifier.weight(1f), progress.gearHere.lure == l, owned && fits,
                                     onClick = {
@@ -177,6 +180,8 @@ fun TackleBox(open: Boolean, progress: Progress, onTackle: (Tackle) -> Unit, onB
                                     Text(t(l.label), color = if (owned) K.Text else K.Muted, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, textAlign = TextAlign.Center, maxLines = 1)
                                     when {
                                         !owned -> Locked(if (progress.level < l.level) t(S.needLevel, l.level) else t(S.inShop))
+                                        progress.onIce && !iceOk -> Locked(t(S.notOnIce))
+                                        progress.onIce && !fits -> Unit
                                         !fits -> Text(t(when (l.tackle) { setOf(Tackle.SPIN) -> S.onlySpin; setOf(Tackle.FEEDER) -> S.onlyFeeder; else -> S.floatOrFeeder }), color = K.Amber, fontSize = 10.sp, textAlign = TextAlign.Center, maxLines = 2)
                                     }
                                 }
@@ -220,4 +225,11 @@ private fun Locked(text: String) {
         Spacer(Modifier.width(2.dp))
         Text(text, color = K.Muted, fontSize = 10.sp, maxLines = 1)
     }
+}
+
+/** Through the ice the rods are fished their winter way. */
+private fun iceLabel(k: Tackle): L = when (k) {
+    Tackle.FLOAT -> S.iceJig
+    Tackle.SPIN -> S.iceSpoon
+    Tackle.FEEDER -> k.label
 }

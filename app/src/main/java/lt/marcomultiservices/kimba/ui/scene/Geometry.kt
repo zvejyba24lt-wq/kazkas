@@ -89,7 +89,7 @@ class SceneGeometry(val w: Float, val h: Float) {
     }
 
     val reeds: List<Reed> = buildList {
-        repeat(26) { add(Reed(w * (0.79f + rnd.nextFloat() * 0.26f), h * (0.16f + rnd.nextFloat() * 0.17f), (rnd.nextFloat() - 0.6f) * 0.1f, 2.5f + rnd.nextFloat() * 3.5f, rnd.nextFloat() * 6.28f, rnd.nextFloat() < 0.3f, rnd.nextBoolean())) }
+        repeat(26) { add(Reed(w * (-0.05f + rnd.nextFloat() * 0.2f), h * (0.16f + rnd.nextFloat() * 0.17f), (rnd.nextFloat() - 0.6f) * 0.1f, 2.5f + rnd.nextFloat() * 3.5f, rnd.nextFloat() * 6.28f, rnd.nextFloat() < 0.3f, rnd.nextBoolean())) }
         repeat(12) { add(Reed(w * (0.24f + rnd.nextFloat() * 0.1f), h * (0.07f + rnd.nextFloat() * 0.08f), (rnd.nextFloat() - 0.4f) * 0.12f, 2f + rnd.nextFloat() * 2.5f, rnd.nextFloat() * 6.28f, rnd.nextFloat() < 0.25f, true)) }
     }.sortedBy { if (it.back) 0 else 1 }
 

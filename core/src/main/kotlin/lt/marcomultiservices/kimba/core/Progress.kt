@@ -81,8 +81,16 @@ data class Progress(
     val onIce: Boolean get() = trip == null && Ice.frozen(water, ice)
 
     /** The gear actually fished with here: on the ice a float rod with a bait that fits it. */
-    val gearHere: Gear get() = if (!onIce) gear else
-        Gear(if (Tackle.FLOAT in lure.tackle && owns(lure)) lure else Lure.WORM, Tackle.FLOAT, rod, reel, line, boat = false, ice = true)
+    /**
+     * The gear actually fished. Through the ice it is a short winter rod: a mormyshka jig under a
+     * nod tipped with maggots or a worm, or, with a spinning rod and a spoon, a vertical spoon
+     * jigged in the hole for perch and pike. Feeders, corn and boilies stay ashore.
+     */
+    val gearHere: Gear get() = when {
+        !onIce -> gear
+        tackle == Tackle.SPIN && owns(Tackle.SPIN) && owns(Lure.SPINNER) -> Gear(Lure.SPINNER, Tackle.SPIN, rod, reel, line, boat = false, ice = true)
+        else -> Gear(if (lure in ICE_BAITS && owns(lure)) lure else Lure.WORM, Tackle.FLOAT, rod, reel, line, boat = false, ice = true)
+    }
 
     /** The bait actually on the hook: the chosen one if it fits the rod, else the first owned one that does. */
     val bait: Lure get() = if (tackle in lure.tackle) lure else baitsFor(tackle).firstOrNull() ?: Lure.WORM
@@ -145,6 +153,9 @@ data class Progress(
 
     fun goHome(water: Water): Progress = if (opened(water)) copy(trip = null, water = water) else copy(trip = null)
 }
+
+/** Baits for the mormyshka through the ice. */
+val ICE_BAITS = setOf(Lure.MAGGOT, Lure.WORM)
 
 object Levels {
     /** Total XP needed to reach [level]. */
