@@ -53,6 +53,23 @@ class BiteWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             ctx, 0, Intent(ctx, MainActivity::class.java).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK or Intent.FLAG_ACTIVITY_CLEAR_TOP),
             PendingIntent.FLAG_IMMUTABLE or PendingIntent.FLAG_UPDATE_CURRENT,
         )
+        // A thunderstorm due within a few hours: fish feed hard before it. Once a day, by day.
+        val storm = lt.marcomultiservices.kimba.core.Storm.ahead(forecast, now)
+        val stormKey = "stormwarn@${Instant.ofEpochMilli(now).atZone(zone).toLocalDate().toEpochDay()}"
+        if (storm != null && stormKey !in saved.notified && Instant.ofEpochMilli(now).atZone(zone).hour in 8..20) {
+            val at = DateTimeFormatter.ofPattern("HH:mm").format(Instant.ofEpochMilli(storm).atZone(zone))
+            val n = NotificationCompat.Builder(ctx, CHANNEL)
+                .setSmallIcon(R.drawable.ic_stat_float)
+                .setContentTitle(S.stormNotifyTitle[lang])
+                .setContentText(S.stormNotifyBody[lang].format(at))
+                .setStyle(NotificationCompat.BigTextStyle().bigText(S.stormNotifyBody[lang].format(at)))
+                .setContentIntent(intent)
+                .setAutoCancel(true)
+                .build()
+            runCatching { NotificationManagerCompat.from(ctx).notify(STORM_ID, n) }
+            ctx.app.store.update { it.copy(notified = it.notified.filterNot { k -> k.startsWith("stormwarn@") }.toSet() + stormKey) }
+            return Result.success()
+        }
         val window = Windows.golden(forecast, now, place.lat, place.lon, zone, hours = 3, goldens = goldens)
             .firstOrNull { it.startMillis <= now + 2 * 3_600_000L && "${it.golden.id}@${it.startMillis}" !in saved.notified }
             ?: return dailyReport(saved, forecast, now, zone, lang, intent)
@@ -103,5 +120,6 @@ class BiteWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
     companion object {
         const val CHANNEL = "bites"
         private const val REPORT_ID = 7101
+        private const val STORM_ID = 7102
     }
 }

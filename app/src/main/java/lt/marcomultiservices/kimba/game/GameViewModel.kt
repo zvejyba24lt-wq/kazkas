@@ -132,6 +132,8 @@ sealed class GameEvent {
     class Achieved(val list: List<Achievement>) : GameEvent()
     class Gift(val kind: GiftKind, val coins: Int, val casts: Int) : GameEvent()
     class Frozen(val cm: Int) : GameEvent()
+    /** A real thunderstorm: coins ×2; [boat] when the boat was pulled ashore. */
+    class Storm(val boat: Boolean) : GameEvent()
 }
 
 /** Why a [GameEvent.Gift] came: a friend's code, a friend's thank-you code, a shared catch. */
@@ -152,6 +154,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private val _conditions = MutableStateFlow<Conditions?>(null)
     val conditions: StateFlow<Conditions?> = _conditions.asStateFlow()
+
+    /** Start of a thunderstorm due within a few hours at the fishing place, from the forecast. */
+    private val _stormAt = MutableStateFlow<Long?>(null)
+    val stormAt: StateFlow<Long?> = _stormAt.asStateFlow()
 
     private val _offline = MutableStateFlow(false)
     val offline: StateFlow<Boolean> = _offline.asStateFlow()
@@ -380,7 +386,34 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val now = System.currentTimeMillis()
         val w = _forecast.value?.weatherAt(now) ?: WeatherRepo.seasonal()
         _conditions.value = Conditions(w, now, place.lat, place.lon, zone)
+        _stormAt.value = demoStormAt ?: _forecast.value?.let { lt.marcomultiservices.kimba.core.Storm.ahead(it, now) }
+        if (lt.marcomultiservices.kimba.core.Storm.on(w)) viewModelScope.launch { stormArrived() }
     }
+
+    /** Demo hook: a storm due at this time. */
+    private var demoStormAt: Long? = null
+
+    fun demoStorm(inHours: Int) {
+        demoStormAt = if (inHours > 0) System.currentTimeMillis() + inHours * 3_600_000L else null
+        _stormAt.value = demoStormAt
+    }
+
+    /**
+     * Once a day when it really thunders: says so, and pulls the boat ashore, as an angler would.
+     * Waits while a cast is out so a fight is never cut short.
+     */
+    private suspend fun stormArrived(demo: Boolean = false) {
+        if (_lake.value.stage != Stage.IDLE) return
+        val key = "storm@${today()}"
+        val s = store.current()
+        if (key in s.notified && !demo) return
+        val boat = s.progress.trip == null && s.progress.stand == lt.marcomultiservices.kimba.core.Stand.BOAT
+        store.update { it.copy(notified = it.notified.filterNot { k -> k.startsWith("storm@") }.toSet() + key, progress = if (boat) it.progress.copy(stand = lt.marcomultiservices.kimba.core.Stand.PIER) else it.progress) }
+        if (boat) afterMove()
+        _events.update { it + GameEvent.Storm(boat) }
+    }
+
+    fun demoStormEvent() = viewModelScope.launch { stormArrived(demo = true) }
 
     fun goldenWindows(): List<GoldenWindow> {
         val s = _saved.value ?: return emptyList()
@@ -417,6 +450,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     fun setStand(stand: lt.marcomultiservices.kimba.core.Stand) {
         if (_lake.value.stage == Stage.FIGHT) return
+        // Nobody rows out in a thunderstorm.
+        if (stand == lt.marcomultiservices.kimba.core.Stand.BOAT && _conditions.value?.weather?.let { lt.marcomultiservices.kimba.core.Storm.on(it) } == true) {
+            _events.update { it + GameEvent.Storm(false) }
+            return
+        }
         updateProgress { it.copy(stand = stand, trip = null) }.invokeOnCompletion { afterMove() }
     }
 

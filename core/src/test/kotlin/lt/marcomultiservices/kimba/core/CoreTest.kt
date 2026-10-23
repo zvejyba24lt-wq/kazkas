@@ -523,4 +523,20 @@ class CoreTest {
         assertEquals(null, bought.buyCamp(CampItem.CABIN))
         assertEquals(1, bought.campCount())
     }
+
+    @Test
+    fun stormIsWarnedAndPaysDouble() {
+        val start = 1_800_000_000_000L
+        val hours = List(12) { i -> Forecast.Hour(start + i * 3_600_000L, 20.0, 1005.0, 0.9, 5.0, 1.0, if (i == 3) Sky.THUNDER else Sky.CLOUDY) }
+        val f = Forecast(hours)
+        assertEquals(start + 3 * 3_600_000L, Storm.ahead(f, start))
+        assertEquals(null, Storm.ahead(f, start, hours = 2))
+        assertEquals(null, Storm.ahead(f, start + 4 * 3_600_000L))
+        val c = Catch("perch", null, 30.0, 400, start, Sky.CLOUDY, 20.0, "x")
+        val day = 20_000L
+        val (_, calm) = Economy.land(Progress(), c, false, day)
+        val (_, storm) = Economy.land(Progress(), c.copy(sky = Sky.THUNDER), false, day)
+        assertTrue(storm.storm && !calm.storm)
+        assertTrue(storm.coins >= calm.coins + Economy.coins(Fish.byId("perch")!!, null, 400))
+    }
 }

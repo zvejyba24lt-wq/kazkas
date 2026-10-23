@@ -46,7 +46,7 @@ class MainActivity : AppCompatActivity() {
     /**
      * Demo and screenshot hooks: `-e place Vilnius`, `-e scene storm|dawnfog|night|snow|rain|dusk|day|live`,
      * `-e catch moon_pike`, `-e fight pike`, `-e screen book|forecast|settings|lake|shop|map|quests`,
-     * `-e water lake|pond|river|sea`, `-e trip bodensee`, `-e tackle float|feeder|spin`, `--ez box true`, `--ez sharepreview true` (share picture of the shown catch), `-e friend CODE`, `-e ice 15` (ice cm), `-e stand pier|bank|boat`, `--ei coins 50000 --ei xp 20000` (test money).
+     * `-e water lake|pond|river|sea`, `-e trip bodensee`, `-e tackle float|feeder|spin`, `--ez box true`, `--ez sharepreview true` (share picture of the shown catch), `-e friend CODE`, `-e ice 15` (ice cm), `-e stand pier|bank|boat`, `-e stormin 2` (storm due in hours, 0 = none), `--ez stormevent true`, `--ei coins 50000 --ei xp 20000` (test money).
      */
     private fun handleDemo(intent: Intent?) {
         if (!BuildConfig.DEMO_HOOKS) return
@@ -67,6 +67,8 @@ class MainActivity : AppCompatActivity() {
         extras.getString("friend")?.let { vm.enterCode(it) }
         if (extras.getBoolean("camp", false)) vm.demoCamp()
         extras.getString("ice")?.toDoubleOrNull()?.let { vm.setDemoIce(it) }
+        extras.getString("stormin")?.toIntOrNull()?.let { vm.demoStorm(it) }
+        if (extras.getBoolean("stormevent", false)) vm.demoStormEvent()
         extras.getString("stand")?.let { st -> lt.marcomultiservices.kimba.core.Stand.entries.firstOrNull { it.name.equals(st, true) }?.let { vm.demoStand(it) } }
         extras.getString("screen")?.let { s -> Screen.entries.firstOrNull { it.name.equals(s, ignoreCase = true) }?.let { startScreen.value = it to System.nanoTime() } }
     }

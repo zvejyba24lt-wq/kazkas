@@ -61,11 +61,16 @@ demo -e cast 0.6; shot 06l_valtis_plude 9
 demo -e screen lake -e stand pier; sleep 2
 
 demo --ei coins 25000 --ei xp 11000 -e scene storm; shot 07_perkunija 4
+# Reaching level 15 pops trophy dialogs: press their button so they don't cover the next shots.
+sleep 2; tap $((W/2)) $((H*59/100)); sleep 1; tap $((W/2)) $((H*59/100)); sleep 1
+demo --ez stormevent true; shot 07b_perkunija_premija 3
+tap $((W/2)) $((H*70/100)); sleep 1
 demo -e scene dawnfog; shot 08_rukas_ausra 4
 demo -e scene night; shot 09_naktis 4
 demo -e scene snow; shot 10_sniegas 4
 demo -e scene rain; shot 11_lietus 4
-demo -e scene dusk; shot 12_sutemos 4
+demo -e scene dusk -e stormin 2; shot 12_sutemos_audra 4
+demo -e stormin 0; sleep 1
 demo -e scene day -e water pond; shot 13_tvenkinys 5
 demo -e water river; shot 14_upe 5
 demo -e scene dusk -e water sea; shot 15_jura_sutemos 5

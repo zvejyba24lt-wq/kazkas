@@ -295,6 +295,23 @@ object S {
         "Bei dir hat es tagelang gefroren, das Eis ist schon %d cm dick. Jetzt angelst du durchs Eisloch mit der Eisangel: Barsche, Rotaugen und Quappen beißen am besten, Karpfen und Schleien ruhen im Schlamm.\n\nIm echten Leben betritt das Eis erst ab 10 cm Dicke, und nie allein.",
         "It has been freezing where you are for days, and the ice is already %d cm thick. Now you fish through a hole with an ice rod: perch, roach and burbot bite best, while carp and tench rest in the mud.\n\nIn real life only step onto ice thicker than 10 cm, and never alone.",
     )
+    // Storm
+    val stormSoon = L("⚡ Perkūnija po ~%d val. · kimba", "⚡ Gewitter in ~%d Std. · Beißzeit", "⚡ Storm in ~%d h · fish feeding")
+    val stormNow = L("⚡ Perkūnija · monetos ×2", "⚡ Gewitter · Münzen ×2", "⚡ Thunderstorm · coins ×2")
+    val stormTag = L("Audros premija ×2", "Gewitterbonus ×2", "Storm bonus ×2")
+    val stormTitle = L("Perkūnija!", "Gewitter!", "Thunderstorm!")
+    val stormBody = L(
+        "Pas tave dabar tikra perkūnija. Kol griaudžia, kiekviena sugauta žuvis duoda dvigubai monetų.\n\nTikrame gyvenime per perkūniją eik nuo vandens: anglies meškerė praleidžia žaibą.",
+        "Bei dir tobt gerade ein echtes Gewitter. Solange es donnert, bringt jeder Fisch doppelte Münzen.\n\nIm echten Leben verlass bei Gewitter das Wasser: eine Karbonrute leitet Blitze.",
+        "There is a real thunderstorm where you are. While it thunders, every fish pays double coins.\n\nIn real life leave the water in a storm: a carbon rod conducts lightning.",
+    )
+    val stormBoat = L("Valtį ištraukei į krantą. Per perkūniją ant vandens neplauk.", "Du hast das Boot an Land gezogen. Bei Gewitter fährt man nicht raus.", "You pulled the boat ashore. Nobody goes out on the water in a storm.")
+    val stormNotifyTitle = L("⚡ Artėja perkūnija", "⚡ Ein Gewitter zieht auf", "⚡ A thunderstorm is coming")
+    val stormNotifyBody = L(
+        "Apie %s pas tave griaus. Prieš audrą slėgis krenta ir žuvys kimba geriausiai.",
+        "Gegen %s donnert es bei dir. Vor dem Gewitter fällt der Luftdruck und die Fische beißen am besten.",
+        "Thunder is due around %s. Before a storm the pressure falls and fish bite best.",
+    )
     val reportTitle = L("Dabar kimba: %s ×2", "Jetzt beißt: %s ×2", "Biting now: %s ×2")
     val reportBody = L(
         "%s, %d°, kibimas %d. Pas tave tikras oras – ir žuvys kimba pagal jį.",

@@ -242,7 +242,7 @@ fun LakeScreen(
             conditions?.let { c ->
                 val trip = Destinations.byId(progress.trip)
                 val placeName = trip?.let { t(it.name) } ?: "${saved?.place?.name ?: ""} · ${t(progress.water.label)}"
-                TopHud(c, placeName, progress, saved?.baitsNow(), vm.offline.collectAsStateWithLifecycle().value, onForecast, onSettings, onBook)
+                TopHud(c, placeName, progress, saved?.baitsNow(), vm.offline.collectAsStateWithLifecycle().value, vm.stormAt.collectAsStateWithLifecycle().value, onForecast, onSettings, onBook)
             }
             // First-play tips: each shows until the player has done that step once.
             val known = saved?.tips
@@ -349,7 +349,7 @@ fun formatDuration(ms: Long): String {
 }
 
 @Composable
-private fun TopHud(c: Conditions, place: String, progress: Progress, baits: Baits?, offline: Boolean, onForecast: () -> Unit, onSettings: () -> Unit, onBook: () -> Unit) {
+private fun TopHud(c: Conditions, place: String, progress: Progress, baits: Baits?, offline: Boolean, stormAt: Long?, onForecast: () -> Unit, onSettings: () -> Unit, onBook: () -> Unit) {
     Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.Top) {
         Glass(Modifier.weight(1f, fill = false).clip(RoundedCornerShape(18.dp)).clickable(onClick = onForecast), padding = 10.dp) {
             Column {
@@ -382,6 +382,16 @@ private fun TopHud(c: Conditions, place: String, progress: Progress, baits: Bait
                         maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp).width(190.dp),
                     )
                 }
+                // A real thunderstorm now (coins ×2) or coming within hours (fish feed before it).
+                val storm = when {
+                    lt.marcomultiservices.kimba.core.Storm.on(c.weather) -> t(S.stormNow)
+                    stormAt != null -> t(S.stormSoon, ((stormAt - c.epochMillis) / 3_600_000.0).roundToInt().coerceAtLeast(1))
+                    else -> null
+                }
+                if (storm != null) Text(
+                    storm, color = Color(0xFFFFE07A), fontSize = 12.sp, fontWeight = FontWeight.Bold,
+                    maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp).width(190.dp),
+                )
                 if (offline) Text(t(S.offline), color = K.Muted, fontSize = 10.sp, modifier = Modifier.padding(top = 4.dp).width(190.dp))
             }
         }
@@ -710,6 +720,7 @@ private fun CastButton(charging: Boolean, chargeStart: Long, ice: Boolean = fals
     }
 }
 
+@OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
 private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?, doubled: Boolean, noAds: Boolean, onDouble: () -> Unit, onShare: () -> Unit, onNext: () -> Unit) {
     val species = Fish.byId(c.species) ?: return
@@ -729,7 +740,7 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?
             Text(golden?.name?.let { t(it) } ?: t(species.name), style = MaterialTheme.typography.displaySmall, color = K.Text, textAlign = TextAlign.Center)
             Spacer(Modifier.height(8.dp))
             // How rare the kind is, and a trophy mark for a fish near the top of its size range.
-            Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            androidx.compose.foundation.layout.FlowRow(horizontalArrangement = Arrangement.spacedBy(8.dp, Alignment.CenterHorizontally), verticalArrangement = Arrangement.spacedBy(6.dp)) {
                 val (rarity, rc) = when {
                     golden?.legend == true -> t(S.legend) to Color(0xFFC79BFF)
                     golden != null -> t(S.rarityVeryRare) to K.Gold
@@ -742,6 +753,7 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?
                 val frac = (c.cm - species.minCm) / (species.maxCm - species.minCm).toDouble()
                 if (frac >= 0.75) Tag(t(S.trophy), K.Gold)
                 if (reward?.challenge == true) Tag(t(S.challengeTag), K.Amber)
+                if (reward?.storm == true) Tag(t(S.stormTag), Color(0xFFFFE07A))
             }
             Spacer(Modifier.height(10.dp))
             // The fish swings up into view, dripping, and the numbers count up.
@@ -841,6 +853,7 @@ private fun EventDialog(event: GameEvent, onClose: () -> Unit) {
             )
         is GameEvent.Achieved -> t(S.achieved) to event.list.joinToString("\n\n") { "🏆 " + it.title[lang] + "\n" + it.text[lang] + "  +" + it.coins }
         is GameEvent.Frozen -> t(S.frozenTitle) to t(S.frozenBody, event.cm)
+        is GameEvent.Storm -> t(S.stormTitle) to (if (event.boat) t(S.stormBoat) + "\n\n" else "") + t(S.stormBody)
         is GameEvent.Gift -> {
             val gifts = listOfNotNull(if (event.coins > 0) S.plusCoins(event.coins)[lang] else null, if (event.casts > 0) S.plusCasts(event.casts)[lang] else null).joinToString("   ")
             when (event.kind) {
@@ -859,6 +872,7 @@ private fun EventDialog(event: GameEvent, onClose: () -> Unit) {
                 when (event) {
                     is GameEvent.LevelUp -> Text("${event.level}", style = MaterialTheme.typography.displaySmall.copy(fontSize = 56.sp), color = Color(0xFF8FD3FF))
                     is GameEvent.Achieved -> TrophyIcon(Modifier.size(56.dp))
+                    is GameEvent.Storm -> Icon(Icons.Rounded.Thunderstorm, null, tint = Color(0xFFFFE07A), modifier = Modifier.size(52.dp))
                     else -> CoinIcon(Modifier.size(48.dp))
                 }
                 Spacer(Modifier.height(8.dp))

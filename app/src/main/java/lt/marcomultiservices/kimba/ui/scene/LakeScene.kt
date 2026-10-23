@@ -329,6 +329,13 @@ fun LakeScene(
                 stand == Stand.BANK && !frozen -> drawBank(geo, colors, conditions.weather.sky == lt.marcomultiservices.kimba.core.Sky.SNOW)
                 else -> pierCache.draw(this, Triple(geo, colors, sea), pierRect(geo, sea)) { drawPier(geo, colors, sea, 0f) }
             }
+            // At night a lantern burns beside the angler (the sea pier has its own lamps).
+            when {
+                sea -> Unit
+                boat -> drawLantern(geo, colors, Offset(geo.w * 0.66f, geo.h * 0.905f), t)
+                stand == Stand.BANK && !frozen -> drawLantern(geo, colors, Offset(geo.w * 0.16f, geo.h * 0.87f), t)
+                else -> drawLantern(geo, colors, Offset(geo.w * 0.34f, geo.h * 0.9f), t)
+            }
             // No reeds out on a sea pier or around the boat.
             if (reeds) drawReeds(geo, colors, t, back = true)
             if (resting) drawRodRest(geo, colors, tip, hasAlarm, s.alarm, t)
@@ -347,6 +354,12 @@ fun LakeScene(
             drawAutumn(geo, colors, t, month, onWater = !frozen && waterKind != Water.SEA && waterKind != Water.RIVER)
             drawFluff(geo, colors, t, month, java.time.Instant.ofEpochMilli(conditions.epochMillis).atZone(java.time.ZoneId.systemDefault()).dayOfMonth)
             drawWeather(geo, colors, conditions, t)
+            // The headlamp follows the float; with nothing out it lights the water in front.
+            drawHeadlamp(geo, colors, when {
+                onWater || s.stage == Stage.FIGHT || s.stage == Stage.LANDING -> floatPos
+                frozen -> target
+                else -> Offset(geo.w * 0.5f, geo.h * 0.68f)
+            }, t)
             if (boat) drawContext.transform.rotate(-rock * 0.9f, Offset(geo.w * 0.5f, geo.h * 0.6f))
             drawContext.transform.scale(1f / cam, 1f / cam, pivot)
             drawContext.transform.translate(-jx, -jy)

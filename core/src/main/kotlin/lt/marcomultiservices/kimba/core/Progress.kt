@@ -140,7 +140,7 @@ object Levels {
 
 /** What a landed fish earns. */
 /** What a landed fish paid; [challenge] is set when it is the best of the day for the daily challenge. */
-class Reward(val coins: Int, val xp: Int, val levelUp: Int?, val quests: List<Quest>, val allQuests: Boolean, val challenge: Boolean = false)
+class Reward(val coins: Int, val xp: Int, val levelUp: Int?, val quests: List<Quest>, val allQuests: Boolean, val challenge: Boolean = false, val storm: Boolean = false)
 
 object Economy {
     const val ALL_QUESTS_COINS = 300
@@ -160,7 +160,9 @@ object Economy {
     fun land(p: Progress, catch: Catch, isNew: Boolean, epochDay: Long): Pair<Progress, Reward> {
         val species = Fish.byId(catch.species) ?: return p to Reward(0, 0, null, emptyList(), false)
         val golden = catch.golden?.let { Fish.goldenById(it) }
-        var coins = coins(species, golden, catch.grams)
+        // A fish from a real thunderstorm pays double.
+        val storm = catch.sky == Sky.THUNDER
+        var coins = coins(species, golden, catch.grams) * (if (storm) Storm.BONUS else 1)
         val xp = xp(species, golden, isNew)
         val quests = Quests.today(p.quests, epochDay, p.level)
         val (updated, done) = quests.record(catch)
@@ -173,7 +175,7 @@ object Economy {
         if (challenge != null && p.challenge.day != epochDay) coins += Challenge.COINS
         val before = p.level
         val next = p.copy(coins = p.coins + coins, xp = p.xp + xp, quests = updated, caught = p.caught + 1, challenge = challenge ?: p.challenge)
-        return next to Reward(coins, xp, next.level.takeIf { it > before }, done, all, challenge = challenge != null)
+        return next to Reward(coins, xp, next.level.takeIf { it > before }, done, all, challenge = challenge != null, storm = storm)
     }
 }
 
