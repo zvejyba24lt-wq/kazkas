@@ -80,9 +80,9 @@ fun CampScreen(vm: GameViewModel, onBack: () -> Unit) {
                 // The keep pond: the biggest fish of each kind caught, swimming.
                 val best = (visitCatches ?: saved?.catches ?: emptyList()).groupBy { it.golden ?: it.species }.values.map { l -> l.maxBy { it.grams } }.sortedByDescending { it.grams }.take(10)
                 Spacer(Modifier.height(14.dp))
-                lt.marcomultiservices.kimba.ui.SectionTitle(t(S.pondTitle))
+                lt.marcomultiservices.kimba.ui.SectionTitle(t(if (friend != null) S.friendPondTitle else S.pondTitle))
                 Spacer(Modifier.height(4.dp))
-                Text(t(if (best.isEmpty()) S.pondEmpty else S.pondNote), color = K.Muted, fontSize = 12.sp, lineHeight = 17.sp)
+                Text(t(if (friend != null) S.friendPondNote else if (best.isEmpty()) S.pondEmpty else S.pondNote), color = K.Muted, fontSize = 12.sp, lineHeight = 17.sp)
                 Spacer(Modifier.height(8.dp))
                 Canvas(Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(20.dp))) { drawKeepPond(best, time.floatValue) }
                 Spacer(Modifier.height(10.dp))

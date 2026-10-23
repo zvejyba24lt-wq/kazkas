@@ -251,6 +251,8 @@ object S {
     val campIncome = L("+%d per dieną", "+%d pro Tag", "+%d a day")
     val pondTitle = L("Tavo tvenkinys", "Dein Teich", "Your pond")
     val pondNote = L("Čia plaukioja didžiausia kiekvienos rūšies tavo pagauta žuvis.", "Hier schwimmt der größte Fisch jeder Art, den du gefangen hast.", "The biggest fish of each kind you have caught swims here.")
+    val friendPondTitle = L("Draugo tvenkinys", "Teich deines Freundes", "Your friend's pond")
+    val friendPondNote = L("Čia plaukioja geriausios draugo pagautos žuvys.", "Hier schwimmen die besten Fische deines Freundes.", "Your friend's best fish swim here.")
     val pondEmpty = L("Kol kas tuščia. Pagauk žuvį, ir ji atsiras čia.", "Noch leer. Fang einen Fisch, und er schwimmt hier.", "Empty so far. Catch a fish and it will swim here.")
     val giftCampTitle = L("Stovyklos rytas", "Morgen im Camp", "Morning at camp")
     // Legends
@@ -385,7 +387,7 @@ object S {
         "“Kimba!” weekly tournament: fish of the week %s, my result %s. Beat me! 🎣\nGame: %s\nPaste this code in the game (Quests → Tournament):\n%s",
     )
     val friendCamp = L("Draugo %s stovykla", "Lager von %s", "%s's camp")
-    val friendCampNote = L("Draugas pasiekė %d lygį. Žemiau – jo geriausios žuvys.", "Dein Freund ist auf Level %d. Unten seine besten Fische.", "Your friend is at level %d. Below are their best fish.")
+    val friendCampNote = L("Draugas pasiekė %d lygį. Pasistatyk tokią pat stovyklą ir pralenk jį turnyre!", "Dein Freund ist auf Level %d. Bau dir ein ebenso schönes Lager und schlag ihn im Turnier!", "Your friend is at level %d. Build a camp as fine as this and beat them in the tournament!")
     val friendsTitle = L("Pakviesk draugų", "Freunde einladen", "Invite friends")
     val friendsBody = L(
         "Draugas įveda tavo kodą ir gauna 250 monetų bei 10 užmetimų. Tada jo žaidimas parodo padėkos kodą: įvedęs jį čia, gausi 300 monetų ir 5 užmetimus.",

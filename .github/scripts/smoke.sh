@@ -85,6 +85,8 @@ demo -e catch trout; shot 20_upetakis 5
 demo --ez release true; shot 20b_paleista 3
 tap $((W/2)) $((H*70/100)); sleep 1
 demo -e screen lake; sleep 2
+# Release XP can bring a level-up and trophies: press their buttons first.
+sleep 2; tap $((W/2)) $((H*59/100)); sleep 1; tap $((W/2)) $((H*63/100)); sleep 1
 demo -e surprise bottle; shot 20c_butelis 6
 demo -e surprise rod; shot 20d_meskere 6
 demo -e surprise crayfish; shot 20e_vezys 6
@@ -105,7 +107,7 @@ demo -e friend QWERTY; shot 29b_draugo_dovana 4
 tap $((W/2)) $((H/2)); sleep 1
 # A trophy dialog may pop up on the lake: press its button before going to the quests.
 sleep 2; tap $((W/2)) $((H*59/100)); sleep 1
-demo -e screen quests; shot 30_uzduotys 3
+demo -e screen quests; sleep 3; tap $((W/2)) $((H*63/100)); shot 30_uzduotys 2
 adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/8)) 400; shot 30b_trofejai 2
 adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/8)) 400; shot 30c_pasiekimai 2
 demo -e screen camp; shot 30d_stovykla_tuscia 3

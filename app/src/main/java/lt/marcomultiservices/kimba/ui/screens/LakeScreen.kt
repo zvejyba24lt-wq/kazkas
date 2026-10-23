@@ -764,13 +764,13 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?
             }
             Spacer(Modifier.height(10.dp))
             // The fish swings up into view, dripping, and the numbers count up.
-            val enter = remember(c) { androidx.compose.animation.core.Animatable(0f) }
-            LaunchedEffect(c) { enter.animateTo(1f, androidx.compose.animation.core.spring(dampingRatio = 0.5f, stiffness = 120f)) }
-            val drip = remember(c) { androidx.compose.animation.core.Animatable(0f) }
-            LaunchedEffect(c) { drip.animateTo(1f, tween(1400)) }
+            val enter = remember(c.epochMillis) { androidx.compose.animation.core.Animatable(0f) }
+            LaunchedEffect(c.epochMillis) { enter.animateTo(1f, androidx.compose.animation.core.spring(dampingRatio = 0.5f, stiffness = 120f)) }
+            val drip = remember(c.epochMillis) { androidx.compose.animation.core.Animatable(0f) }
+            LaunchedEffect(c.epochMillis) { drip.animateTo(1f, tween(1400)) }
             // A glint runs once along the wet fish.
-            val shine = remember(c) { androidx.compose.animation.core.Animatable(0f) }
-            LaunchedEffect(c) { shine.animateTo(1f, tween(900, delayMillis = 650)) }
+            val shine = remember(c.epochMillis) { androidx.compose.animation.core.Animatable(0f) }
+            LaunchedEffect(c.epochMillis) { shine.animateTo(1f, tween(900, delayMillis = 650)) }
             // The trophy photo: the angler lifts the fish out across both hands.
             val context = LocalContext.current
             androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth().height(230.dp).clip(RoundedCornerShape(18.dp)).background(Brush.radialGradient(listOf(if (golden != null) Color(0x55FFD27A) else Color(0x335B8BD0), Color.Transparent)))) {
@@ -827,8 +827,8 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?
                 }
             }
             Spacer(Modifier.height(12.dp))
-            val count = remember(c) { androidx.compose.animation.core.Animatable(0f) }
-            LaunchedEffect(c) { count.animateTo(1f, tween(700, delayMillis = 250)) }
+            val count = remember(c.epochMillis) { androidx.compose.animation.core.Animatable(0f) }
+            LaunchedEffect(c.epochMillis) { count.animateTo(1f, tween(700, delayMillis = 250)) }
             val grams = (c.grams * count.value).roundToInt()
             Row(horizontalArrangement = Arrangement.spacedBy(28.dp)) {
                 Stat(t(S.length), "%.0f cm".format(c.cm * count.value))
