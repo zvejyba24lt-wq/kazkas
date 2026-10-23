@@ -105,7 +105,7 @@ object ShareCard {
         val fish = asset(context, "fish/${c.species}.webp")
         if (fish != null) {
             val size = (c.cm / 50.0).toFloat().coerceIn(0.85f, 1.35f)
-            val fw = (hr - hl) / 0.55f * size
+            val fw = (hr - hl) / 0.7f * size
             val fh = fish.height * fw / fish.width
             val cy = hy - fh * 0.05f
             p.color = 0xFF000000.toInt()

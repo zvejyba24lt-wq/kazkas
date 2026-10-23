@@ -15,15 +15,15 @@ import android.graphics.Shader
  * across the hands. Used by the catch card in the game and by the picture players share.
  *
  * Picture slot (see docs/GRAFIKA.md): `angler` — an angler from the waist up, facing us, forearms
- * held forward with open hands at 22 % and 78 % of the width and 62 % of the height, transparent
+ * held forward with open hands at 15 % and 85 % of the width and 63 % of the height, transparent
  * around him. The fish is laid across the hands by code. Without it a simple painted figure is
  * drawn here.
  */
 object Angler {
     /** Where the hands are in the `angler` picture, as fractions of its width and height. */
-    const val HAND_L = 0.22f
-    const val HAND_R = 0.78f
-    const val HAND_Y = 0.62f
+    const val HAND_L = 0.15f
+    const val HAND_R = 0.855f
+    const val HAND_Y = 0.63f
 
     /** The `angler` picture, its seasonal version first (`angler_winter` wears winter clothes). */
     @Suppress("UNUSED_PARAMETER")

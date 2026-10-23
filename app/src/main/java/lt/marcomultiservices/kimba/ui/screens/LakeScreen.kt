@@ -781,7 +781,7 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?
                 val boxW = boxH * 0.8f
                 val figure = android.graphics.RectF(wPx / 2 - boxW / 2, hPx * 0.04f, wPx / 2 + boxW / 2, hPx * 0.04f + boxH)
                 val (hl, hr, hy) = lt.marcomultiservices.kimba.share.Angler.hands(figure)
-                val fishW = ((hr - hl) / 0.55f * (c.cm / 50.0).toFloat().coerceIn(0.85f, 1.3f)).coerceAtMost(wPx * 0.98f)
+                val fishW = ((hr - hl) / 0.7f * (c.cm / 50.0).toFloat().coerceIn(0.85f, 1.3f)).coerceAtMost(wPx * 0.98f)
                 Canvas(Modifier.fillMaxSize()) {
                     drawIntoCanvas { lt.marcomultiservices.kimba.share.Angler.body(context, it.nativeCanvas, figure) }
                 }
