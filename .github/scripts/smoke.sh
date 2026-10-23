@@ -113,6 +113,8 @@ demo --ez camp true -e screen camp; shot 30e_stovykla 4
 demo --ez friendcard true -e screen quests; sleep 3
 adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/4)) 400; adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/3)) 400; shot 30g_turnyras 2
 demo --ez visit true -e screen camp; shot 30h_draugo_stovykla 4
+demo --ez widget true -e screen lake; shot 30i_valdiklis 6
+adb shell input keyevent KEYCODE_BACK; sleep 1
 demo -e screen book; shot 30f_legendos 3
 demo -e screen forecast; shot 31_prognoze 6
 demo -e screen settings; shot 32_nustatymai 3

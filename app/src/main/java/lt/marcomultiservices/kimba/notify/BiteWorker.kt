@@ -38,8 +38,11 @@ class BiteWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
         val ctx = applicationContext
         val saved = ctx.app.store.current()
         val place = saved.place ?: return Result.success()
-        if (!saved.notify) return Result.success()
+        val widget = lt.marcomultiservices.kimba.widget.BiteWidget.placed(ctx)
+        if (!saved.notify && !widget) return Result.success()
         val forecast = ctx.app.weather.forecast(place) ?: return Result.retry()
+        if (widget) lt.marcomultiservices.kimba.widget.BiteWidget.render(ctx, saved, forecast)
+        if (!saved.notify) return Result.success()
         val now = System.currentTimeMillis()
         val zone = ZoneId.systemDefault()
         // Home waters the player has opened (trips have their own weather and are not watched).

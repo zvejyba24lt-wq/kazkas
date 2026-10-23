@@ -2,4 +2,6 @@
 <resources>
     <string name="app_name">Wetterbiss</string>
     <string name="channel_bites">Beißzeiten</string>
+    <string name="widget_name">Heutiger Biss</string>
+    <string name="widget_description">Wie die Fische heute bei deinem echten Wetter beißen</string>
 </resources>

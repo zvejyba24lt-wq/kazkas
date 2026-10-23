@@ -370,6 +370,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         if (f != null) _forecast.value = f
         recompute(place)
         if (f != null && demoIce == null) store.current().place?.let { home -> repo.cached(home)?.let { growIce(it) } }
+        // The home-screen widget shows the home water, whatever trip the player is on.
+        if (demoScene == null) store.current().let { s -> s.place?.let { home -> repo.cached(home)?.let { lt.marcomultiservices.kimba.widget.BiteWidget.render(getApplication(), s, it) } } }
     }
 
     /** Demo hook: ice thickness in cm, or null for the real one. */

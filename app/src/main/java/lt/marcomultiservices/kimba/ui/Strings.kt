@@ -425,6 +425,22 @@ object S {
     )
     fun plusCasts(n: Int) = L("+$n ${Plural.lt(n, "užmetimas", "užmetimai", "užmetimų")}", "+$n ${if (n == 1) "Wurf" else "Würfe"}", "+$n ${if (n == 1) "cast" else "casts"}")
 
+    fun skyIcon(s: Sky) = when (s) {
+        Sky.CLEAR -> "☀"
+        Sky.PARTLY -> "⛅"
+        Sky.CLOUDY -> "☁"
+        Sky.FOG -> "🌫"
+        Sky.DRIZZLE, Sky.RAIN, Sky.HEAVY_RAIN -> "🌧"
+        Sky.SLEET, Sky.SNOW -> "🌨"
+        Sky.THUNDER -> "⛈"
+    }
+    // Home-screen widget
+    val widgetBite = L("kibimas dabar", "Biss jetzt", "bite now")
+    val widgetHot = L("Kimba: %s", "Es beißt: %s", "Biting: %s")
+    val widgetBest = L("Geriausia šiandien %s · %d", "Am besten heute %s · %d", "Best today %s · %d")
+    val widgetNow = L("Dabar geriausias šios dienos metas!", "Jetzt ist die beste Zeit des Tages!", "Right now is the best time today!")
+    val widgetStart = L("Atidaryk žaidimą ir pasirink vietą", "Öffne das Spiel und wähle deinen Ort", "Open the game and choose your place")
+
     fun sky(s: Sky) = when (s) {
         Sky.CLEAR -> L("Giedra", "Klar", "Clear")
         Sky.PARTLY -> L("Mažai debesuota", "Wolkig", "Partly cloudy")

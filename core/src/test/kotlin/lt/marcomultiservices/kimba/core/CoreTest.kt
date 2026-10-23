@@ -615,5 +615,17 @@ class CoreTest {
         assertEquals(1, FriendCards.add(friend, back.copy(grams = 1000))!!.friendCards.size)
         assertEquals(null, FriendCards.find("KIMBA1:@@@"))
     }
-}
 
+    @Test
+    fun todayFindsTheBestHourLeft() {
+        val zone = java.time.ZoneId.of("Europe/Vilnius")
+        val now = java.time.LocalDate.of(2026, 6, 10).atTime(9, 0).atZone(zone).toInstant().toEpochMilli()
+        val hours = List(30) { i -> Forecast.Hour(now + i * 3_600_000L, 18.0, 1012.0, 0.5, 3.0, 0.0, Sky.CLOUDY) }
+        val t = Today.of(Forecast(hours), now, 54.7, 25.3, zone)!!
+        assertTrue(t.bestIndex >= t.index)
+        val endOfDay = java.time.LocalDate.of(2026, 6, 11).atStartOfDay(zone).toInstant().toEpochMilli()
+        assertTrue(t.bestMillis in now until endOfDay)
+        assertTrue(t.hot != null)
+        assertEquals(null, Today.of(Forecast(emptyList()), now, 54.7, 25.3, zone))
+    }
+}

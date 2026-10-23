@@ -2,4 +2,6 @@
 <resources>
     <string name="app_name">Kimba!</string>
     <string name="channel_bites">Bite windows</string>
+    <string name="widget_name">Today\'s bite</string>
+    <string name="widget_description">How well fish bite today in your real weather</string>
 </resources>

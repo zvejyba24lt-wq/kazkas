@@ -9,6 +9,8 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.compose.runtime.CompositionLocalProvider
 import androidx.compose.runtime.mutableStateOf
 import androidx.core.splashscreen.SplashScreen.Companion.installSplashScreen
+import androidx.lifecycle.lifecycleScope
+import kotlinx.coroutines.launch
 import lt.marcomultiservices.kimba.ads.AdsConsent
 import lt.marcomultiservices.kimba.data.Places
 import lt.marcomultiservices.kimba.game.GameViewModel
@@ -83,6 +85,15 @@ class MainActivity : AppCompatActivity() {
         extras.getString("surprise")?.let { vm.demoSurprise(it) }
         if (extras.getBoolean("friendcard", false)) vm.demoFriendCard()
         if (extras.getBoolean("visit", false)) vm.demoVisit()
+        // The home-screen widget shown over the game (for screenshots; a widget can't be placed from a script).
+        if (extras.getBoolean("widget", false)) lifecycleScope.launch {
+            val saved = app.store.current()
+            val forecast = saved.place?.let { app.weather.forecast(it) }
+            val v = lt.marcomultiservices.kimba.widget.BiteWidget.views(this@MainActivity, saved, forecast).apply(this@MainActivity, null)
+            val px = (resources.displayMetrics.density).let { d -> android.widget.FrameLayout.LayoutParams((320 * d).toInt(), (150 * d).toInt()) }
+            val box = android.widget.FrameLayout(this@MainActivity).apply { setPadding(40, 40, 40, 40); addView(v, px) }
+            android.app.AlertDialog.Builder(this@MainActivity).setView(box).show()
+        }
         extras.getString("stand")?.let { st -> lt.marcomultiservices.kimba.core.Stand.entries.firstOrNull { it.name.equals(st, true) }?.let { vm.demoStand(it) } }
         extras.getString("screen")?.let { s -> Screen.entries.firstOrNull { it.name.equals(s, ignoreCase = true) }?.let { startScreen.value = it to System.nanoTime() } }
     }

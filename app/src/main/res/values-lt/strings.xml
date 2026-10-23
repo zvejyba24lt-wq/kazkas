@@ -2,4 +2,6 @@
 <resources>
     <string name="app_name">Kimba!</string>
     <string name="channel_bites">Kibimo langai</string>
+    <string name="widget_name">Šiandienos kibimas</string>
+    <string name="widget_description">Kaip šiandien kimba pagal tikrą orą tavo vietoje</string>
 </resources>
