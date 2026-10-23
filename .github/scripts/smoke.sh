@@ -10,7 +10,14 @@ mkdir -p "$OUT"
 
 # The lake animates every frame, so uiautomator never sees an idle UI: no node lookups here,
 # only intents and screen coordinates.
-shot() { sleep "${2:-2}"; timeout 30 adb exec-out screencap -p > "$OUT/$1.png"; echo "shot $1 (top: $(adb shell dumpsys activity activities | grep -m1 topResumedActivity | tr -s ' '))"; }
+# The slow emulator now and then shows "Process system isn't responding" over everything: wait it out.
+unanr() {
+  for _ in 1 2 3; do
+    timeout 10 adb shell dumpsys window | grep -m1 mCurrentFocus | grep -qi "not responding" || return 0
+    timeout 10 adb shell input tap $((${W:-1080} * 25 / 100)) $((${H:-2400} * 58 / 100)); sleep 1
+  done
+}
+shot() { sleep "${2:-2}"; unanr; timeout 30 adb exec-out screencap -p > "$OUT/$1.png"; echo "shot $1 (top: $(adb shell dumpsys activity activities | grep -m1 topResumedActivity | tr -s ' '))"; }
 demo() { timeout 30 adb shell am start -n "$ACT" --ez noConsent true "$@" > /dev/null; }
 tap() { timeout 20 adb shell input tap "$1" "$2"; }
 
