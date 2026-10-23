@@ -44,6 +44,7 @@ Koordinatės žemiau pateiktos ekrano dalimis: `w` – ekrano plotis, `h` – au
 | `boat` | Medinės valties priekis (žiūrint nuo galinio suolo) | Plotis 1,1w, apačioje (apie 1190×700 px), aplink permatoma | Vieta „Valtis“. Laivagalis į viršų ties 0,42w, 0,72h; irklai šonuose. |
 | `camp_bg` | Tuščia stovyklos laukymė prie ežero | Platus 16:10 (1600×1000 px) | Fonas stovyklos ekrane. |
 | `camp_fire`, `camp_chair`, `camp_tent`, `camp_lantern`, `camp_dog`, `camp_smoker`, `camp_flag`, `camp_cabin` | Stovyklos daiktai | Kiekvienas atskirai, permatomas fonas, apačia = žemė | Laužavietė, žvejo kėdė, palapinė, žibintas ant stulpelio, šuo, rūkykla, vėliava, žvejo namelis. |
+| `pond_bg` | Tvenkinio vidus per stiklą iš šono | Platus (1600×700 px), nepermatomas | Stovyklos tvenkinys, kuriame plaukioja geriausios žuvys. Vidurys tuščias. |
 | `item_<rūšis>_<vardas>` | Parduotuvės ikonos | Kvadratas | Pvz. `item_lure_worm`, `item_rod_carbon`, `item_float_glow`, `item_up_boat`. Vardai yra `core/.../Gear.kt` (`Lure`, `Rod`, `Reel`, `Line`, `FloatStyle`, `Upgrade`). |
 
 Žuvų nuotraukos dedamos atskirai: `app/src/main/assets/fish/<rūšies id>.webp`, galva į kairę,
