@@ -215,6 +215,17 @@ class CoreTest {
     }
 
     @Test
+    fun theSplashScaresFishForAFewSeconds() {
+        val c = cond(1_760_000_000_000L)
+        val rng = Random(9)
+        repeat(500) {
+            val b = BiteEngine.roll(c, rng.nextDouble(), rng)
+            assertTrue(b.waitSeconds >= BiteEngine.QUIET_S + 3.0, "wait ${b.waitSeconds}")
+            assertTrue(b.nibbles.all { it >= BiteEngine.QUIET_S }, "nibbles ${b.nibbles}")
+        }
+    }
+
+    @Test
     fun trimmedLogKeepsRecordsAndStamps() {
         val rainy = Catch("roach", null, 20.0, 100, 1_000L, Sky.RAIN, 10.0, "x")
         val big = Catch("pike", null, 110.0, 9000, 2_000L, Sky.PARTLY, 10.0, "x")

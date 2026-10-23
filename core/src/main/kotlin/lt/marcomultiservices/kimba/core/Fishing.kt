@@ -35,12 +35,15 @@ object BiteEngine {
     /** Chance that a bite at a legend's water, while its conditions hold, is the legend. */
     const val LEGEND_CHANCE = 0.06
 
+    /** Seconds after the float lands before anything touches the bait. */
+    const val QUIET_S = 3.5
+
     /** [cast] is the cast distance 0..1: near casts reach reed fish, far casts the deep-water predators. */
     fun roll(c: Conditions, cast: Double, rng: Random, spot: Spot = Spot.HOME_LAKE, gear: Gear = Gear(), legendsCaught: Set<String> = emptySet()): Bite {
         // A legend of this home water, if its three conditions meet right now.
         val legend = Fish.legends.firstOrNull { it.legendOf == spot.water && spot.trip == null && it.id !in legendsCaught && it.active(c) }
         if (legend != null && rng.nextDouble() < LEGEND_CHANCE) {
-            val wait = 6.0 + rng.nextDouble() * 8.0
+            val wait = 8.0 + rng.nextDouble() * 8.0
             return Bite(legend.base, legend, kotlin.math.round(legend.base.maxCm * 1.15), wait, listOf(wait * 0.4, wait * 0.7), 1.1)
         }
         val act = Fish.activities(c, spot)
@@ -68,9 +71,11 @@ object BiteEngine {
         val size = sizeFraction(rng.nextDouble(), (if (golden != null) 2.0 else 5.5) * lure.sizeBias * (if (gear.tackle == Tackle.FEEDER) 0.85 else 1.0))
         val cm = species.minCm + (species.maxCm - species.minCm) * size
         val index = (Fish.biteIndex(c, spot) / 100.0) * (weights.values.sum() / act.values.sum()).coerceIn(0.5, 1.3)
-        val wait = (16.0 - 11.0 * index) * (0.6 + 0.8 * rng.nextDouble()) * (if (gear.boat) 0.75 else 1.0)
+        // The splash scares the fish off for a while: the float settles first, nothing touches
+        // the bait for the first few seconds, and the real bite never comes straight away.
+        val wait = ((16.0 - 11.0 * index) * (0.6 + 0.8 * rng.nextDouble()) * (if (gear.boat) 0.75 else 1.0)).coerceAtLeast(QUIET_S + 3.0 + rng.nextDouble() * 3.0)
         val nibbles = buildList {
-            var t = 1.2 + rng.nextDouble() * 1.5
+            var t = QUIET_S + rng.nextDouble() * 2.0
             while (t < wait - 1.0) {
                 add(t)
                 t += 1.0 + rng.nextDouble() * 2.5

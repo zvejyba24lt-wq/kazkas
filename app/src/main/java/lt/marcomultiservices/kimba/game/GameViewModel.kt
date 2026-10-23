@@ -546,7 +546,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             }
             // The very first fish comes soon, after two clear nibbles, so the tips can teach it.
             val bite = if (knows(Tip.STRIKE)) rolled else
-                Bite(rolled.species, rolled.golden, rolled.cm, rolled.waitSeconds.coerceIn(8.0, 11.0), listOf(3.0, 5.5), rolled.condition)
+                Bite(rolled.species, rolled.golden, rolled.cm, rolled.waitSeconds.coerceIn(9.5, 12.0), listOf(4.5, 7.0), rolled.condition)
             learn(Tip.CAST)
             val tackle = p.gearHere.tackle
             // A spinning lure is hunted while it is worked: the take comes sooner, with fewer knocks before it.

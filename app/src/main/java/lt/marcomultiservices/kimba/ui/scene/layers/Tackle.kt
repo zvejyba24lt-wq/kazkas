@@ -37,19 +37,22 @@ import kotlin.random.Random
 /**
  * Float body for each style, sinking by [sink] pixels. [u] is the size unit: the whole float
  * is about 5 u tall. The glow float shines in the dark. Art slot `float_<style>` (e.g.
- * `float_classic`, 1:2.6 portrait) replaces the drawing; its waterline is at 65 % height.
+ * `float_classic`, 1:2.6 portrait) replaces the drawing; [waterline] is the fraction of its
+ * height from the top that sits at [pos] (65 % when held up, [floatWaterline] in the water).
  */
-internal fun DrawScope.drawFloatBody(pos: Offset, u: Float, sink: Float, style: FloatStyle = FloatStyle.CLASSIC, daylight: Float = 1f, alpha: Float = 1f) {
+internal fun DrawScope.drawFloatBody(pos: Offset, u: Float, sink: Float, style: FloatStyle = FloatStyle.CLASSIC, daylight: Float = 1f, alpha: Float = 1f, waterline: Float = 0.65f) {
     val y = pos.y + sink
+    val art = ArtPack["float_" + style.name.lowercase()]
+    val top = if (art != null) y - u * 5.2f * waterline else y - u * 3.4f
     val pal = Palette.Floats.getValue(style)
     if (style == FloatStyle.GLOW) {
         // Only the glowing tip lights up a little around itself, as a real starlight does.
         val g = (0.15f + 0.85f * (1f - daylight)) * 0.55f
-        val tip = Offset(pos.x, y - u * 2.95f)
+        val tip = Offset(pos.x, top + u * 0.45f)
         drawCircle(Brush.radialGradient(listOf(Palette.GlowFloatHalo, Palette.GlowFloatHalo.copy(alpha = 0f)), tip, u * 1.1f), u * 1.1f, tip, alpha = g * alpha)
     }
-    ArtPack["float_" + style.name.lowercase()]?.let { img ->
-        drawArt(img, Rect(pos.x - u, y - u * 3.4f, pos.x + u, y + u * 1.8f), alpha = alpha)
+    art?.let { img ->
+        drawArt(img, Rect(pos.x - u, top, pos.x + u, top + u * 5.2f), alpha = alpha)
         return
     }
     val slim = if (style == FloatStyle.FEATHER) 0.55f else 1f
@@ -78,6 +81,17 @@ fun DrawScope.drawFloat(center: Offset, height: Float, style: FloatStyle, glow: 
  * the bait (below 0 it lifts) and shakes and tilts while [tremble] (1 right after a nibble,
  * fading to 0) lasts. On a bite it leans over as it is pulled under.
  */
+/**
+ * Where each painted float is shotted down to, as a fraction of the picture from the top: a
+ * well-set float shows only its tip, down to the first band on the body.
+ */
+internal fun floatWaterline(style: FloatStyle): Float = when (style) {
+    FloatStyle.CLASSIC -> 0.48f
+    FloatStyle.FEATHER -> 0.22f
+    FloatStyle.GLOW -> 0.41f
+    FloatStyle.GOLD -> 0.36f
+}
+
 internal fun DrawScope.drawFloatOnWater(geo: SceneGeometry, pos: Offset, dip: Float, t: Float, bite: Boolean, style: FloatStyle, daylight: Float, tremble: Float = 0f) {
     val u = geo.h * 0.016f * geo.scaleAt(pos.y)
     val bob = sin(t * 2.2f) * u * 0.12f
@@ -98,7 +112,7 @@ internal fun DrawScope.drawFloatOnWater(geo: SceneGeometry, pos: Offset, dip: Fl
     val sink = dip * u * 3.2f + bob
     val at = Offset(pos.x + shake, pos.y)
     clipRect(bottom = pos.y + u * 0.15f) {
-        rotate(tilt, pivot = Offset(at.x, pos.y + sink)) { drawFloatBody(at, u, sink, style, daylight) }
+        rotate(tilt, pivot = Offset(at.x, pos.y + sink)) { drawFloatBody(at, u, sink, style, daylight, waterline = floatWaterline(style)) }
     }
     drawOval(Color.Black.copy(alpha = 0.15f), Offset(pos.x - u * 0.9f, pos.y - u * 0.15f), Size(u * 1.8f, u * 0.4f))
     if (bite) {
