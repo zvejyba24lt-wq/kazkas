@@ -24,6 +24,8 @@ tap() { timeout 20 adb shell input tap "$1" "$2"; }
 sleep 45
 adb install -r "$APK" || exit 1
 adb shell pm grant "$PKG" android.permission.POST_NOTIFICATIONS || true
+# The one-time "Viewing full screen" hint would cover every screenshot.
+adb shell settings put secure immersive_mode_confirmations confirmed || true
 adb logcat -c
 # AppCompat syncs its stored app locale once on the first start, so start once, then switch to Lithuanian.
 timeout 60 adb shell am start -W -n "$ACT" --ez noConsent true; sleep 12
