@@ -32,6 +32,9 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import androidx.compose.foundation.layout.offset
+import androidx.compose.ui.graphics.nativeCanvas
+import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
 import androidx.compose.foundation.layout.statusBarsPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
@@ -764,10 +767,26 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?
             // A glint runs once along the wet fish.
             val shine = remember(c) { androidx.compose.animation.core.Animatable(0f) }
             LaunchedEffect(c) { shine.animateTo(1f, tween(900, delayMillis = 650)) }
-            Box(Modifier.fillMaxWidth().height(170.dp).clip(RoundedCornerShape(18.dp)).background(Brush.radialGradient(listOf(if (golden != null) Color(0x55FFD27A) else Color(0x335B8BD0), Color.Transparent)))) {
+            // The trophy photo: the angler lifts the fish out across both hands.
+            val context = LocalContext.current
+            androidx.compose.foundation.layout.BoxWithConstraints(Modifier.fillMaxWidth().height(230.dp).clip(RoundedCornerShape(18.dp)).background(Brush.radialGradient(listOf(if (golden != null) Color(0x55FFD27A) else Color(0x335B8BD0), Color.Transparent)))) {
+                val density = androidx.compose.ui.platform.LocalDensity.current
+                val wPx = with(density) { maxWidth.toPx() }
+                val hPx = with(density) { maxHeight.toPx() }
+                val boxH = hPx * 1.25f
+                val boxW = boxH * 0.8f
+                val figure = android.graphics.RectF(wPx / 2 - boxW / 2, hPx * 0.04f, wPx / 2 + boxW / 2, hPx * 0.04f + boxH)
+                val (hl, hr, hy) = lt.marcomultiservices.kimba.share.Angler.hands(figure)
+                val fishW = ((hr - hl) / 0.55f * (c.cm / 50.0).toFloat().coerceIn(0.85f, 1.3f)).coerceAtMost(wPx * 0.98f)
+                Canvas(Modifier.fillMaxSize()) {
+                    drawIntoCanvas { lt.marcomultiservices.kimba.share.Angler.body(context, it.nativeCanvas, figure) }
+                }
                 FishPicture(
                     c.species, Fish.gold(c.golden), time,
-                    Modifier.fillMaxSize().graphicsLayer {
+                    Modifier
+                        .offset { androidx.compose.ui.unit.IntOffset((wPx / 2 - fishW / 2).roundToInt(), (hy - fishW * 0.27f).roundToInt()) }
+                        .size(with(density) { fishW.toDp() }, with(density) { (fishW * 0.5f).toDp() })
+                        .graphicsLayer {
                         val p = enter.value
                         translationY = (1f - p) * 140f
                         rotationZ = kotlin.math.sin(p * 9f) * (1f - p.coerceAtMost(1f)) * 14f
@@ -776,6 +795,16 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?
                         alpha = p.coerceIn(0f, 1f)
                     },
                 )
+                Canvas(Modifier.fillMaxSize()) {
+                    // Hands lift with the fish as it swings up.
+                    val lift = (1f - enter.value) * 140f
+                    drawIntoCanvas { cv ->
+                        cv.nativeCanvas.save()
+                        cv.nativeCanvas.translate(0f, lift)
+                        lt.marcomultiservices.kimba.share.Angler.hands(context, cv.nativeCanvas, figure)
+                        cv.nativeCanvas.restore()
+                    }
+                }
                 Canvas(Modifier.fillMaxSize()) {
                     val g = shine.value
                     if (g > 0f && g < 1f) {

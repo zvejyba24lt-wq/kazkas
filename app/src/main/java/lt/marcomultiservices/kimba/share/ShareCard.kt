@@ -98,22 +98,26 @@ object ShareCard {
             text(cv, tag.uppercase(), W / 2f, 284f, 30f, 0xFFFFD27A.toInt(), sans, Paint.Align.CENTER, spacing = 0.12f)
         }
 
-        // The fish itself, lying across the water with a soft shadow.
+        // The trophy photo: the angler holding the fish out across both hands.
+        val box = RectF(W / 2f - 340f, 380f, W / 2f + 340f, 1232f)
+        Angler.body(context, cv, box)
+        val (hl, hr, hy) = Angler.hands(box)
         val fish = asset(context, "fish/${c.species}.webp")
         if (fish != null) {
-            val fw = 900f
+            val size = (c.cm / 50.0).toFloat().coerceIn(0.85f, 1.35f)
+            val fw = (hr - hl) / 0.55f * size
             val fh = fish.height * fw / fish.width
-            val cy = 905f
-            p.shader = RadialGradient(W / 2f, cy + fh * 0.42f, fw * 0.5f, intArrayOf(0x88000000.toInt(), 0x00000000), null, Shader.TileMode.CLAMP)
-            cv.save(); cv.scale(1f, 0.18f, W / 2f, cy + fh * 0.42f)
-            cv.drawCircle(W / 2f, cy + fh * 0.42f, fw * 0.5f, p)
-            cv.restore()
-            p.shader = null
+            val cy = hy - fh * 0.05f
             p.color = 0xFF000000.toInt()
             if (golden) p.colorFilter = ColorMatrixColorFilter(GOLD)
             cv.drawBitmap(fish, null, RectF(W / 2f - fw / 2, cy - fh / 2, W / 2f + fw / 2, cy + fh / 2), p)
             p.colorFilter = null
         }
+        Angler.hands(context, cv, box)
+        // A dark band behind the numbers so they read over the jacket.
+        p.shader = LinearGradient(0f, 1040f, 0f, 1232f, intArrayOf(0x000A1424, 0xCC0A1424.toInt()), null, Shader.TileMode.CLAMP)
+        cv.drawRect(0f, 1040f, W.toFloat(), 1232f, p)
+        p.shader = null
 
         text(cv, "${weight(c, lang)}   ·   ${c.cm.roundToInt()} cm", W / 2f, 1128f, 80f, 0xFFFFFFFF.toInt(), sans, Paint.Align.CENTER, shadow = true)
         val clock = java.time.Instant.ofEpochMilli(c.epochMillis).atZone(java.time.ZoneId.systemDefault()).toLocalTime()

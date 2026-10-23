@@ -46,6 +46,7 @@ Koordinatės žemiau pateiktos ekrano dalimis: `w` – ekrano plotis, `h` – au
 | `camp_fire`, `camp_chair`, `camp_tent`, `camp_lantern`, `camp_dog`, `camp_smoker`, `camp_flag`, `camp_cabin` | Stovyklos daiktai | Kiekvienas atskirai, permatomas fonas, apačia = žemė | Laužavietė, žvejo kėdė, palapinė, žibintas ant stulpelio, šuo, rūkykla, vėliava, žvejo namelis. |
 | `pond_bg` | Tvenkinio vidus per stiklą iš šono | Platus (1600×700 px), nepermatomas | Stovyklos tvenkinys, kuriame plaukioja geriausios žuvys. Vidurys tuščias. |
 | `lantern` | Senas žibalinis žibintas, stovintis ant žemės | Stačias (apie 300×450 px), permatomas fonas | Naktį dega šalia žvejo. Liepsną ir šviesą prideda kodas. |
+| `angler` | Žvejys iki juosmens, laikantis žuvį | Stačias 4:5 (apie 800×1000 px), permatomas fonas | Trofėjaus nuotrauka laimikio kortelėje ir pasigyrimo paveikslėlyje. Delnai atkišti į priekį ties 22 % ir 78 % pločio, 62 % aukščio. Žuvį į rankas įdeda kodas, todėl paveikslėlyje žuvies nėra. |
 | `item_<rūšis>_<vardas>` | Parduotuvės ikonos | Kvadratas | Pvz. `item_lure_worm`, `item_rod_carbon`, `item_float_glow`, `item_up_boat`. Vardai yra `core/.../Gear.kt` (`Lure`, `Rod`, `Reel`, `Line`, `FloatStyle`, `Upgrade`). |
 
 Žuvų nuotraukos dedamos atskirai: `app/src/main/assets/fish/<rūšies id>.webp`, galva į kairę,
