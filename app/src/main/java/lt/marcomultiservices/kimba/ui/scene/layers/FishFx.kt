@@ -63,7 +63,7 @@ internal fun DrawScope.drawFishShadow(geo: SceneGeometry, pos: Offset, dip: Floa
  */
 internal fun DrawScope.drawHookedFish(geo: SceneGeometry, mouth: Offset, t: Float, species: String, golden: Boolean, size: Float, heading: Float, running: Boolean, colors: SceneColors) {
     val s = geo.scaleAt(mouth.y)
-    val len = geo.w * 0.2f * s * size.coerceIn(0.5f, 2f)
+    val len = geo.w * 0.26f * s * size.coerceIn(0.5f, 2f)
     // Pictures face left; the body trails behind the mouth, a little under the surface.
     val c = Offset(mouth.x - heading * len * 0.42f, mouth.y + len * 0.1f)
     val wag = sin(t * (if (running) 22f else 12f)) * (if (running) 7f else 4f)

@@ -271,8 +271,8 @@ fun LakeScreen(
 
         // The fight: the tension meter at the right edge, the rod's steer track above the thumbs.
         if (stage == Stage.FIGHT) {
-            TensionGauge(lake.tension, lake.fightDistance, lake.running, lake.tackle, Modifier.align(androidx.compose.ui.BiasAlignment(1f, 0.05f)).padding(end = 10.dp))
-            SteerBar(lake.rodAim, lake.fishHeading, lake.atNet, lake.fishSide, lake.running, Modifier.align(androidx.compose.ui.BiasAlignment(0f, 0.55f)))
+            TensionGauge(lake.tension, lake.fightDistance, lake.running, lake.tackle, Modifier.align(androidx.compose.ui.BiasAlignment(1f, 0.32f)).padding(end = 10.dp))
+            SteerBar(lake.rodAim, lake.fishHeading, lake.atNet, lake.fishSide, lake.running, Modifier.align(androidx.compose.ui.BiasAlignment(0f, 1f)).navigationBarsPadding().padding(bottom = 18.dp))
         }
 
         // The strike call sits above the middle of the screen, clear of the thumbs.
