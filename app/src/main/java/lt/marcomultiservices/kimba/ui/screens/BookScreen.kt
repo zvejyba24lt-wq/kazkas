@@ -124,6 +124,22 @@ fun BookScreen(vm: GameViewModel, onBack: () -> Unit) {
                 }
                 Spacer(Modifier.height(8.dp))
             }
+            // The legends first: one named giant per home water, its clues coming one a day.
+            if (filter == "all" || filter == "golden") {
+                item {
+                    Spacer(Modifier.height(4.dp))
+                    SectionTitle(t(S.legendsTitle))
+                    Spacer(Modifier.height(4.dp))
+                    Text(t(S.legendsNote), color = K.Muted, fontSize = 12.sp, lineHeight = 17.sp)
+                    Spacer(Modifier.height(8.dp))
+                }
+                items(Fish.legends, key = { it.id }) { g ->
+                    val got = catches.filter { it.golden == g.id }.maxByOrNull { it.grams }
+                    val known = saved?.progress?.clues(java.time.LocalDate.now().toEpochDay()) ?: 1
+                    LegendCard(g, got, known, time)
+                }
+                item { Spacer(Modifier.height(18.dp)) }
+            }
             if (filter != "golden") items(species, key = { it.id }) { s ->
                 val mine = catches.filter { it.species == s.id && it.golden == null }
                 val lang = LocalLang.current
@@ -140,21 +156,6 @@ fun BookScreen(vm: GameViewModel, onBack: () -> Unit) {
                 items(goldens, key = { it.id }) { g ->
                     val mine = catches.filter { it.golden == g.id }
                     FishCard(g.base.id, true, t(g.name), t(g.condition), mine, time)
-                }
-            }
-            // The legends: one named giant per home water, its clues coming one a day.
-            if (filter == "all" || filter == "golden") {
-                item {
-                    Spacer(Modifier.height(18.dp))
-                    SectionTitle(t(S.legendsTitle))
-                    Spacer(Modifier.height(4.dp))
-                    Text(t(S.legendsNote), color = K.Muted, fontSize = 12.sp, lineHeight = 17.sp)
-                    Spacer(Modifier.height(8.dp))
-                }
-                items(Fish.legends, key = { it.id }) { g ->
-                    val got = catches.filter { it.golden == g.id }.maxByOrNull { it.grams }
-                    val known = saved?.progress?.clues(java.time.LocalDate.now().toEpochDay()) ?: 1
-                    LegendCard(g, got, known, time)
                 }
             }
         }

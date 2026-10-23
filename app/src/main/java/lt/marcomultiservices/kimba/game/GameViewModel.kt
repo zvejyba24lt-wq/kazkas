@@ -762,7 +762,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     /** Stands at [stand], with the boat given for free (for screenshots). */
     fun demoStand(stand: lt.marcomultiservices.kimba.core.Stand) {
-        if (_lake.value.stage == Stage.FIGHT) resetLake()
+        resetLake()
         updateProgress { it.copy(stand = stand, trip = null, owned = it.owned + Upgrade.BOAT.key) }.invokeOnCompletion { afterMove() }
     }
 

@@ -90,18 +90,14 @@ demo -e screen map; shot 29_zemelapis 5
 demo -e screen lake; sleep 2
 demo -e friend QWERTY; shot 29b_draugo_dovana 4
 tap $((W/2)) $((H/2)); sleep 1
+# A trophy dialog may pop up on the lake: press its button before going to the quests.
+sleep 2; tap $((W/2)) $((H*59/100)); sleep 1
 demo -e screen quests; shot 30_uzduotys 3
 adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/8)) 400; shot 30b_trofejai 2
 adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/8)) 400; shot 30c_pasiekimai 2
 demo -e screen camp; shot 30d_stovykla_tuscia 3
 demo --ez camp true -e screen camp; shot 30e_stovykla 4
-demo -e screen book; sleep 3
-adb shell input swipe $((W/2)) $((H*7/8)) $((W/2)) $((H/10)) 150; sleep 1
-adb shell input swipe $((W/2)) $((H*7/8)) $((W/2)) $((H/10)) 150; sleep 1
-adb shell input swipe $((W/2)) $((H*7/8)) $((W/2)) $((H/10)) 150; sleep 1
-adb shell input swipe $((W/2)) $((H*7/8)) $((W/2)) $((H/10)) 150; sleep 1
-adb shell input swipe $((W/2)) $((H*7/8)) $((W/2)) $((H/10)) 150; sleep 1
-adb shell input swipe $((W/2)) $((H*7/8)) $((W/2)) $((H/10)) 150; shot 30f_legendos 2
+demo -e screen book; shot 30f_legendos 3
 demo -e screen forecast; shot 31_prognoze 6
 demo -e screen settings; shot 32_nustatymai 3
 adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/5)) 400; shot 33_nustatymai_toliau 2
