@@ -115,6 +115,7 @@ import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.rememberScrollState
+import androidx.compose.foundation.verticalScroll
 import androidx.compose.material.icons.rounded.Map
 import androidx.compose.material.icons.rounded.Storefront
 import androidx.compose.material.icons.rounded.TaskAlt
@@ -252,6 +253,8 @@ fun LakeScreen(
             // While a cast is out, words sit high on the screen: the bottom belongs to the thumbs.
             Spacer(Modifier.height(10.dp))
             when (stage) {
+                // The very first cast: how the cast button works.
+                Stage.IDLE, Stage.CHARGING -> if (tip(Tip.CAST) && !boxOpen) Coach(Tip.CAST, arrow = true)
                 Stage.WAITING -> when {
                     !lake.hint && tip(Tip.WAIT) -> Coach(Tip.WAIT, tackle = lake.tackle)
                     lake.hint -> Hint(t(if (lake.tackle == Tackle.FLOAT) S.tooEarly else S.tooEarlyTip), warn = true)
@@ -310,11 +313,14 @@ fun LakeScreen(
 
         AnimatedVisibility(stage == Stage.CAUGHT || stage == Stage.LOST, enter = fadeIn() + scaleIn(initialScale = 0.9f), exit = fadeOut()) {
             Box(Modifier.fillMaxSize().background(Color(0x66000000)).clickable(enabled = false) {}, contentAlignment = Alignment.Center) {
-                if (lake.caught != null && stage == Stage.CAUGHT) {
-                    CatchCard(lake.caught, lake.newSpecies, lake.record, lake.reward, lake.doubled, progress.noAds, lake.returnedFrom, onDouble = { rewarded { vm.doubleCoins() } }, onShare = { shareCatch(lake.caught) }, onRelease = { vm.releaseCatch() }) { next() }
-                } else if (lake.surprise != null && stage == Stage.CAUGHT) {
-                    SurpriseCard(lake.surprise, lake.foundLure, lake.foundRod, onCove = { vm.travel(lt.marcomultiservices.kimba.core.Destinations.secret); next() }) { next() }
-                } else if (lake.lost != null) LostCard(lake.lost) { next() }
+                // The catch card is tall: on a small phone it scrolls instead of losing its buttons.
+                Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding(), horizontalAlignment = Alignment.CenterHorizontally) {
+                    if (lake.caught != null && stage == Stage.CAUGHT) {
+                        CatchCard(lake.caught, lake.newSpecies, lake.record, lake.reward, lake.doubled, progress.noAds, lake.returnedFrom, onDouble = { rewarded { vm.doubleCoins() } }, onShare = { shareCatch(lake.caught) }, onRelease = { vm.releaseCatch() }) { next() }
+                    } else if (lake.surprise != null && stage == Stage.CAUGHT) {
+                        SurpriseCard(lake.surprise, lake.foundLure, lake.foundRod, onCove = { vm.travel(lt.marcomultiservices.kimba.core.Destinations.secret); next() }) { next() }
+                    } else if (lake.lost != null) LostCard(lake.lost) { next() }
+                }
             }
         }
 
@@ -586,13 +592,13 @@ private fun FightCue(running: Boolean, atNet: Boolean, side: Float, heading: Flo
     }
 }
 
+/** Line under the ice at the start of a fight, in metres. */
+private const val ICE_DEPTH_M = 8f
+
 /**
  * The line-tension meter standing at the right edge: it fills from the bottom, green while
  * safe, red in the top band where the line snaps; above it, the line still out in metres.
  */
-/** Line under the ice at the start of a fight, in metres. */
-private const val ICE_DEPTH_M = 8f
-
 @Composable
 private fun TensionGauge(tension: Float, distance: Float, running: Boolean, atNet: Boolean, tackle: Tackle, ice: Boolean, modifier: Modifier = Modifier) {
     val pulse by rememberInfiniteTransition(label = "gauge").animateFloat(0.4f, 1f, infiniteRepeatable(tween(260), RepeatMode.Reverse), label = "p")
@@ -898,7 +904,8 @@ private fun EventDialog(event: GameEvent, onClose: () -> Unit) {
     val sfx = LocalContext.current.app.sfx
     LaunchedEffect(event) { sfx.play(if (event is GameEvent.LevelUp) Sfx.Fx.LEVEL else Sfx.Fx.COIN) }
     Box(Modifier.fillMaxSize().background(Color(0x99000000)).clickable(onClick = onClose), contentAlignment = Alignment.Center) {
-        Glass(Modifier.padding(28.dp).fillMaxWidth(), radius = 26.dp, padding = 22.dp) {
+        // Jonas's words or a few trophies at once can be long: the card scrolls on a small phone.
+        Glass(Modifier.verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().padding(28.dp).fillMaxWidth(), radius = 26.dp, padding = 22.dp) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 when (event) {
                     is GameEvent.LevelUp -> Text("${event.level}", style = MaterialTheme.typography.displaySmall.copy(fontSize = 56.sp), color = Color(0xFF8FD3FF))

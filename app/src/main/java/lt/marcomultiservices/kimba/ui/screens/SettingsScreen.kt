@@ -79,9 +79,17 @@ fun SettingsScreen(vm: GameViewModel, onBack: () -> Unit) {
             LanguagePicker()
 
             Spacer(Modifier.height(22.dp))
+            // Turned on without the phone's permission it would stay silent: ask for it then.
+            val ctx = LocalContext.current
+            val notifyPermission = rememberLauncherForActivityResult(ActivityResultContracts.RequestPermission()) {}
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(t(S.notifications), color = K.Text, fontSize = 15.sp, modifier = Modifier.weight(1f))
-                Switch(saved?.notify ?: true, { vm.setNotify(it) }, colors = SwitchDefaults.colors(checkedTrackColor = K.Amber))
+                Switch(saved?.notify ?: true, { on ->
+                    vm.setNotify(on)
+                    if (on && android.os.Build.VERSION.SDK_INT >= 33 &&
+                        ctx.checkSelfPermission(Manifest.permission.POST_NOTIFICATIONS) != android.content.pm.PackageManager.PERMISSION_GRANTED
+                    ) notifyPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+                }, colors = SwitchDefaults.colors(checkedTrackColor = K.Amber))
             }
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(t(S.sound), color = K.Text, fontSize = 15.sp, modifier = Modifier.weight(1f))

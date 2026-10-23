@@ -88,7 +88,8 @@ fun BookScreen(vm: GameViewModel, onBack: () -> Unit) {
     val catches = saved?.catches ?: emptyList()
     val time = lt.marcomultiservices.kimba.ui.scene.rememberSceneTime()
     val caughtKinds = catches.map { it.golden ?: it.species }.toSet()
-    val total = Fish.all.size + Fish.goldens.size
+    // Legends count too: a caught legend is a kind in the book like any other.
+    val total = Fish.all.size + Fish.goldens.size + Fish.legends.size
 
     // Filter: null = everything, a water, or only the golden fish.
     var filter by androidx.compose.runtime.saveable.rememberSaveable { androidx.compose.runtime.mutableStateOf("all") }

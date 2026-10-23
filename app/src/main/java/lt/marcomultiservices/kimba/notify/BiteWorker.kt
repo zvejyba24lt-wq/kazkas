@@ -30,7 +30,8 @@ import kotlin.math.roundToInt
 
 /**
  * Every two hours: fetches the forecast and, when a golden fish's window is open now or opens
- * within the next two hours, tells the player once; otherwise maybe the daily report. These
+ * within the next two hours, tells the player once (between 7:00 and 22:00); otherwise maybe the
+ * daily report. These
  * alerts are true, which is the point.
  */
 class BiteWorker(context: Context, params: WorkerParameters) : CoroutineWorker(context, params) {
@@ -73,6 +74,8 @@ class BiteWorker(context: Context, params: WorkerParameters) : CoroutineWorker(c
             ctx.app.store.update { it.copy(notified = it.notified.filterNot { k -> k.startsWith("stormwarn@") }.toSet() + stormKey) }
             return Result.success()
         }
+        // Never at night: a buzz at three in the morning gets the game uninstalled.
+        if (Instant.ofEpochMilli(now).atZone(zone).hour !in 7..21) return Result.success()
         val window = Windows.golden(forecast, now, place.lat, place.lon, zone, hours = 3, goldens = goldens)
             .firstOrNull { it.startMillis <= now + 2 * 3_600_000L && "${it.golden.id}@${it.startMillis}" !in saved.notified }
             ?: return dailyReport(saved, forecast, now, zone, lang, intent)
