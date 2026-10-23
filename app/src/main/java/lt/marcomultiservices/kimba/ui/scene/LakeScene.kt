@@ -27,6 +27,7 @@ import androidx.compose.ui.graphics.ShaderBrush
 import androidx.compose.ui.platform.LocalDensity
 import lt.marcomultiservices.kimba.core.Conditions
 import lt.marcomultiservices.kimba.core.FloatStyle
+import lt.marcomultiservices.kimba.core.Stand
 import lt.marcomultiservices.kimba.core.Tackle
 import lt.marcomultiservices.kimba.core.Water
 import lt.marcomultiservices.kimba.game.GameViewModel
@@ -55,6 +56,8 @@ fun LakeScene(
     hasAlarm: Boolean = false,
     /** Ice on this water in cm: a rim along the shores while it forms, fishing through a hole once it holds. */
     iceCm: Double = 0.0,
+    /** Where the player stands: the jetty, the reed bank or the boat (on the ice it is always the hole). */
+    stand: Stand = Stand.PIER,
 ) {
     BoxWithConstraints(modifier) {
         val density = LocalDensity.current
@@ -113,6 +116,20 @@ fun LakeScene(
         val frozen = iceCm >= lt.marcomultiservices.kimba.core.Ice.SAFE_CM
         val lookDownTarget by remember(frozen) { derivedStateOf { val st = lake.value; if (frozen) 0f else if ((st.stage == Stage.FIGHT && st.fightDistance < 0.22f) || st.stage == Stage.LANDING) 1f else 0f } }
         val lookDown by animateFloatAsState(lookDownTarget, tween(900, easing = FastOutSlowInEasing), label = "look")
+        // The camera follows the cast out and settles close on the float (closer the farther it
+        // went), then keeps the hooked fish in view; between casts it pulls back to the whole lake.
+        val followTarget by remember(frozen) {
+            derivedStateOf {
+                val st = lake.value
+                when (st.stage) {
+                    Stage.FLYING, Stage.WAITING, Stage.BITE -> if (frozen) 1.22f else 1.08f + 0.34f * st.castDist.toFloat()
+                    else -> 1f
+                }
+            }
+        }
+        val follow by animateFloatAsState(followTarget, tween(1800, easing = FastOutSlowInEasing), label = "follow")
+        val focusTarget by remember { derivedStateOf { when (lake.value.stage) { Stage.FLYING, Stage.WAITING, Stage.BITE -> 1f; Stage.FIGHT -> 0.5f; else -> 0f } } }
+        val focus by animateFloatAsState(focusTarget, tween(1800, easing = FastOutSlowInEasing), label = "focus")
 
         Canvas(Modifier.fillMaxSize()) {
             val t = time.floatValue
@@ -124,7 +141,13 @@ fun LakeScene(
             // Float and line state.
             val kind = if (s.stage == Stage.IDLE || s.stage == Stage.CHARGING) tackle else s.tackle
             // On the ice the bait always goes down the same hole.
-            val target = if (frozen) geo.floatTarget(GameViewModel.ICE_DIST, 0) else geo.floatTarget(s.castDist, s.castId)
+            // From the boat even a short cast lands clear of the bow.
+            val boat = stand == Stand.BOAT && !frozen
+            val target = when {
+                frozen -> geo.floatTarget(GameViewModel.ICE_DIST, 0)
+                boat -> geo.floatTarget(0.3 + 0.7 * s.castDist, s.castId)
+                else -> geo.floatTarget(s.castDist, s.castId)
+            }
             // A spinning lure comes back from where it landed towards the bank below the angler.
             val spinEnd = Offset(geo.w * 0.6f, geo.h * 0.9f)
             val spinFrac = when {
@@ -219,8 +242,11 @@ fun LakeScene(
             val sea = waterKind == Water.SEA
             // Looking down at the bank the view closes in further around the bottom edge, so
             // nothing past the picture ever shows.
-            val pivot = if (frozen) target else Offset(geo.w * (0.55f + 0.02f * lookDown), geo.h * (0.78f + 0.22f * lookDown))
-            var cam = zoom + 0.3f * lookDown
+            val base = if (frozen) target else Offset(geo.w * (0.55f + 0.02f * lookDown), geo.h * (0.78f + 0.22f * lookDown))
+            // A spinning lure is watched on its way back; anything else where it landed.
+            val seen = if (s.stage == Stage.FIGHT || (kind == Tackle.SPIN && s.stage != Stage.FLYING)) floatPos else target
+            val pivot = Offset(base.x + (seen.x - base.x) * focus, base.y + (seen.y - base.y) * focus)
+            var cam = maxOf(zoom, follow) + 0.3f * lookDown
             // A jolt on the strike, a run and the landing, dying away quickly.
             val shakeAge = (android.os.SystemClock.uptimeMillis() - s.shakeAt).toFloat()
             val jolt = if (s.shakeAt > 0 && shakeAge < 420f) s.shake * (1f - shakeAge / 420f) else 0f
@@ -229,7 +255,11 @@ fun LakeScene(
             // A touch of extra zoom so a jolt never shows past the edge of the picture.
             cam *= 1f + jolt * 0.03f
             drawContext.transform.translate(jx, jy)
+            // The boat rides the swell: the whole view sways a little (zoomed in so no corner shows).
+            val rock = if (boat) sin(t * 0.9f) * (0.6f + (colors.wind / 10f).coerceAtMost(0.8f)) else 0f
+            if (boat) cam *= 1.05f
             drawContext.transform.scale(cam, cam, pivot)
+            if (boat) drawContext.transform.rotate(rock * 0.9f, Offset(geo.w * 0.5f, geo.h * 0.6f))
             drawSky(geo, colors, conditions, t, sun, moon)
             if (sea) {
                 drawShores(geo, colors, waterKind, t)
@@ -260,9 +290,10 @@ fun LakeScene(
                 if (!sea) drawSwallows(geo, colors, t)
             }
             drawMist(geo, colors, conditions)
+            val month = conditions.month
             if (!frozen) when (waterKind) {
-                Water.LAKE -> drawLilies(geo, colors, t, geo.lilies)
-                Water.POND -> drawLilies(geo, colors, t, geo.pondLilies)
+                Water.LAKE -> if (liliesIn(month)) drawLilies(geo, colors, t, geo.lilies)
+                Water.POND -> if (liliesIn(month)) drawLilies(geo, colors, t, geo.pondLilies)
                 Water.RIVER -> drawRiverBits(geo, colors, t)
                 Water.SEA -> { drawBuoy(geo, colors, t); drawGulls(geo, colors, t) }
             }
@@ -287,18 +318,23 @@ fun LakeScene(
             if (s.stage == Stage.FIGHT && frozen) {
                 drawBubbles(geo, floatPos, t, if (s.running) 0.9f else 0.35f)
             } else if (s.stage == Stage.FIGHT) {
-                s.bite?.let { b -> drawHookedFish(geo, floatPos, t, b.species.id, b.golden != null, (b.cm / 60.0).toFloat(), s.fishHeading, s.running, colors) }
+                s.bite?.let { b -> drawHookedFish(geo, floatPos, t, b.species.id, lt.marcomultiservices.kimba.core.Fish.gold(b.golden?.id), (b.cm / 60.0).toFloat(), s.fishHeading, s.running, colors) }
                 drawFightSplash(geo, floatPos, t, s.running)
                 val b = s.bite
-                if (s.running && b != null) drawFishJump(geo, floatPos, t, b.species.id, b.golden != null, (b.cm / 60.0).toFloat())
+                if (s.running && b != null) drawFishJump(geo, floatPos, t, b.species.id, lt.marcomultiservices.kimba.core.Fish.gold(b.golden?.id), (b.cm / 60.0).toFloat())
             }
-            pierCache.draw(this, Triple(geo, colors, sea), pierRect(geo, sea)) { drawPier(geo, colors, sea, 0f) }
-            // No reeds out on a sea pier.
-            if (!sea) drawReeds(geo, colors, t, back = true)
+            val reeds = !sea && !boat
+            when {
+                boat -> drawBoat(geo, colors, rock)
+                stand == Stand.BANK && !frozen -> drawBank(geo, colors, conditions.weather.sky == lt.marcomultiservices.kimba.core.Sky.SNOW)
+                else -> pierCache.draw(this, Triple(geo, colors, sea), pierRect(geo, sea)) { drawPier(geo, colors, sea, 0f) }
+            }
+            // No reeds out on a sea pier or around the boat.
+            if (reeds) drawReeds(geo, colors, t, back = true)
             if (resting) drawRodRest(geo, colors, tip, hasAlarm, s.alarm, t)
             drawRod(geo, colors, tip, quiver = kind == Tackle.FEEDER)
             drawLine(geo, tip, floatPos, s.stage, tension, slack = when (kind) { Tackle.FEEDER -> 0.12f; Tackle.SPIN -> 0.25f; else -> 1f })
-            if (s.stage == Stage.LANDING) s.bite?.let { b -> drawLandedFish(geo, floatPos, t, lift.value, b.species.id, b.golden != null, (b.cm / 60.0).toFloat()) }
+            if (s.stage == Stage.LANDING) s.bite?.let { b -> drawLandedFish(geo, floatPos, t, lift.value, b.species.id, lt.marcomultiservices.kimba.core.Fish.gold(b.golden?.id), (b.cm / 60.0).toFloat()) }
             if (hanging || s.stage == Stage.FLYING) {
                 val u = geo.h * 0.016f * geo.scaleAt(geo.h)
                 when (kind) {
@@ -307,8 +343,11 @@ fun LakeScene(
                     Tackle.SPIN -> drawSpoon(floatPos, u, t, colors)
                 }
             }
-            if (!sea) drawReeds(geo, colors, t, back = false)
+            if (reeds) drawReeds(geo, colors, t, back = false)
+            drawAutumn(geo, colors, t, month, onWater = !frozen && waterKind != Water.SEA && waterKind != Water.RIVER)
+            drawFluff(geo, colors, t, month, java.time.Instant.ofEpochMilli(conditions.epochMillis).atZone(java.time.ZoneId.systemDefault()).dayOfMonth)
             drawWeather(geo, colors, conditions, t)
+            if (boat) drawContext.transform.rotate(-rock * 0.9f, Offset(geo.w * 0.5f, geo.h * 0.6f))
             drawContext.transform.scale(1f / cam, 1f / cam, pivot)
             drawContext.transform.translate(-jx, -jy)
             drawVignette(geo)

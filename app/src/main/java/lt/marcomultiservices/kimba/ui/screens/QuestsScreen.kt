@@ -61,6 +61,7 @@ import androidx.compose.runtime.setValue
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.input.KeyboardCapitalization
 import lt.marcomultiservices.kimba.core.Invites
+import lt.marcomultiservices.kimba.core.Challenge
 import lt.marcomultiservices.kimba.share.ShareCard
 import lt.marcomultiservices.kimba.ui.amberButtonColors
 import java.time.LocalDate
@@ -78,6 +79,8 @@ fun QuestsScreen(vm: GameViewModel, onBack: () -> Unit) {
                 Text(t(S.streakNow, p.streak), color = K.Amber, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.height(14.dp))
+            ChallengeCard(p)
+            Spacer(Modifier.height(10.dp))
             for (q in quests.list) {
                 QuestCard(q)
                 Spacer(Modifier.height(10.dp))
@@ -183,15 +186,15 @@ private fun TrophyWall(catches: List<Catch>) {
                     Column(
                         Modifier.weight(1f).padding(4.dp).clip(plaque)
                             .background(Brush.verticalGradient(listOf(Color(0xFF8A5E36), Color(0xFF6B4527))))
-                            .border(1.dp, if (c.golden != null) K.Gold else Color(0x55FFE0B0), plaque)
+                            .border(1.dp, if (Fish.gold(c.golden)) K.Gold else Color(0x55FFE0B0), plaque)
                             .padding(8.dp),
                         horizontalAlignment = Alignment.CenterHorizontally,
                     ) {
-                        FishPicture(c.species, c.golden != null, null, Modifier.fillMaxWidth().height(64.dp))
+                        FishPicture(c.species, Fish.gold(c.golden), null, Modifier.fillMaxWidth().height(64.dp))
                         Spacer(Modifier.height(4.dp))
                         val name = (c.golden?.let { Fish.goldenById(it)?.name } ?: Fish.byId(c.species)?.name)?.get(lang) ?: c.species
                         Text(name, color = Color(0xFFFFF1DC), fontSize = 13.sp, fontWeight = FontWeight.Bold, maxLines = 1)
-                        Text("${Plural.kg(c.grams, lang)} · ${c.cm.toInt()} cm", color = if (c.golden != null) K.Gold else Color(0xFFE8D2B0), fontSize = 12.sp)
+                        Text("${Plural.kg(c.grams, lang)} · ${c.cm.toInt()} cm", color = if (Fish.gold(c.golden)) K.Gold else Color(0xFFE8D2B0), fontSize = 12.sp)
                     }
                 }
                 if (row.size == 1) Spacer(Modifier.weight(1f))
@@ -299,6 +302,56 @@ private fun FriendsCard(p: Progress, onCode: (String, (Boolean) -> Unit) -> Unit
                 Text(thanks, color = K.Text, fontSize = 22.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp, modifier = Modifier.weight(1f))
                 OutlinedButton({ runCatching { ShareCard.sendText(context, S.thanksText[lang].format(thanks), S.thanksTitle[lang]) } }) {
                     Text(t(S.send), color = K.Text)
+                }
+            }
+        }
+    }
+}
+
+/** The day's challenge, the same for every player, with today's best and a Wordle-style share. */
+@Composable
+private fun ChallengeCard(p: Progress) {
+    val lang = LocalLang.current
+    val context = LocalContext.current
+    val today = LocalDate.now()
+    val day = today.toEpochDay()
+    val species = Challenge.species(day, today.monthValue)
+    val log = p.challenge.takeIf { it.day == day }
+    val shape = RoundedCornerShape(16.dp)
+    Column(
+        Modifier.fillMaxWidth().clip(shape)
+            .background(Brush.horizontalGradient(listOf(Color(0x40E0A030), Color(0x14E0A030))))
+            .border(1.dp, Color(0x88E0A030), shape)
+            .padding(14.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(t(S.challengeTitle, Challenge.number(day)).uppercase(), color = K.Amber, fontSize = 12.sp, fontWeight = FontWeight.Black, letterSpacing = 1.2.sp)
+                Text(t(species.name), color = K.Text, fontSize = 20.sp, fontWeight = FontWeight.Bold)
+            }
+            FishPicture(species.id, false, null, Modifier.width(92.dp).height(46.dp))
+        }
+        Spacer(Modifier.height(4.dp))
+        Text(t(S.challengeGoal, t(species.name).lowercase()), color = K.Muted, fontSize = 12.sp, lineHeight = 17.sp)
+        Spacer(Modifier.height(8.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            if (log == null) {
+                Text(t(S.challengeNone), color = K.Muted, fontSize = 13.sp, modifier = Modifier.weight(1f))
+            } else {
+                val weight = Plural.kg(log.grams, lang)
+                Column(Modifier.weight(1f)) {
+                    Text(t(S.challengeBest, "$weight · ${log.cm.toInt()} cm"), color = K.Text, fontSize = 14.sp, fontWeight = FontWeight.SemiBold)
+                    Text(Challenge.bar(Challenge.boxes(log, species)), fontSize = 16.sp)
+                }
+                OutlinedButton({
+                    val text = S.challengeShareText[lang].format(
+                        Challenge.number(day), species.name[lang], weight, Challenge.bar(Challenge.boxes(log, species)), p.inviteCode, ShareCard.link(p.inviteCode),
+                    )
+                    runCatching { ShareCard.sendText(context, text, S.challengeShare[lang]) }
+                }) {
+                    Icon(Icons.Rounded.Share, null, tint = K.Text, modifier = Modifier.size(16.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(t(S.challengeShare), color = K.Text)
                 }
             }
         }

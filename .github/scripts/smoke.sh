@@ -53,6 +53,12 @@ demo -e cast 0.5; shot 06f_ekete 9
 demo -e fight perch; shot 06g_ledo_kova 3
 demo -e screen lake -e ice 5 -e scene day; shot 06h_ledas_formuojasi 5
 demo -e ice 0; sleep 2
+# The other places to stand: the reed bank and, with the boat (test money buys it), out on the water.
+demo -e stand bank -e scene day; shot 06i_nendrynas 5
+demo -e cast 0.6; shot 06j_nendrynas_plude 9
+demo -e stand boat; shot 06k_valtis 5
+demo -e cast 0.6; shot 06l_valtis_plude 9
+demo -e screen lake -e stand pier; sleep 2
 
 demo --ei coins 25000 --ei xp 11000 -e scene storm; shot 07_perkunija 4
 demo -e scene dawnfog; shot 08_rukas_ausra 4
@@ -87,6 +93,15 @@ tap $((W/2)) $((H/2)); sleep 1
 demo -e screen quests; shot 30_uzduotys 3
 adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/8)) 400; shot 30b_trofejai 2
 adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/8)) 400; shot 30c_pasiekimai 2
+demo -e screen camp; shot 30d_stovykla_tuscia 3
+demo --ez camp true -e screen camp; shot 30e_stovykla 4
+demo -e screen book; sleep 3
+adb shell input swipe $((W/2)) $((H*7/8)) $((W/2)) $((H/10)) 150; sleep 1
+adb shell input swipe $((W/2)) $((H*7/8)) $((W/2)) $((H/10)) 150; sleep 1
+adb shell input swipe $((W/2)) $((H*7/8)) $((W/2)) $((H/10)) 150; sleep 1
+adb shell input swipe $((W/2)) $((H*7/8)) $((W/2)) $((H/10)) 150; sleep 1
+adb shell input swipe $((W/2)) $((H*7/8)) $((W/2)) $((H/10)) 150; sleep 1
+adb shell input swipe $((W/2)) $((H*7/8)) $((W/2)) $((H/10)) 150; shot 30f_legendos 2
 demo -e screen forecast; shot 31_prognoze 6
 demo -e screen settings; shot 32_nustatymai 3
 adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/5)) 400; shot 33_nustatymai_toliau 2

@@ -37,6 +37,13 @@ Koordinatės žemiau pateiktos ekrano dalimis: `w` – ekrano plotis, `h` – au
 | `bite_alarm` | Elektroninis signalizatorius | Santykis 1:1 | Meškerė guli viršuje. Raudona lemputė mirksi kodu, kairėje apačioje. |
 | `reel` | Ritė po meškere | Santykis 1:1, šonu | Kojelė viršuje per vidurį, špūlė į dešinę. Žaidimas pasuka ją pagal meškerę. |
 | `reeds` | Nendrių kuokštas apatiniame dešiniajame kampe | x nuo 0,62w iki 1,04w, y nuo 0,66h iki h (apie 1:1,85) | Pakeičia abi kodu pieštas nendrių eiles, siūbuoja pagal vėją. |
+| `ice` | Užšalęs ežeras: ledas su sniegu | Visas plotis, nuo horizonto `hy` (0,44h) iki apačios (1080×1210 px, nepermatomas) | Rodomas, kai ledas ≥ 10 cm. Viršutinis kraštas = tolimasis krantas. Senas eketes, plyšius ir taką gali įpiešti pats. |
+| `ice_hole` | Žvejo eketė su išgręžto ledo trupiniais | Santykis apie 3:1,3, centras ties (0,5w; 0,667h) | Žiūrint įstrižai iš viršaus. Vidurys tamsus vanduo; plūdė ir ratilai piešiami kodu ant viršaus. |
+| `ice_angler` | Tolimas žvejys ant dėžės (iš nugaros) | Stačias, apatinis kraštas ant ledo | Piešiami 3 skirtingais atstumais. |
+| `bank` | Nendrių krantas: žolėtas šlaitas su akmenimis | Visas plotis, apačioje (apie 1080×560 px), viršus permatomas | Vieta „Nendrynas“. Vanduo matosi pro permatomą viršų. |
+| `boat` | Medinės valties priekis (žiūrint nuo galinio suolo) | Plotis 1,1w, apačioje (apie 1190×700 px), aplink permatoma | Vieta „Valtis“. Laivagalis į viršų ties 0,42w, 0,72h; irklai šonuose. |
+| `camp_bg` | Tuščia stovyklos laukymė prie ežero | Platus 16:10 (1600×1000 px) | Fonas stovyklos ekrane. |
+| `camp_fire`, `camp_chair`, `camp_tent`, `camp_lantern`, `camp_dog`, `camp_smoker`, `camp_flag`, `camp_cabin` | Stovyklos daiktai | Kiekvienas atskirai, permatomas fonas, apačia = žemė | Laužavietė, žvejo kėdė, palapinė, žibintas ant stulpelio, šuo, rūkykla, vėliava, žvejo namelis. |
 | `item_<rūšis>_<vardas>` | Parduotuvės ikonos | Kvadratas | Pvz. `item_lure_worm`, `item_rod_carbon`, `item_float_glow`, `item_up_boat`. Vardai yra `core/.../Gear.kt` (`Lure`, `Rod`, `Reel`, `Line`, `FloatStyle`, `Upgrade`). |
 
 Žuvų nuotraukos dedamos atskirai: `app/src/main/assets/fish/<rūšies id>.webp`, galva į kairę,

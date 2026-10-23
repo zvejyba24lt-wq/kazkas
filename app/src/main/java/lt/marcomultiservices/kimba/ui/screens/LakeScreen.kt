@@ -203,6 +203,7 @@ fun LakeScreen(
         conditions?.let { LakeScene(
                 it, lakeState, Modifier.fillMaxSize(), progress.spot.water, progress.float, progress.gearHere.tackle, progress.owns(lt.marcomultiservices.kimba.core.Upgrade.ALARM),
                 iceCm = if (progress.trip == null) lt.marcomultiservices.kimba.core.Ice.on(progress.water, progress.ice) else 0.0,
+                stand = progress.standHere,
             ) }
 
         // Taps on the lake strike; holding during the fight reels in.
@@ -717,18 +718,20 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?
     Glass(Modifier.padding(20.dp).fillMaxWidth(), radius = 26.dp, padding = 20.dp) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
             val header = when {
+                golden?.legend == true -> t(S.legendCaught)
                 golden != null -> t(S.goldenCaught)
                 isNew -> t(S.newSpecies)
                 record -> t(S.newRecord)
                 else -> t(S.caught)
             }
-            Text(header, color = if (golden != null) K.Gold else K.Amber, fontSize = 13.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
+            Text(header, color = if (golden?.legend == true) Color(0xFFC79BFF) else if (golden != null) K.Gold else K.Amber, fontSize = 13.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp)
             Spacer(Modifier.height(6.dp))
             Text(golden?.name?.let { t(it) } ?: t(species.name), style = MaterialTheme.typography.displaySmall, color = K.Text, textAlign = TextAlign.Center)
             Spacer(Modifier.height(8.dp))
             // How rare the kind is, and a trophy mark for a fish near the top of its size range.
             Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
                 val (rarity, rc) = when {
+                    golden?.legend == true -> t(S.legend) to Color(0xFFC79BFF)
                     golden != null -> t(S.rarityVeryRare) to K.Gold
                     species.abundance >= 0.8 -> t(S.rarityCommon) to Color(0xFF9FB3C2)
                     species.abundance >= 0.5 -> t(S.rarityUncommon) to Color(0xFF8DC26F)
@@ -738,6 +741,7 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?
                 Tag(rarity, rc)
                 val frac = (c.cm - species.minCm) / (species.maxCm - species.minCm).toDouble()
                 if (frac >= 0.75) Tag(t(S.trophy), K.Gold)
+                if (reward?.challenge == true) Tag(t(S.challengeTag), K.Amber)
             }
             Spacer(Modifier.height(10.dp))
             // The fish swings up into view, dripping, and the numbers count up.
@@ -750,7 +754,7 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?
             LaunchedEffect(c) { shine.animateTo(1f, tween(900, delayMillis = 650)) }
             Box(Modifier.fillMaxWidth().height(170.dp).clip(RoundedCornerShape(18.dp)).background(Brush.radialGradient(listOf(if (golden != null) Color(0x55FFD27A) else Color(0x335B8BD0), Color.Transparent)))) {
                 FishPicture(
-                    c.species, c.golden != null, time,
+                    c.species, Fish.gold(c.golden), time,
                     Modifier.fillMaxSize().graphicsLayer {
                         val p = enter.value
                         translationY = (1f - p) * 140f
@@ -838,11 +842,12 @@ private fun EventDialog(event: GameEvent, onClose: () -> Unit) {
         is GameEvent.Achieved -> t(S.achieved) to event.list.joinToString("\n\n") { "🏆 " + it.title[lang] + "\n" + it.text[lang] + "  +" + it.coins }
         is GameEvent.Frozen -> t(S.frozenTitle) to t(S.frozenBody, event.cm)
         is GameEvent.Gift -> {
-            val gifts = listOfNotNull(if (event.coins > 0) S.plusCoins(event.coins)[lang] else null, S.plusCasts(event.casts)[lang]).joinToString("   ")
+            val gifts = listOfNotNull(if (event.coins > 0) S.plusCoins(event.coins)[lang] else null, if (event.casts > 0) S.plusCasts(event.casts)[lang] else null).joinToString("   ")
             when (event.kind) {
                 GiftKind.FRIEND -> t(S.giftFriendTitle) to gifts + "\n\n" + t(S.giftFriendNote)
                 GiftKind.THANKS -> t(S.giftThanksTitle) to gifts
                 GiftKind.SHARE -> t(S.giftShareTitle) to gifts
+                GiftKind.CAMP -> t(S.giftCampTitle) to gifts
             }
         }
     }

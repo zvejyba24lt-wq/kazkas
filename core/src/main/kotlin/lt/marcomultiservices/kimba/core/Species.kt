@@ -35,14 +35,22 @@ class Species(
     fun livesAt(spot: Spot): Boolean = spot.water in waters && (onlyAt == null || spot.trip in onlyAt)
 }
 
-/** A rare golden form of a species that only bites under one real-world condition. */
+/**
+ * A rare golden form of a species that only bites under one real-world condition. A legend
+ * (see [Fish.legends]) is one named giant of a home water instead: caught once, never golden.
+ */
 class Golden(
     val id: String,
     val base: Species,
     val name: L,
     val condition: L,
+    /** The legend's home water and the three clues that reveal its [condition] over three days. */
+    val legendOf: Water? = null,
+    val clues: List<L> = emptyList(),
     val active: (Conditions) -> Boolean,
-)
+) {
+    val legend: Boolean get() = legendOf != null
+}
 
 object Fish {
     private val LAKE = setOf(Water.LAKE)
@@ -287,7 +295,59 @@ object Fish {
     fun plural(id: String): L? = plurals[id]
 
     fun byId(id: String): Species? = all.firstOrNull { it.id == id }
-    fun goldenById(id: String): Golden? = goldens.firstOrNull { it.id == id }
+    fun goldenById(id: String): Golden? = goldens.firstOrNull { it.id == id } ?: legends.firstOrNull { it.id == id }
+
+    /** True for a golden fish shown in gold (legends keep their own colours). */
+    fun gold(id: String?): Boolean = id != null && goldenById(id)?.legend == false
+
+    /**
+     * One legendary giant for each home water. It bites only when three real conditions meet,
+     * one clue a day tells the player which, and it can be caught once.
+     */
+    val legends: List<Golden> by lazy {
+        listOf(
+            Golden(
+                "legend_pike", pike, L("Žalioji Ragana", "Grüne Hexe", "The Green Witch"),
+                L("Sutemose, kai krenta slėgis ir dangus apsiniaukęs", "In der Dämmerung, bei fallendem Luftdruck und bedecktem Himmel", "At dusk, with falling pressure and an overcast sky"),
+                Water.LAKE,
+                listOf(
+                    L("Ji medžioja sutemose.", "Sie jagt in der Dämmerung.", "She hunts at dusk."),
+                    L("Ji jaučia, kai slėgis krenta prieš orų permainą.", "Sie spürt, wenn der Luftdruck vor einem Wetterwechsel fällt.", "She feels the pressure falling before the weather turns."),
+                    L("Saulės ji nemėgsta: tik po debesimis.", "Sonne mag sie nicht: nur unter Wolken.", "She shuns the sun: only under clouds."),
+                ),
+            ) { c -> c.phase == DayPhase.DUSK && c.falling > 0.15 && c.weather.cloud >= 0.6 },
+            Golden(
+                "legend_carp", carp, L("Senis Karpis", "Der alte Karpfen", "Old Mossback"),
+                L("Šiltą naktį (20 °C ir daugiau), kai nėra vėjo", "In einer warmen Nacht (20 °C und mehr) ohne Wind", "On a warm night (20 °C or more) with no wind"),
+                Water.POND,
+                listOf(
+                    L("Jis išplaukia tik naktį.", "Er kommt nur nachts heraus.", "He only comes out at night."),
+                    L("Šaltas vanduo jam netinka: reikia bent 20 °C.", "Kaltes Wasser mag er nicht: mindestens 20 °C.", "Cold water won't do: it takes 20 °C or more."),
+                    L("Mažiausias vėjelis jį išgąsdina.", "Schon ein Lüftchen verscheucht ihn.", "The slightest breeze scares him off."),
+                ),
+            ) { c -> c.phase == DayPhase.NIGHT && c.weather.tempC >= 20 && c.weather.windMs < 2.5 },
+            Golden(
+                "legend_catfish", catfish, L("Ūsuotasis Senis", "Der alte Bartwels", "Old Whiskers"),
+                L("Naktį per lietų, kai šilta (14 °C ir daugiau)", "Nachts bei Regen, wenn es warm ist (14 °C und mehr)", "At night in the rain, when it is warm (14 °C or more)"),
+                Water.RIVER,
+                listOf(
+                    L("Jis kyla iš duobės tik naktį.", "Er steigt nur nachts aus seiner Grube.", "He rises from his hole only at night."),
+                    L("Lietus jam drumsčia vandenį – tada jis drąsus.", "Regen trübt ihm das Wasser – dann wird er mutig.", "Rain muddies the water – then he grows bold."),
+                    L("Šaltyje jis miega: reikia bent 14 °C.", "In der Kälte schläft er: mindestens 14 °C.", "He sleeps in the cold: it takes 14 °C or more."),
+                ),
+            ) { c -> c.phase == DayPhase.NIGHT && c.rain >= 0.3 && c.weather.tempC >= 14 },
+            Golden(
+                "legend_cod", cod, L("Baltijos Karalius", "König der Ostsee", "King of the Baltic"),
+                L("Dieną, kai pučia vėjas (8 m/s ir daugiau) ir šalta (8 °C ir mažiau)", "Am Tag bei Wind (8 m/s und mehr) und Kälte (8 °C und weniger)", "By day, in wind (8 m/s or more) and cold (8 °C or less)"),
+                Water.SEA,
+                listOf(
+                    L("Jis plaukia į krantą dieną.", "Er kommt am Tag zur Küste.", "He comes inshore by day."),
+                    L("Jį atneša vėjas ir bangos.", "Wind und Wellen bringen ihn.", "Wind and waves bring him."),
+                    L("Šiltame vandenyje jo nėra: tik 8 °C ir šalčiau.", "Im warmen Wasser fehlt er: nur bei 8 °C und kälter.", "He shuns warm water: only at 8 °C or colder."),
+                ),
+            ) { c -> c.phase == DayPhase.DAY && c.weather.windMs >= 8 && c.weather.tempC <= 8 },
+        )
+    }
 
     /**
      * How likely each species living at [spot] is to bite right now, weighted by abundance.

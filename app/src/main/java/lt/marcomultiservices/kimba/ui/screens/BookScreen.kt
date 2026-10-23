@@ -5,6 +5,12 @@ import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.horizontalScroll
 import androidx.compose.foundation.Canvas
 import androidx.compose.foundation.background
+import androidx.compose.material.icons.rounded.WbSunny
+import androidx.compose.material.icons.rounded.Umbrella
+import androidx.compose.material.icons.rounded.Dehaze
+import androidx.compose.material.icons.rounded.AcUnit
+import androidx.compose.material.icons.rounded.NightsStay
+import androidx.compose.material.icons.rounded.IceSkating
 import androidx.compose.foundation.border
 import androidx.compose.foundation.clickable
 import androidx.compose.foundation.layout.Box
@@ -136,6 +142,21 @@ fun BookScreen(vm: GameViewModel, onBack: () -> Unit) {
                     FishCard(g.base.id, true, t(g.name), t(g.condition), mine, time)
                 }
             }
+            // The legends: one named giant per home water, its clues coming one a day.
+            if (filter == "all" || filter == "golden") {
+                item {
+                    Spacer(Modifier.height(18.dp))
+                    SectionTitle(t(S.legendsTitle))
+                    Spacer(Modifier.height(4.dp))
+                    Text(t(S.legendsNote), color = K.Muted, fontSize = 12.sp, lineHeight = 17.sp)
+                    Spacer(Modifier.height(8.dp))
+                }
+                items(Fish.legends, key = { it.id }) { g ->
+                    val got = catches.filter { it.golden == g.id }.maxByOrNull { it.grams }
+                    val known = saved?.progress?.clues(java.time.LocalDate.now().toEpochDay()) ?: 1
+                    LegendCard(g, got, known, time)
+                }
+            }
         }
     }
 }
@@ -163,9 +184,69 @@ private fun FishCard(species: String, golden: Boolean, name: String, note: Strin
                 val weight = if (best.grams >= 1000) "%.2f kg".format(best.grams / 1000.0) else "${best.grams} g"
                 Text("${t(S.best)}: %.0f cm · %s".format(best.cm, weight), color = K.Amber, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
                 Text(t(S.count, mine.size), color = K.Muted, fontSize = 11.sp)
+                // Weather stamps: lit for each real weather this kind was caught in.
+                val got = mine.flatMap { lt.marcomultiservices.kimba.core.Stamp.of(it) }.toSet()
+                Spacer(Modifier.height(4.dp))
+                Row(horizontalArrangement = androidx.compose.foundation.layout.Arrangement.spacedBy(5.dp)) {
+                    for (st in lt.marcomultiservices.kimba.core.Stamp.entries) {
+                        val on = st in got
+                        androidx.compose.material3.Icon(
+                            stampIcon(st), t(st.label),
+                            tint = if (on) stampColor(st) else Color(0x33FFFFFF),
+                            modifier = Modifier.size(18.dp).clip(androidx.compose.foundation.shape.CircleShape)
+                                .background(if (on) stampColor(st).copy(alpha = 0.18f) else Color.Transparent).padding(2.dp),
+                        )
+                    }
+                }
             } else {
                 Text(t(S.unknown), color = Color(0x88B4BCC6), fontSize = 11.sp)
             }
+        }
+    }
+}
+
+private fun stampIcon(s: lt.marcomultiservices.kimba.core.Stamp) = when (s) {
+    lt.marcomultiservices.kimba.core.Stamp.SUN -> Icons.Rounded.WbSunny
+    lt.marcomultiservices.kimba.core.Stamp.RAIN -> Icons.Rounded.Umbrella
+    lt.marcomultiservices.kimba.core.Stamp.FOG -> Icons.Rounded.Dehaze
+    lt.marcomultiservices.kimba.core.Stamp.SNOW -> Icons.Rounded.AcUnit
+    lt.marcomultiservices.kimba.core.Stamp.NIGHT -> Icons.Rounded.NightsStay
+    lt.marcomultiservices.kimba.core.Stamp.ICE -> Icons.Rounded.IceSkating
+}
+
+private fun stampColor(s: lt.marcomultiservices.kimba.core.Stamp) = when (s) {
+    lt.marcomultiservices.kimba.core.Stamp.SUN -> Color(0xFFFFC94D)
+    lt.marcomultiservices.kimba.core.Stamp.RAIN -> Color(0xFF6FB6FF)
+    lt.marcomultiservices.kimba.core.Stamp.FOG -> Color(0xFFC8CDD2)
+    lt.marcomultiservices.kimba.core.Stamp.SNOW -> Color(0xFFE6F2FF)
+    lt.marcomultiservices.kimba.core.Stamp.NIGHT -> Color(0xFFB59BFF)
+    lt.marcomultiservices.kimba.core.Stamp.ICE -> Color(0xFF9FE3F0)
+}
+
+@Composable
+private fun LegendCard(g: lt.marcomultiservices.kimba.core.Golden, got: Catch?, known: Int, timeState: androidx.compose.runtime.MutableFloatState) {
+    val lang = LocalLang.current
+    val shape = RoundedCornerShape(18.dp)
+    val violet = Color(0xFFC79BFF)
+    Column(
+        Modifier.fillMaxWidth().padding(vertical = 5.dp).clip(shape)
+            .background(Brush.horizontalGradient(listOf(Color(0x33C79BFF), Color(0x0FC79BFF))))
+            .border(1.dp, Color(0x66C79BFF), shape)
+            .padding(12.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            lt.marcomultiservices.kimba.ui.fish.FishPicture(g.base.id, false, timeState.takeIf { got != null }, Modifier.width(118.dp).height(64.dp), silhouette = got == null)
+            Spacer(Modifier.width(12.dp))
+            Column(Modifier.weight(1f)) {
+                Text(t(g.name), color = violet, fontSize = 16.sp, fontWeight = FontWeight.Bold)
+                Text("${t(g.base.name)} · ${g.legendOf?.label?.get(lang) ?: ""}", color = K.Muted, fontSize = 12.sp)
+                if (got != null) Text(t(S.legendDone, lt.marcomultiservices.kimba.core.Plural.kg(got.grams, lang)), color = K.Amber, fontSize = 12.sp, fontWeight = FontWeight.SemiBold)
+            }
+        }
+        Spacer(Modifier.height(6.dp))
+        for ((i, clue) in g.clues.withIndex()) {
+            val open = got != null || i < known
+            Text((if (open) "✦ " + t(clue) else "✧ " + t(S.clueLocked)), color = if (open) K.Text else Color(0x88B4BCC6), fontSize = 12.sp, lineHeight = 17.sp)
         }
     }
 }

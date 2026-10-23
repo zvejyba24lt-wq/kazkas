@@ -152,11 +152,24 @@ enum class Upgrade(override val label: L, override val price: Int, override val 
     BOX_10(L("Didžiausia masalų dėžė", "Größte Köderdose", "Largest bait box"), 8000, 8,
         L("20 užmetimų", "20 Würfe", "20 casts")),
     BOAT(L("Valtis", "Boot", "Boat"), 10000, 8,
-        L("Pasieki gilumą, kimba greičiau", "Erreicht die Tiefe, Bisse kommen schneller", "Reach deep water, bites come faster")),
+        L("Žvejok iš valties ežero viduryje: gilu, kimba greičiau", "Angle vom Boot mitten im See: tief, Bisse kommen schneller", "Fish from a boat out on the water: deep, bites come faster")),
     ALARM(L("Elektroninis signalizatorius", "Elektronischer Bissanzeiger", "Electronic bite alarm"), 3500, 7,
         L("Ant dugninės meškerės pypsi ir mirksi, kai žuvis liečia masalą", "Piept und blinkt an der Grundrute, wenn ein Fisch den Köder berührt", "Beeps and flashes on the bottom rod when a fish touches the bait"));
 
     override val key: String get() = "up:$name"
+}
+
+/**
+ * Where on the home water the player stands, each seen from its own angle: the jetty, the reed
+ * bank (shallow, reed fish) or out in the boat (deep water, quicker bites; needs the boat).
+ */
+enum class Stand(val label: L, val reach: Double) {
+    PIER(L("Lieptas", "Steg", "Jetty"), 0.0),
+    BANK(L("Nendrynas", "Schilfufer", "Reed bank"), -0.12),
+    BOAT(L("Valtis", "Boot", "Boat"), 0.2);
+
+    /** The sea has its long pier and the boat, no reed bank. */
+    fun at(water: Water): Boolean = !(this == BANK && water == Water.SEA)
 }
 
 /** Everything the player fishes with right now. */
@@ -169,6 +182,7 @@ data class Gear(
     val boat: Boolean = false,
     /** Fishing through a hole in the ice. */
     val ice: Boolean = false,
+    val stand: Stand = Stand.PIER,
 ) {
     val strength: Double get() = rod.strength + line.strength
 }

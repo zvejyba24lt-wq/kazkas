@@ -37,6 +37,8 @@ import lt.marcomultiservices.kimba.core.Economy
 import lt.marcomultiservices.kimba.core.Invites
 import lt.marcomultiservices.kimba.core.Item
 import lt.marcomultiservices.kimba.core.acceptInvite
+import lt.marcomultiservices.kimba.core.buyCamp
+import lt.marcomultiservices.kimba.core.campCount
 import lt.marcomultiservices.kimba.core.shared
 import lt.marcomultiservices.kimba.core.thank
 import lt.marcomultiservices.kimba.core.Progress
@@ -133,7 +135,7 @@ sealed class GameEvent {
 }
 
 /** Why a [GameEvent.Gift] came: a friend's code, a friend's thank-you code, a shared catch. */
-enum class GiftKind { FRIEND, THANKS, SHARE }
+enum class GiftKind { FRIEND, THANKS, SHARE, CAMP }
 
 class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val store = application.app.store
@@ -220,9 +222,18 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             store.update { s ->
                 val (p, b) = Streak.visit(s.progress, day)
                 bonus = b
-                if (b == null) s else s.copy(progress = p.copy(quests = Quests.today(p.quests, day, p.level)), baits = s.baits.add(b.casts, System.currentTimeMillis(), p.boxSize))
+                val clued = if (p.cluesFrom == 0L) p.copy(cluesFrom = day) else p
+                if (b == null) s.copy(progress = clued) else s.copy(progress = clued.copy(quests = Quests.today(p.quests, day, p.level)), baits = s.baits.add(b.casts, System.currentTimeMillis(), p.boxSize))
             }
             bonus?.let { b -> _events.update { it + GameEvent.StreakBonus(b.day, b.coins, b.casts) } }
+            // The camp pays each morning for every piece built.
+            if (bonus != null) {
+                val camp = lt.marcomultiservices.kimba.core.CampItem.DAILY_PER_ITEM * store.current().progress.campCount()
+                if (camp > 0) {
+                    store.update { s -> s.copy(progress = s.progress.copy(coins = s.progress.coins + camp)) }
+                    _events.update { it + GameEvent.Gift(GiftKind.CAMP, camp, 0) }
+                }
+            }
             checkAchievements()
         }
     }
@@ -393,6 +404,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         store.update { s -> f(s.progress)?.let { s.copy(progress = it) } ?: s }
     }
 
+    fun buyCamp(item: lt.marcomultiservices.kimba.core.CampItem) = updateProgress { p -> p.buyCamp(item)?.also { sfx.play(Sfx.Fx.COIN) } }
+
     fun buy(item: Item) = updateProgress { p -> p.buy(item)?.also { sfx.play(Sfx.Fx.COIN) } }
     fun equip(item: Item) = updateProgress { it.equip(item) }
     fun setNoAds(on: Boolean) = updateProgress { if (it.noAds == on) null else it.copy(noAds = on) }
@@ -400,6 +413,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun travel(d: Destination) {
         if (_lake.value.stage == Stage.FIGHT) return
         updateProgress { it.travel(d) }.invokeOnCompletion { afterMove() }
+    }
+
+    fun setStand(stand: lt.marcomultiservices.kimba.core.Stand) {
+        if (_lake.value.stage == Stage.FIGHT) return
+        updateProgress { it.copy(stand = stand, trip = null) }.invokeOnCompletion { afterMove() }
     }
 
     fun goHome(water: Water) {
@@ -458,7 +476,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             store.update { saved -> saved.baits.use(System.currentTimeMillis(), saved.progress.boxSize)?.let { saved.copy(baits = it) } ?: saved }
         }
         job = viewModelScope.launch {
-            val rolled = BiteEngine.roll(c, power, rng, p.spot, p.gearHere)
+            val legends = _saved.value?.catches?.mapNotNull { it.golden }?.filter { it.startsWith("legend_") }?.toSet() ?: emptySet()
+            val rolled = BiteEngine.roll(c, power, rng, p.spot, p.gearHere, legends)
             // The very first fish comes soon, after two clear nibbles, so the tips can teach it.
             val bite = if (knows(Tip.STRIKE)) rolled else
                 Bite(rolled.species, rolled.golden, rolled.cm, rolled.waitSeconds.coerceIn(8.0, 11.0), listOf(3.0, 5.5), rolled.condition)
@@ -699,6 +718,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             tempC = c.weather.tempC,
             place = spot.trip ?: saved.place?.name ?: "",
             water = spot.water,
+            ice = saved.progress.onIce,
         )
         val key = base.golden ?: base.species
         val previous = saved.catches.filter { (it.golden ?: it.species) == key }
@@ -737,6 +757,15 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /** Test money and experience for screenshots. */
+    /** Builds the whole camp for free (for screenshots). */
+    fun demoCamp() = updateProgress { p -> p.copy(owned = p.owned + lt.marcomultiservices.kimba.core.CampItem.entries.map { it.key }) }
+
+    /** Stands at [stand], with the boat given for free (for screenshots). */
+    fun demoStand(stand: lt.marcomultiservices.kimba.core.Stand) {
+        if (_lake.value.stage == Stage.FIGHT) resetLake()
+        updateProgress { it.copy(stand = stand, trip = null, owned = it.owned + Upgrade.BOAT.key) }.invokeOnCompletion { afterMove() }
+    }
+
     fun demoProgress(coins: Int, xp: Int) = updateProgress { p ->
         p.copy(coins = if (coins >= 0) coins else p.coins, xp = if (xp >= 0) xp else p.xp)
     }

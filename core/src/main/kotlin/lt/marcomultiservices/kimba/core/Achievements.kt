@@ -13,11 +13,15 @@ enum class Achievement(val title: L, val text: L, val target: Int, val coins: In
     FIVE_KILO(L("Stambi žuvis", "Großfisch", "Big one"), L("Sugauk žuvį, sveriančią bent 5 kg", "Fange einen Fisch ab 5 kg", "Catch a fish of 5 kg or more"), 5000, 700),
     TEN_KILO(L("Pabaisa", "Monster", "Monster"), L("Sugauk žuvį, sveriančią bent 10 kg", "Fange einen Fisch ab 10 kg", "Catch a fish of 10 kg or more"), 10000, 2000),
     GOLDEN(L("Aukso blizgesys", "Goldglanz", "Golden glint"), L("Sugauk auksinę žuvį", "Fange einen goldenen Fisch", "Catch a golden fish"), 1, 1000),
+    LEGEND(L("Legendų medžiotojas", "Legendenjäger", "Legend hunter"), L("Sugauk legendinę žuvį", "Fange einen legendären Fisch", "Catch a legendary fish"), 1, 2000),
     ALL_WATERS(L("Visi vandenys", "Alle Gewässer", "Every water"), L("Pažvejok ežere, tvenkinyje, upėje ir jūroje", "Fange im See, Teich, Fluss und Meer", "Catch fish in a lake, pond, river and the sea"), Water.entries.size, 800),
     RAIN(L("Lietaus žvejys", "Regenangler", "Rain angler"), L("Sugauk žuvį, kai pas tave tikrai lyja", "Fange einen Fisch, während es bei dir wirklich regnet", "Catch a fish while it really rains where you are"), 1, 200),
     STORM(L("Perkūno draugas", "Gewitterfreund", "Storm friend"), L("Sugauk žuvį per tikrą perkūniją", "Fange einen Fisch bei echtem Gewitter", "Catch a fish during a real thunderstorm"), 1, 600),
     FOG(L("Rūko žvejys", "Nebelangler", "Fog angler"), L("Sugauk žuvį per tikrą rūką", "Fange einen Fisch bei echtem Nebel", "Catch a fish in real fog"), 1, 400),
     SNOW(L("Žiemos žvejys", "Winterangler", "Winter angler"), L("Sugauk žuvį, kai tikrai sninga", "Fange einen Fisch, während es wirklich schneit", "Catch a fish while it really snows"), 1, 400),
+    ICE_FISH(L("Ledo žvejys", "Eisangler", "Ice angler"), L("Sugauk žuvį iš eketės", "Fange einen Fisch durchs Eisloch", "Catch a fish through the ice"), 1, 500),
+    STAMPS_10(L("Visų orų žvejys", "Allwetter-Angler", "All-weather angler"), L("Surink 10 oro antspaudų žuvų knygoje", "Sammle 10 Wetterstempel im Fischbuch", "Collect 10 weather stamps in the fish book"), 10, 700),
+    STAMPS_40(L("Orų metraštininkas", "Wetterchronist", "Weather chronicler"), L("Surink 40 oro antspaudų", "Sammle 40 Wetterstempel", "Collect 40 weather stamps"), 40, 3000),
     TRAVELER(L("Keliautojas", "Reisender", "Traveller"), L("Aplankyk 3 žvejybos vietas žemėlapyje", "Besuche 3 Angelorte auf der Karte", "Visit 3 places on the map"), 3, 500),
     STREAK_7(L("Ištikimas", "Treu", "Faithful"), L("Žvejok 7 dienas iš eilės", "Angle 7 Tage am Stück", "Fish 7 days in a row"), 7, 500),
     LEVEL_10(L("Meistras", "Meister", "Master"), L("Pasiek 10 lygį", "Erreiche Level 10", "Reach level 10"), 10, 1500);
@@ -30,12 +34,15 @@ enum class Achievement(val title: L, val text: L, val target: Int, val coins: In
             FIRST_FISH, FISH_25, FISH_100, FISH_500 -> maxOf(p.caught, catches.size)
             SPECIES_5, SPECIES_12, SPECIES_ALL -> catches.map { it.species }.distinct().size
             KILO, FIVE_KILO, TEN_KILO -> if ((catches.maxOfOrNull { it.grams } ?: 0) >= target) target else 0
-            GOLDEN -> if (catches.any { it.golden != null }) 1 else 0
+            GOLDEN -> if (catches.any { Fish.gold(it.golden) }) 1 else 0
+            LEGEND -> catches.count { it.golden != null && Fish.goldenById(it.golden)?.legend == true }
             ALL_WATERS -> catches.map { it.water }.distinct().size
             RAIN -> catches.count { it.sky in Achievements.rainy }
             STORM -> catches.count { it.sky == Sky.THUNDER }
             FOG -> catches.count { it.sky == Sky.FOG }
             SNOW -> catches.count { it.sky == Sky.SNOW || it.sky == Sky.SLEET }
+            ICE_FISH -> catches.count { it.ice }
+            STAMPS_10, STAMPS_40 -> Stamp.collected(catches).size
             TRAVELER -> p.trips.size
             STREAK_7 -> p.streak
             LEVEL_10 -> p.level

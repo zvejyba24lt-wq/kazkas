@@ -240,8 +240,51 @@ object S {
     val notifyTitle = L("%s kimba dabar!", "%s beißt jetzt!", "%s is biting now!")
     val notifyBody = L("%s. Langas baigsis apie %s.", "%s. Das Zeitfenster endet gegen %s.", "%s. The window closes around %s.")
 
+    // Camp
+    val campTitle = L("Tavo stovykla", "Dein Camp", "Your camp")
+    val campOpen = L("Tavo stovykla prie vandens", "Dein Camp am Wasser", "Your camp by the water")
+    val campNote = L(
+        "Įsirenk savo kampelį prie ežero. Kiekvienas daiktas kas rytą atneša po 20 monetų.",
+        "Richte dir dein Plätzchen am See ein. Jedes Stück bringt jeden Morgen 20 Münzen.",
+        "Set up your own spot by the lake. Every piece brings 20 coins each morning.",
+    )
+    val campIncome = L("+%d per dieną", "+%d pro Tag", "+%d a day")
+    val pondTitle = L("Tavo tvenkinys", "Dein Teich", "Your pond")
+    val pondNote = L("Čia plaukioja didžiausia kiekvienos rūšies tavo pagauta žuvis.", "Hier schwimmt der größte Fisch jeder Art, den du gefangen hast.", "The biggest fish of each kind you have caught swims here.")
+    val pondEmpty = L("Kol kas tuščia. Pagauk žuvį, ir ji atsiras čia.", "Noch leer. Fang einen Fisch, und er schwimmt hier.", "Empty so far. Catch a fish and it will swim here.")
+    val giftCampTitle = L("Stovyklos rytas", "Morgen im Camp", "Morning at camp")
+    // Legends
+    val legend = L("Legenda", "Legende", "Legend")
+    val legendCaught = L("LEGENDA!", "LEGENDE!", "LEGEND!")
+    val legendsTitle = L("Ežerų legendos", "Legenden der Gewässer", "Legends of the waters")
+    val legendsNote = L(
+        "Kiekviename namų vandenyje gyvena viena legendinė žuvis. Ji kimba tik tada, kai susidaro trys tikros sąlygos. Kasdien sužinosi po vieną užuominą.",
+        "In jedem Heimgewässer lebt ein legendärer Fisch. Er beißt nur, wenn drei echte Bedingungen zusammenkommen. Jeden Tag erfährst du einen Hinweis.",
+        "Each home water has one legendary fish. It bites only when three real conditions meet. You learn one clue a day.",
+    )
+    val clueLocked = L("Užuomina rytoj…", "Hinweis morgen…", "Clue tomorrow…")
+    val legendDone = L("Pagauta! %s", "Gefangen! %s", "Caught! %s")
+    // Daily challenge
+    val challengeTitle = L("Dienos iššūkis #%d", "Tageschallenge #%d", "Daily challenge #%d")
+    val challengeGoal = L(
+        "Pagauk kuo sunkesnę žuvį – šiandien tai %s. Visi žaidėjai turi tą patį iššūkį. Pirmoji žuvis duoda +150 monetų.",
+        "Fang einen möglichst schweren Fisch – heute: %s. Alle Spieler haben dieselbe Challenge. Der erste bringt +150 Münzen.",
+        "Catch the heaviest fish you can – today: %s. Every player has the same challenge. The first one pays +150 coins.",
+    )
+    val challengeNone = L("Šiandien dar nepagavai.", "Heute noch keiner gefangen.", "None caught yet today.")
+    val challengeBest = L("Tavo geriausia: %s", "Dein bester: %s", "Your best: %s")
+    val challengeShare = L("Dalintis", "Teilen", "Share")
+    val challengeTag = L("Iššūkio rekordas!", "Challenge-Rekord!", "Challenge best!")
+    /** Number, kind, weight, bar, code, link. */
+    val challengeShareText = L(
+        "🎣 Kimba! iššūkis #%d\n%s %s\n%s\nPabandyk pranokti! Mano kodas: %s\n%s",
+        "🎣 Wetterbiss Challenge #%d\n%s %s\n%s\nSchaffst du mehr? Mein Code: %s\n%s",
+        "🎣 Kimba! challenge #%d\n%s %s\n%s\nCan you beat it? My code: %s\n%s",
+    )
+    val standTitle = L("Kur žvejosi namuose?", "Wo angelst du zu Hause?", "Where do you fish at home?")
+    val needBoat = L("Reikia valties", "Boot nötig", "Needs the boat")
     // Ice
-    val iceOn = L("❄ Ledas %d cm · žvejyba iš eketės", "❄ Eis %d cm · Eisangeln", "❄ Ice %d cm · ice fishing")
+    val iceOn = L("❄ Ledas %d cm · eketė", "❄ Eis %d cm · Eisloch", "❄ Ice %d cm · ice hole")
     val iceForming = L("❄ Ežeras stingsta: ledas %d cm", "❄ Der See friert zu: Eis %d cm", "❄ The lake is freezing: ice %d cm")
     val holeLead = L("Eketė! Įvesk galvą į eketę", "Eisloch! Kopf ins Loch führen", "The hole! Lead its head into the hole")
     val lower = L("Nuleisti", "Ablassen", "Lower")

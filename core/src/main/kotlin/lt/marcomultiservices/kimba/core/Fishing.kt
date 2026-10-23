@@ -33,12 +33,23 @@ object BiteEngine {
     const val GOLDEN_CHANCE = 0.3
 
     /** [cast] is the cast distance 0..1: near casts reach reed fish, far casts the deep-water predators. */
-    fun roll(c: Conditions, cast: Double, rng: Random, spot: Spot = Spot.HOME_LAKE, gear: Gear = Gear()): Bite {
+    /** Chance that a bite at a legend's water, while its conditions hold, is the legend. */
+    const val LEGEND_CHANCE = 0.06
+
+    fun roll(c: Conditions, cast: Double, rng: Random, spot: Spot = Spot.HOME_LAKE, gear: Gear = Gear(), legendsCaught: Set<String> = emptySet()): Bite {
+        // A legend of this home water, if its three conditions meet right now.
+        val legend = Fish.legends.firstOrNull { it.legendOf == spot.water && spot.trip == null && it.id !in legendsCaught && it.active(c) }
+        if (legend != null && rng.nextDouble() < LEGEND_CHANCE) {
+            val wait = 6.0 + rng.nextDouble() * 8.0
+            return Bite(legend.base, legend, kotlin.math.round(legend.base.maxCm * 1.15), wait, listOf(wait * 0.4, wait * 0.7), 1.1)
+        }
         val act = Fish.activities(c, spot)
         // A boat takes the bait further out, where the deep-water fish are.
         // A feeder is thrown further, to the deeper bottom.
         // A hole in the ice is drilled over middling depth.
-        val reach = if (gear.ice) 0.55 else (cast + (if (gear.boat) 0.2 else 0.0) + (if (gear.tackle == Tackle.FEEDER) 0.12 else 0.0)).coerceAtMost(1.2)
+        // The reed bank reaches only the shallows.
+        val reach = if (gear.ice) 0.55 else (cast + (if (gear.boat) 0.2 else 0.0) + (if (gear.stand == Stand.BANK) Stand.BANK.reach else 0.0) +
+            (if (gear.tackle == Tackle.FEEDER) 0.12 else 0.0)).coerceIn(0.0, 1.2)
         val weights = act.mapValues { (s, a) ->
             val d = (s.depth - reach) / 0.35
             a * gear.lure.affinity(s) * gear.tackle.affinity(s) * (exp(-d * d) + 0.04) * (if (s.shy) gear.line.shyFactor else 1.0) *
@@ -218,4 +229,36 @@ data class Catch(
     val place: String,
     val water: Water = Water.LAKE,
     val coins: Int = 0,
+    /** Caught through the ice. */
+    val ice: Boolean = false,
 )
+
+/**
+ * Weather stamps in the fish book: each kind caught in sunshine, rain, fog, snow, at night and
+ * through the ice. They can only be collected in the real weather.
+ */
+enum class Stamp(val label: L) {
+    SUN(L("Saulė", "Sonne", "Sun")),
+    RAIN(L("Lietus", "Regen", "Rain")),
+    FOG(L("Rūkas", "Nebel", "Fog")),
+    SNOW(L("Sniegas", "Schnee", "Snow")),
+    NIGHT(L("Naktis", "Nacht", "Night")),
+    ICE(L("Ledas", "Eis", "Ice"));
+
+    companion object {
+        fun of(c: Catch, zone: java.time.ZoneId = java.time.ZoneId.systemDefault()): Set<Stamp> = buildSet {
+            val hour = java.time.Instant.ofEpochMilli(c.epochMillis).atZone(zone).hour
+            val night = hour >= 22 || hour < 5
+            if (night) add(NIGHT)
+            if (c.sky == Sky.CLEAR && !night) add(SUN)
+            if (c.sky in Achievements.rainy) add(RAIN)
+            if (c.sky == Sky.FOG) add(FOG)
+            if (c.sky == Sky.SNOW || c.sky == Sky.SLEET) add(SNOW)
+            if (c.ice) add(ICE)
+        }
+
+        /** Every (kind, stamp) pair collected, golden fish counted under their own name. */
+        fun collected(catches: List<Catch>): Set<Pair<String, Stamp>> =
+            catches.flatMap { c -> of(c).map { (c.golden ?: c.species) to it } }.toSet()
+    }
+}

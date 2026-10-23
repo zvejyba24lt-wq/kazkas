@@ -77,7 +77,8 @@ object ShareCard {
 
         val serif = Typeface.create(Typeface.SERIF, Typeface.BOLD)
         val sans = Typeface.create(Typeface.SANS_SERIF, Typeface.BOLD)
-        val golden = c.golden != null
+        val golden = Fish.gold(c.golden)
+        val legend = c.golden != null && !golden
         val amber = if (golden) 0xFFFFD27A.toInt() else 0xFFF2B25C.toInt()
 
         text(cv, S.shareHeader[lang], W / 2f, 108f, 40f, amber, sans, Paint.Align.CENTER, spacing = 0.28f)
@@ -85,6 +86,7 @@ object ShareCard {
         val species = Fish.byId(c.species)
         val trophy = species != null && (c.cm - species.minCm) / (species.maxCm - species.minCm).toDouble() >= 0.75
         val tag = when {
+            legend -> S.legend[lang]
             golden -> S.rarityVeryRare[lang]
             trophy -> S.trophy[lang]
             else -> null

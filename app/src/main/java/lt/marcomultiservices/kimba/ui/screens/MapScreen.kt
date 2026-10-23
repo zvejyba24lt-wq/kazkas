@@ -58,6 +58,8 @@ import lt.marcomultiservices.kimba.core.Destination
 import lt.marcomultiservices.kimba.core.Destinations
 import lt.marcomultiservices.kimba.core.Fish
 import lt.marcomultiservices.kimba.core.Progress
+import lt.marcomultiservices.kimba.core.Stand
+import lt.marcomultiservices.kimba.core.Upgrade
 import lt.marcomultiservices.kimba.core.Water
 import lt.marcomultiservices.kimba.game.GameViewModel
 import lt.marcomultiservices.kimba.ui.K
@@ -93,7 +95,7 @@ private class Projection(bbox: List<Double>, val w: Float, val h: Float) {
 }
 
 @Composable
-fun MapScreen(vm: GameViewModel, onBack: () -> Unit, onFish: () -> Unit) {
+fun MapScreen(vm: GameViewModel, onBack: () -> Unit, onCamp: () -> Unit = {}, onFish: () -> Unit) {
     val saved by vm.saved.collectAsStateWithLifecycle()
     val p = saved?.progress ?: Progress()
     val home = saved?.place
@@ -153,7 +155,19 @@ fun MapScreen(vm: GameViewModel, onBack: () -> Unit, onFish: () -> Unit) {
                 Text("© Natural Earth", color = Color(0x66B4BCC6), fontSize = 9.sp, modifier = Modifier.padding(top = 2.dp))
             }
             Spacer(Modifier.height(12.dp))
-            if (dest != null) DestinationCard(dest, p, onGo = { vm.travel(dest); onFish() }) else HomeCard(p, home?.name ?: "", onGo = { w -> vm.goHome(w); onFish() })
+            if (dest != null) DestinationCard(dest, p, onGo = { vm.travel(dest); onFish() }) else HomeCard(p, home?.name ?: "", onGo = { w -> vm.goHome(w); onFish() }, onStand = { st -> vm.setStand(st); onFish() })
+            Spacer(Modifier.height(10.dp))
+            // The player's own camp by the home water.
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Brush.horizontalGradient(listOf(Color(0x40E0A030), Color(0x14E0A030))))
+                    .border(1.dp, Color(0x88E0A030), RoundedCornerShape(14.dp)).clickable { onCamp() }.padding(14.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("⛺", fontSize = 22.sp)
+                Spacer(Modifier.width(10.dp))
+                Text(t(S.campOpen), color = K.Text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
+                Text("›", color = K.Amber, fontSize = 24.sp)
+            }
             Spacer(Modifier.height(18.dp))
             SectionTitle(t(S.trips))
             Spacer(Modifier.height(4.dp))
@@ -236,7 +250,7 @@ private fun DestinationCard(d: Destination, p: Progress, onGo: () -> Unit) {
 }
 
 @Composable
-private fun HomeCard(p: Progress, homeName: String, onGo: (Water) -> Unit) {
+private fun HomeCard(p: Progress, homeName: String, onGo: (Water) -> Unit, onStand: (Stand) -> Unit) {
     Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(18.dp)).background(Brush.verticalGradient(listOf(Color(0x33FFFFFF), Color(0x14FFFFFF)))).border(1.dp, K.Line, RoundedCornerShape(18.dp)).padding(14.dp)) {
         Row(verticalAlignment = Alignment.CenterVertically) {
             Icon(Icons.Rounded.Home, null, tint = Color(0xFF8FD3FF))
@@ -261,6 +275,26 @@ private fun HomeCard(p: Progress, homeName: String, onGo: (Water) -> Unit) {
                     Spacer(Modifier.height(4.dp))
                     Text(t(w.label), color = if (here) Color(0xFF2A1A06) else if (open) K.Text else K.Muted, fontSize = 11.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
                     if (!open) Text(t(S.needLevel, w.homeLevel), color = K.Muted, fontSize = 9.sp, maxLines = 1)
+                }
+            }
+        }
+        // Where to stand on the home water: each place is seen from its own angle.
+        Spacer(Modifier.height(14.dp))
+        Text(t(S.standTitle), color = K.Muted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(6.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
+            for (st in Stand.entries.filter { it.at(p.water) }) {
+                val open = st != Stand.BOAT || p.owns(Upgrade.BOAT)
+                val here = p.trip == null && p.standHere == st
+                Column(
+                    Modifier.weight(1f).clip(RoundedCornerShape(14.dp))
+                        .background(if (here) K.Amber else Color(0x1FFFFFFF))
+                        .border(1.dp, if (here) K.Amber else K.Line, RoundedCornerShape(14.dp))
+                        .clickable(enabled = open) { onStand(st) }.padding(vertical = 10.dp),
+                    horizontalAlignment = Alignment.CenterHorizontally,
+                ) {
+                    Text(t(st.label), color = if (here) Color(0xFF2A1A06) else if (open) K.Text else K.Muted, fontSize = 12.sp, fontWeight = FontWeight.SemiBold, maxLines = 1)
+                    if (!open) Text(t(S.needBoat), color = K.Muted, fontSize = 9.sp, maxLines = 1)
                 }
             }
         }

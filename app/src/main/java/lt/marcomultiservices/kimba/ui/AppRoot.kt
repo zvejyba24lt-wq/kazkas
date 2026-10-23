@@ -29,7 +29,7 @@ import lt.marcomultiservices.kimba.ui.screens.ShopScreen
 import lt.marcomultiservices.kimba.ui.screens.SettingsScreen
 import lt.marcomultiservices.kimba.ui.screens.WelcomeScreen
 
-enum class Screen { LAKE, BOOK, FORECAST, SETTINGS, SHOP, MAP, QUESTS }
+enum class Screen { LAKE, BOOK, FORECAST, SETTINGS, SHOP, MAP, QUESTS, CAMP }
 
 @Composable
 fun AppRoot(vm: GameViewModel, startScreen: Pair<Screen, Long>?) {
@@ -61,7 +61,8 @@ fun AppRoot(vm: GameViewModel, startScreen: Pair<Screen, Long>?) {
                 { screen = Screen.MAP }, { screen = Screen.SHOP }, { screen = Screen.QUESTS },
             )
             Screen.SHOP -> ShopScreen(vm) { screen = Screen.LAKE }
-            Screen.MAP -> MapScreen(vm, { screen = Screen.LAKE }) { screen = Screen.LAKE }
+            Screen.MAP -> MapScreen(vm, { screen = Screen.LAKE }, onCamp = { screen = Screen.CAMP }) { screen = Screen.LAKE }
+            Screen.CAMP -> lt.marcomultiservices.kimba.ui.screens.CampScreen(vm) { screen = Screen.MAP }
             Screen.QUESTS -> QuestsScreen(vm) { screen = Screen.LAKE }
             Screen.BOOK -> BookScreen(vm) { screen = Screen.LAKE }
             Screen.FORECAST -> ForecastScreen(vm) { screen = Screen.LAKE }

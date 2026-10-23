@@ -118,7 +118,7 @@ fun DrawScope.drawIceAnglers(geo: SceneGeometry, colors: SceneColors, t: Float) 
 /** The player's hole: chipped ice and snow around dark water that trembles with the float. */
 fun DrawScope.drawIceHole(geo: SceneGeometry, colors: SceneColors, at: Offset, t: Float, stir: Float) {
     val s = geo.scaleAt(at.y)
-    val r = geo.w * 0.075f * s
+    val r = geo.w * 0.1f * s
     val art = ArtPack["ice_hole"]
     if (art != null) {
         val w = r * 3.2f
@@ -146,11 +146,11 @@ fun DrawScope.drawIceHole(geo: SceneGeometry, colors: SceneColors, at: Offset, t
 /** Thin ice forming along the shores before the lake freezes over. */
 fun DrawScope.drawIceRim(geo: SceneGeometry, colors: SceneColors, amount: Float) {
     val a = amount.coerceIn(0f, 1f)
-    val col = colors.lit(Color(0xFFDDE8F0)).copy(alpha = 0.75f)
+    val col = colors.lit(Color(0xFFEAF2F8)).copy(alpha = 0.92f)
     // Along the far shore.
     drawRect(Brush.verticalGradient(listOf(col, col.copy(alpha = 0f)), geo.hy, geo.hy + geo.h * 0.03f * (0.4f + a)), Offset(0f, geo.hy), Size(geo.w, geo.h * 0.03f * (0.4f + a)))
     // Around the jetty and the near bank.
-    val nearTop = geo.h * (0.93f - 0.07f * a)
+    val nearTop = geo.h * (0.9f - 0.1f * a)
     drawRect(Brush.verticalGradient(listOf(col.copy(alpha = 0f), col), nearTop, geo.h), Offset(0f, nearTop), Size(geo.w, geo.h - nearTop))
     for (k in 0 until 10) {
         val x = geo.w * iceRandom(k, 41)

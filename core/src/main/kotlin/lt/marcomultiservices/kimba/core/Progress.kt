@@ -37,9 +37,26 @@ data class Progress(
     val shareDay: Long = 0,
     /** Ice on the home waters, from the real temperatures (see [Ice]). */
     val ice: IceLog = IceLog(),
+    /** Where the player stands at home (see [Stand]). */
+    val stand: Stand = Stand.PIER,
+    /** Today's best for the daily challenge (see [Challenge]). */
+    val challenge: ChallengeLog = ChallengeLog(),
+    /** Epoch day the legends' clues started to come, one a day. */
+    val cluesFrom: Long = 0,
 ) {
+    /** Clues of each legend known on [day]: one the first day, all three after two more. */
+    fun clues(day: Long): Int = if (cluesFrom == 0L) 1 else (1 + day - cluesFrom).toInt().coerceIn(1, 3)
+
     val level: Int get() = Levels.levelOf(xp)
-    val gear: Gear get() = Gear(bait, tackle, rod, reel, line, Upgrade.BOAT.key in owned)
+    val gear: Gear get() = Gear(bait, tackle, rod, reel, line, boat = standHere == Stand.BOAT, stand = standHere)
+
+    /** The stand in use: trips are fished from the shore, the boat only once bought. */
+    val standHere: Stand get() = when {
+        trip != null -> Stand.PIER
+        stand == Stand.BOAT && Upgrade.BOAT.key !in owned -> Stand.PIER
+        !stand.at(water) -> Stand.PIER
+        else -> stand
+    }
 
     /** At home on frozen water the player fishes through the ice with a short winter float rod. */
     val onIce: Boolean get() = trip == null && Ice.frozen(water, ice)
@@ -122,7 +139,8 @@ object Levels {
 }
 
 /** What a landed fish earns. */
-class Reward(val coins: Int, val xp: Int, val levelUp: Int?, val quests: List<Quest>, val allQuests: Boolean)
+/** What a landed fish paid; [challenge] is set when it is the best of the day for the daily challenge. */
+class Reward(val coins: Int, val xp: Int, val levelUp: Int?, val quests: List<Quest>, val allQuests: Boolean, val challenge: Boolean = false)
 
 object Economy {
     const val ALL_QUESTS_COINS = 300
@@ -149,9 +167,13 @@ object Economy {
         coins += done.sumOf { it.coins }
         val all = done.isNotEmpty() && updated.allDone
         if (all) coins += ALL_QUESTS_COINS
+        // The daily challenge: a better fish of the day's kind is kept, the first one pays.
+        val month = java.time.LocalDate.ofEpochDay(epochDay).monthValue
+        val challenge = Challenge.record(p.challenge, epochDay, month, catch)
+        if (challenge != null && p.challenge.day != epochDay) coins += Challenge.COINS
         val before = p.level
-        val next = p.copy(coins = p.coins + coins, xp = p.xp + xp, quests = updated, caught = p.caught + 1)
-        return next to Reward(coins, xp, next.level.takeIf { it > before }, done, all)
+        val next = p.copy(coins = p.coins + coins, xp = p.xp + xp, quests = updated, caught = p.caught + 1, challenge = challenge ?: p.challenge)
+        return next to Reward(coins, xp, next.level.takeIf { it > before }, done, all, challenge = challenge != null)
     }
 }
 

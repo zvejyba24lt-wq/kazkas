@@ -458,4 +458,69 @@ class CoreTest {
         assertEquals(Lure.WORM, p.gearHere.lure)
         assertTrue(Ice.affinity(Fish.byId("carp")!!) < 0.1)
     }
+
+    @Test
+    fun weatherStampsComeFromTheRealWeather() {
+        val zone = ZoneId.of("Europe/Vilnius")
+        val noon = LocalDateTime.of(2026, 1, 10, 12, 0).atZone(zone).toInstant().toEpochMilli()
+        val midnight = LocalDateTime.of(2026, 1, 10, 23, 30).atZone(zone).toInstant().toEpochMilli()
+        fun c(sky: Sky, at: Long, ice: Boolean = false) = Catch("perch", null, 20.0, 100, at, sky, -5.0, "", ice = ice)
+        assertEquals(setOf(Stamp.SUN), Stamp.of(c(Sky.CLEAR, noon), zone))
+        assertEquals(setOf(Stamp.NIGHT), Stamp.of(c(Sky.CLEAR, midnight), zone))
+        assertEquals(setOf(Stamp.SNOW, Stamp.ICE), Stamp.of(c(Sky.SNOW, noon, ice = true), zone))
+        assertEquals(setOf(Stamp.RAIN), Stamp.of(c(Sky.THUNDER, noon), zone))
+    }
+
+    @Test
+    fun dailyChallengeKeepsTheBestFishOfTheDay() {
+        val day = LocalDateTime.of(2026, 7, 4, 12, 0).toLocalDate().toEpochDay()
+        val s = Challenge.species(day, 7)
+        assertEquals(s, Challenge.species(day, 7))
+        fun fish(cm: Double) = Catch(s.id, null, cm, s.grams(cm), 0, Sky.CLEAR, 18.0, "")
+        val first = Challenge.record(ChallengeLog(), day, 7, fish(s.minCm + 2.0))!!
+        assertEquals(null, Challenge.record(first, day, 7, fish(s.minCm + 1.0)))
+        val better = Challenge.record(first, day, 7, fish(s.maxCm.toDouble()))!!
+        assertEquals(5, Challenge.boxes(better, s))
+        assertEquals("🟩🟩🟩⬜⬜", Challenge.bar(3))
+        // The first fish of the day pays the bonus once.
+        val (p1, r1) = Economy.land(Progress(), fish(s.minCm + 2.0), true, day)
+        val (_, r2) = Economy.land(p1, fish(s.maxCm.toDouble()), false, day)
+        assertTrue(r1.challenge && r2.challenge)
+        assertTrue(r1.coins - Economy.coins(s, null, s.grams(s.minCm + 2.0)) >= Challenge.COINS)
+        // In winter the kind is one that bites under the ice.
+        for (d in 0L until 40L) assertTrue(Ice.affinity(Challenge.species(day + d, 1)) >= 0.8)
+    }
+
+    @Test
+    fun aLegendBitesOnlyWhenItsConditionsMeetAndOnce() {
+        val pike = Fish.legends.first { it.id == "legend_pike" }
+        // Find an evening in Vilnius at dusk.
+        var dusk = LocalDateTime.of(2026, 10, 20, 16, 0).atZone(vilnius).toInstant().toEpochMilli()
+        while (cond(dusk).phase != DayPhase.DUSK) dusk += 10 * 60_000L
+        val right = cond(dusk, Sky.CLOUDY, trend = -2.0, cloud = 0.9)
+        val wrong = cond(dusk, Sky.CLEAR, trend = -2.0, cloud = 0.1)
+        assertTrue(pike.active(right) && !pike.active(wrong))
+        val rng = Random(3)
+        val bites = List(2000) { BiteEngine.roll(right, 0.5, rng, Spot.HOME_LAKE) }
+        val legends = bites.count { it.golden == pike }
+        assertTrue(legends in 60..200, "legends=$legends")
+        assertTrue(bites.first { it.golden == pike }.cm > Fish.pike.maxCm)
+        // Once caught, never again; never on a trip or another water.
+        assertTrue(List(2000) { BiteEngine.roll(right, 0.5, rng, Spot.HOME_LAKE, legendsCaught = setOf(pike.id)) }.none { it.golden == pike })
+        assertTrue(List(2000) { BiteEngine.roll(right, 0.5, rng, Spot(Water.POND)) }.none { it.golden?.legend == true && it.golden != Fish.legends.first { l -> l.legendOf == Water.POND } })
+        assertTrue(!Fish.gold(pike.id) && Fish.gold("moon_pike"))
+        // Clues come one a day.
+        val p = Progress(cluesFrom = 100)
+        assertEquals(1, p.clues(100)); assertEquals(3, p.clues(105))
+    }
+
+    @Test
+    fun campPiecesAreBoughtOnce() {
+        val p = Progress(coins = 1000, xp = Levels.xpFor(3))
+        val bought = p.buyCamp(CampItem.FIRE)!!
+        assertEquals(600, bought.coins)
+        assertEquals(null, bought.buyCamp(CampItem.FIRE))
+        assertEquals(null, bought.buyCamp(CampItem.CABIN))
+        assertEquals(1, bought.campCount())
+    }
 }
