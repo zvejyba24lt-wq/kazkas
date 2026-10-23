@@ -44,7 +44,7 @@ object BiteEngine {
         val legend = Fish.legends.firstOrNull { it.legendOf == spot.water && spot.trip == null && it.id !in legendsCaught && it.active(c) }
         if (legend != null && rng.nextDouble() < LEGEND_CHANCE) {
             val wait = 8.0 + rng.nextDouble() * 8.0
-            return Bite(legend.base, legend, kotlin.math.round(legend.base.maxCm * 1.15), wait, listOf(wait * 0.4, wait * 0.7), 1.1)
+            return Bite(legend.base, legend, kotlin.math.round(legend.base.maxCm * 1.15), wait, listOf(wait * 0.45, wait * 0.7), 1.1)
         }
         val act = Fish.activities(c, spot)
         // A boat takes the bait further out, where the deep-water fish are.
