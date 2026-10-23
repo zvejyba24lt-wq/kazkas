@@ -180,7 +180,9 @@ class SceneGeometry(val w: Float, val h: Float) {
         // feet, and each metre further shows less, so 3 m is close in and 60 m far out.
         val m = dist.coerceIn(0.0, 1.0) * lt.marcomultiservices.kimba.core.Reach.metres(tackle)
         val v = (PERSPECTIVE_M / (kotlin.math.max(0.0, m - 1.0) + PERSPECTIVE_M)).toFloat()
-        return Offset(x, far + (near - far) * v)
+        // The pier and the angler's own side take the left of the near water: a short cast goes
+        // out to the right, clear of the boards, the way one casts off the end of a jetty.
+        return Offset(x + w * NEAR_SHIFT * v, far + (near - far) * v)
     }
 
     /** Perspective scale at screen height y: small far away, large close by. */
@@ -189,6 +191,8 @@ class SceneGeometry(val w: Float, val h: Float) {
     companion object {
         /** Metres out at which a cast lands halfway between the angler's feet and the far water. */
         const val PERSPECTIVE_M = 20.0
+        /** How far right (in screen widths) a cast at the angler's feet lands; far casts stay centred. */
+        const val NEAR_SHIFT = 0.18f
 
         /** A layered spruce silhouette with slightly ragged tiers. */
         fun spruce(p: Path, x: Float, base: Float, height: Float, width: Float, rnd: Random) {
