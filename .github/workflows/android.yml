@@ -41,7 +41,16 @@ jobs:
       - name: Unit tests
         run: ./gradlew --no-daemon :core:test
 
+      # The converted track is cached: fetching and converting it took a quarter of an hour.
+      - name: Music cache
+        id: music
+        uses: actions/cache@v4
+        with:
+          path: app/src/main/assets/music/lake.ogg
+          key: music-sunset-plains-v1
+
       - name: Music (CC0, see docs/MUSIC.md)
+        if: steps.music.outputs.cache-hit != 'true'
         run: |
           # The track is public domain (CC0); it is fetched here rather than kept in git.
           mkdir -p app/src/main/assets/music
