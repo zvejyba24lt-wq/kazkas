@@ -63,3 +63,31 @@ fun DrawScope.drawArt(img: ImageBitmap, rect: Rect, light: Color = Color.White, 
         colorFilter = filter ?: if (light == Color.White) null else ColorFilter.lighting(light, Color.Black),
     )
 }
+
+/**
+ * [img] drawn in [rect] as vertical strips, each shifted up or down by [bend] (strip centre from
+ * 0 at the left edge to 1 at the right, returning pixels), so a fish picture can flex its body
+ * and beat its tail instead of moving like a board.
+ */
+fun DrawScope.drawBentArt(img: ImageBitmap, rect: Rect, bend: (Float) -> Float, light: Color = Color.White, alpha: Float = 1f, filter: ColorFilter? = null, strips: Int = 18) {
+    val cf = filter ?: if (light == Color.White) null else ColorFilter.lighting(light, Color.Black)
+    val sw = img.width / strips.toFloat()
+    val dw = rect.width / strips
+    for (i in 0 until strips) {
+        val sx = (i * sw).roundToInt()
+        val sxEnd = if (i == strips - 1) img.width else ((i + 1) * sw).roundToInt()
+        val dy = bend((i + 0.5f) / strips)
+        val dx = rect.left + i * dw
+        drawImage(
+            img,
+            srcOffset = IntOffset(sx, 0),
+            srcSize = IntSize((sxEnd - sx).coerceAtLeast(1), img.height),
+            dstOffset = IntOffset(dx.roundToInt(), (rect.top + dy).roundToInt()),
+            // One pixel wider so neighbouring strips never show a seam.
+            dstSize = IntSize((dw + 1.5f).roundToInt().coerceAtLeast(1), rect.height.roundToInt().coerceAtLeast(1)),
+            alpha = alpha,
+            colorFilter = cf,
+        )
+    }
+}
+

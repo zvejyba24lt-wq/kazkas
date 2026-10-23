@@ -58,28 +58,56 @@ internal fun DrawScope.drawFishShadow(geo: SceneGeometry, pos: Offset, dip: Floa
 }
 
 /**
+ * A swimming fish's body wave: the head stays nearly still, the wave grows towards the tail and
+ * travels back along the body. [u] is 0 at the head (left of the picture) and 1 at the tail.
+ */
+internal fun swimWave(u: Float, t: Float, freq: Float, amp: Float): Float {
+    val grow = u * u * 0.85f + u * 0.15f
+    return amp * grow * sin(t * freq - u * 4.2f)
+}
+
+/**
  * The hooked fish seen through the water while it is played: its own picture, dimmed and
- * tinted by the water, facing the way it swims with a beating tail. The line holds its mouth.
+ * tinted by the water, facing the way it swims. Its body flexes and the tail beats, it swings
+ * from side to side on the line, now and then shakes its head hard and rolls, showing its flank.
  */
 internal fun DrawScope.drawHookedFish(geo: SceneGeometry, mouth: Offset, t: Float, species: String, golden: Boolean, size: Float, heading: Float, running: Boolean, colors: SceneColors) {
     val s = geo.scaleAt(mouth.y)
     val len = geo.w * 0.26f * s * size.coerceIn(0.5f, 2f)
     // Pictures face left; the body trails behind the mouth, a little under the surface.
     val c = Offset(mouth.x - heading * len * 0.42f, mouth.y + len * 0.1f)
-    val wag = sin(t * (if (running) 22f else 12f)) * (if (running) 7f else 4f)
+    // Bursts of head shaking every few seconds, the way a pike or a carp fights the hook.
+    val burst = ((sin(t * 0.9f + 1.3f) - 0.55f) / 0.45f).coerceIn(0f, 1f)
+    val shake = sin(t * 31f) * 9f * burst
+    // The whole fish swings on the line, wider when it runs.
+    val swing = sin(t * (if (running) 5.5f else 2.6f)) * (if (running) 11f else 7f)
+    // A slow roll: the body narrows as it turns its flank or back to us.
+    val roll = 1f - 0.22f * (0.5f + 0.5f * sin(t * 1.7f)) - 0.12f * burst
+    val freq = if (running) 17f else 9f + 8f * burst
+    val amp = len * (if (running) 0.13f else 0.08f + 0.06f * burst)
     val tint = lerp(colors.lit(Color(0xFF7FA9A0)), Color.White, 0.25f)
     withTransform({
-        rotate(wag, mouth)
-        scale(-heading, 1f, c)
+        rotate(swing + shake, mouth)
+        scale(-heading, roll, c)
     }) {
         val photo = ArtPack.fish(species)
         val rect = Rect(c.x - len / 2, c.y - len * 0.3f, c.x + len / 2, c.y + len * 0.3f)
         if (photo != null) {
             val ht = rect.width * photo.height / photo.width
             val r = Rect(rect.left, c.y - ht / 2, rect.right, c.y + ht / 2)
-            drawArt(photo, r, light = tint, alpha = if (running) 0.85f else 0.7f, filter = if (golden) lt.marcomultiservices.kimba.ui.fish.FishPhotos.goldFilter else null)
+            lt.marcomultiservices.kimba.ui.scene.drawBentArt(
+                photo, r, { u -> swimWave(u, t, freq, amp) },
+                light = tint, alpha = if (running) 0.85f else 0.7f, filter = if (golden) lt.marcomultiservices.kimba.ui.fish.FishPhotos.goldFilter else null,
+            )
         } else {
             lt.marcomultiservices.kimba.ui.fish.FishArt.draw(this, species, golden, rect, t)
+        }
+    }
+    // Head shakes break the surface: a burst of spray at the mouth.
+    if (burst > 0.2f) {
+        for (i in 0 until 6) {
+            val k = (t * 3.1f + i * 0.17f) % 1f
+            drawCircle(Palette.Spray.copy(alpha = (1 - k) * 0.6f * burst), (1.5f + 2.5f * s) * (1 - k * 0.5f), Offset(mouth.x + cos(i * 2.2f) * len * 0.18f * k, mouth.y - sin(k * PI.toFloat()) * len * 0.22f))
         }
     }
     // A veil of water over the back half keeps it under the surface.
@@ -134,7 +162,10 @@ internal fun DrawScope.drawFishJump(geo: SceneGeometry, pos: Offset, t: Float, s
     val angle = dir * (f - 0.5f) * 80f
     rotate(angle, Offset(x, y)) {
         withTransform({ if (dir > 0) scale(-1f, 1f, Offset(x, y)) }) {
-            drawFishPicture(species, golden, Rect(x - len / 2, y - len * 0.2f, x + len / 2, y + len * 0.2f), t)
+            // Arched in the air, tail kicking.
+            drawFishPicture(species, golden, Rect(x - len / 2, y - len * 0.2f, x + len / 2, y + len * 0.2f), t) { u ->
+                -len * 0.1f * sin(u * PI.toFloat()) + swimWave(u, t, 24f, len * 0.08f)
+            }
         }
     }
     // Spray where it left and where it falls back.
@@ -169,7 +200,7 @@ internal fun DrawScope.drawFightSplash(geo: SceneGeometry, pos: Offset, t: Float
 }
 
 /** The fish's photo if there is one (head left, fitted into [rect] by width), otherwise its drawing. */
-internal fun DrawScope.drawFishPicture(species: String, golden: Boolean, rect: Rect, t: Float) {
+internal fun DrawScope.drawFishPicture(species: String, golden: Boolean, rect: Rect, t: Float, bend: ((Float) -> Float)? = null) {
     val photo = ArtPack.fish(species)
     if (photo == null) {
         lt.marcomultiservices.kimba.ui.fish.FishArt.draw(this, species, golden, rect, t)
@@ -177,7 +208,8 @@ internal fun DrawScope.drawFishPicture(species: String, golden: Boolean, rect: R
     }
     val ht = rect.width * photo.height / photo.width
     val r = Rect(rect.left, rect.center.y - ht / 2, rect.right, rect.center.y + ht / 2)
-    drawArt(photo, r, filter = if (golden) lt.marcomultiservices.kimba.ui.fish.FishPhotos.goldFilter else null)
+    val filter = if (golden) lt.marcomultiservices.kimba.ui.fish.FishPhotos.goldFilter else null
+    if (bend != null) lt.marcomultiservices.kimba.ui.scene.drawBentArt(photo, r, bend, filter = filter) else drawArt(photo, r, filter = filter)
 }
 
 /** The float landing after a cast: a crown of spray and a ring spreading out. */
@@ -213,7 +245,9 @@ internal fun DrawScope.drawLandedFish(geo: SceneGeometry, mouth: Offset, t: Floa
     val wiggle = sin(t * 11f) * 10f * (1f - l * 0.6f)
     // Head up: the picture's head (left side) points to the hook.
     rotate(90f + wiggle, mouth) {
-        drawFishPicture(species, golden, Rect(mouth.x, mouth.y - len * 0.25f, mouth.x + len, mouth.y + len * 0.25f), t)
+        drawFishPicture(species, golden, Rect(mouth.x, mouth.y - len * 0.25f, mouth.x + len, mouth.y + len * 0.25f), t) { u ->
+            swimWave(u, t, 14f, len * 0.09f * (1f - l * 0.4f))
+        }
     }
     // Drops running off the tail.
     for (i in 0 until 5) {
