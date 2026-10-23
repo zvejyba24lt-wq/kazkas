@@ -24,7 +24,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
-import androidx.compose.foundation.layout.statusBarsPadding
+import lt.marcomultiservices.kimba.ui.safeTopPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -68,7 +68,7 @@ import lt.marcomultiservices.kimba.ui.t
 fun ScreenFrame(title: String, onBack: () -> Unit, content: @Composable () -> Unit) {
     val sfx = (androidx.compose.ui.platform.LocalContext.current.applicationContext as lt.marcomultiservices.kimba.KimbaApp).sfx
     Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0xFF13233A), K.Ink)))) {
-        Column(Modifier.fillMaxSize().statusBarsPadding()) {
+        Column(Modifier.fillMaxSize().safeTopPadding()) {
             Row(Modifier.fillMaxWidth().padding(horizontal = 8.dp, vertical = 6.dp), verticalAlignment = Alignment.CenterVertically) {
                 Icon(
                     Icons.AutoMirrored.Rounded.ArrowBack, t(S.back), tint = K.Text,

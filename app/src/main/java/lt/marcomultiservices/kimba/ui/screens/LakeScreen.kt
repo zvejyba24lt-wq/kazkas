@@ -33,7 +33,7 @@ import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
 import lt.marcomultiservices.kimba.ui.scene.layers.drawSurprise
-import androidx.compose.foundation.layout.statusBarsPadding
+import lt.marcomultiservices.kimba.ui.safeTopPadding
 import androidx.compose.foundation.layout.width
 import androidx.compose.foundation.shape.CircleShape
 import androidx.compose.foundation.shape.RoundedCornerShape
@@ -240,7 +240,7 @@ fun LakeScreen(
             },
         )
 
-        Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().padding(horizontal = 14.dp, vertical = 8.dp)) {
+        Column(Modifier.fillMaxSize().safeTopPadding().navigationBarsPadding().padding(horizontal = 14.dp, vertical = 8.dp)) {
             conditions?.let { c ->
                 val trip = Destinations.byId(progress.trip)
                 val placeName = trip?.let { t(it.name) } ?: "${saved?.place?.name ?: ""} · ${t(progress.water.label)}"
@@ -314,7 +314,7 @@ fun LakeScreen(
         AnimatedVisibility(stage == Stage.CAUGHT || stage == Stage.LOST, enter = fadeIn() + scaleIn(initialScale = 0.9f), exit = fadeOut()) {
             Box(Modifier.fillMaxSize().background(Color(0x66000000)).clickable(enabled = false) {}, contentAlignment = Alignment.Center) {
                 // The catch card is tall: on a small phone it scrolls instead of losing its buttons.
-                Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding(), horizontalAlignment = Alignment.CenterHorizontally) {
+                Column(Modifier.fillMaxWidth().verticalScroll(rememberScrollState()).safeTopPadding().navigationBarsPadding(), horizontalAlignment = Alignment.CenterHorizontally) {
                     if (lake.caught != null && stage == Stage.CAUGHT) {
                         CatchCard(lake.caught, lake.newSpecies, lake.record, lake.reward, lake.doubled, progress.noAds, lake.returnedFrom, onDouble = { rewarded { vm.doubleCoins() } }, onShare = { shareCatch(lake.caught) }, onRelease = { vm.releaseCatch() }) { next() }
                     } else if (lake.surprise != null && stage == Stage.CAUGHT) {
@@ -905,7 +905,7 @@ private fun EventDialog(event: GameEvent, onClose: () -> Unit) {
     LaunchedEffect(event) { sfx.play(if (event is GameEvent.LevelUp) Sfx.Fx.LEVEL else Sfx.Fx.COIN) }
     Box(Modifier.fillMaxSize().background(Color(0x99000000)).clickable(onClick = onClose), contentAlignment = Alignment.Center) {
         // Jonas's words or a few trophies at once can be long: the card scrolls on a small phone.
-        Glass(Modifier.verticalScroll(rememberScrollState()).statusBarsPadding().navigationBarsPadding().padding(28.dp).fillMaxWidth(), radius = 26.dp, padding = 22.dp) {
+        Glass(Modifier.verticalScroll(rememberScrollState()).safeTopPadding().navigationBarsPadding().padding(28.dp).fillMaxWidth(), radius = 26.dp, padding = 22.dp) {
             Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
                 when (event) {
                     is GameEvent.LevelUp -> Text("${event.level}", style = MaterialTheme.typography.displaySmall.copy(fontSize = 56.sp), color = Color(0xFF8FD3FF))

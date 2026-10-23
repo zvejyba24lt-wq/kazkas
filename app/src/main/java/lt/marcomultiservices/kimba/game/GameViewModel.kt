@@ -47,6 +47,7 @@ import lt.marcomultiservices.kimba.core.Quests
 import lt.marcomultiservices.kimba.core.Reward
 import lt.marcomultiservices.kimba.core.Streak
 import lt.marcomultiservices.kimba.core.Tackle
+import lt.marcomultiservices.kimba.core.Levels
 import lt.marcomultiservices.kimba.core.Lure
 import lt.marcomultiservices.kimba.core.Upgrade
 import lt.marcomultiservices.kimba.core.Shop
@@ -226,6 +227,73 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         viewModelScope.launch { refresh(force = false) }
     }
 
+    /**
+     * Temporary admin menu (test builds only): the sky, time of day and month the lake shows,
+     * each null for the real one.
+     */
+    data class AdminWorld(val sky: Sky? = null, val phase: DayPhase? = null, val month: Int? = null) {
+        val real: Boolean get() = sky == null && phase == null && month == null
+    }
+
+    val admin = MutableStateFlow(AdminWorld())
+
+    fun setAdminWorld(w: AdminWorld) {
+        admin.value = w
+        viewModelScope.launch { refresh(force = false) }
+    }
+
+    /** Sets the level (its experience from the start) for testing. */
+    fun adminLevel(level: Int) = updateProgress { it.copy(xp = Levels.xpFor(level.coerceAtLeast(1))) }
+
+    fun adminCoins(add: Int) = updateProgress { it.copy(coins = (it.coins + add).coerceAtLeast(0)) }
+
+    fun adminCasts() = viewModelScope.launch { store.update { it.copy(baits = it.baits.add(10, System.currentTimeMillis(), it.progress.boxSize)) } }
+
+    /** Every rod, bait and upgrade, for testing. */
+    fun adminAllGear() = updateProgress { p -> p.copy(owned = p.owned + Tackle.entries.map { it.key } + Lure.entries.map { it.key } + Upgrade.entries.map { it.key }) }
+
+    /** Ice on the home water in cm, or null to grow it from the real frost again. */
+    fun adminIce(cm: Double?) {
+        if (cm != null) { setDemoIce(cm); return }
+        demoIce = null
+        afterMove()
+        updateProgress { it.copy(ice = lt.marcomultiservices.kimba.core.IceLog()) }.invokeOnCompletion { viewModelScope.launch { refresh(force = false) } }
+    }
+
+    /** The lake in the admin menu's sky, time of day and month; what is left real comes from the forecast. */
+    private fun adminConditions(w: AdminWorld, place: Place): Conditions {
+        val now = System.currentTimeMillis()
+        val month = w.month ?: LocalDate.now(zone).monthValue
+        val date = if (w.month == null) LocalDate.now(zone) else LocalDate.now(zone).withMonth(month).withDayOfMonth(15)
+        val dayStart = date.atStartOfDay(zone).toInstant().toEpochMilli()
+        val t = when (val phase = w.phase) {
+            null -> dayStart + (now - LocalDate.now(zone).atStartOfDay(zone).toInstant().toEpochMilli())
+            else -> {
+                val targetElev = when (phase) { DayPhase.NIGHT -> -25.0; DayPhase.DAWN -> -2.0; DayPhase.DUSK -> -1.0; DayPhase.DAY -> 40.0 }
+                (0 until 24 * 12).map { dayStart + it * 5 * 60_000L }
+                    .filter { x -> val ha = Astro.sunHourAngle(x, place.lon); when (phase) { DayPhase.DAWN -> ha < 0; DayPhase.DUSK -> ha > 0; else -> true } }
+                    .minBy { abs(Astro.sunElevation(it, place.lat, place.lon) - targetElev) }
+            }
+        }
+        val realWeather = _forecast.value?.weatherAt(now) ?: WeatherRepo.seasonal()
+        val air = doubleArrayOf(-3.0, -2.0, 2.0, 9.0, 15.0, 18.0, 20.0, 19.0, 14.0, 8.0, 3.0, -1.0)[month - 1]
+        val weather = when (w.sky) {
+            null -> if (w.month == null) realWeather else realWeather.copy(tempC = air + 3)
+            // Snow and sleet need frost or near it; a thunderstorm needs summer warmth.
+            Sky.CLEAR -> Weather(air + 4, 1022.0, 0.5, 0.05, 2.0, 0.0, Sky.CLEAR)
+            Sky.PARTLY -> Weather(air + 3, 1016.0, 0.0, 0.35, 3.0, 0.0, Sky.PARTLY)
+            Sky.CLOUDY -> Weather(air + 1, 1010.0, -1.0, 0.95, 4.0, 0.0, Sky.CLOUDY)
+            Sky.FOG -> Weather(air, 1017.0, 0.0, 0.7, 0.5, 0.0, Sky.FOG)
+            Sky.DRIZZLE -> Weather(air, 1008.0, -1.5, 1.0, 3.0, 0.4, Sky.DRIZZLE)
+            Sky.RAIN -> Weather(air - 1, 1005.0, -3.0, 1.0, 5.0, 2.5, Sky.RAIN)
+            Sky.HEAVY_RAIN -> Weather(air - 1, 1000.0, -4.0, 1.0, 8.0, 7.0, Sky.HEAVY_RAIN)
+            Sky.SLEET -> Weather(minOf(air, 1.5), 1004.0, -2.0, 1.0, 6.0, 1.5, Sky.SLEET)
+            Sky.SNOW -> Weather(minOf(air, -2.0), 1020.0, 0.5, 0.9, 3.0, 0.6, Sky.SNOW)
+            Sky.THUNDER -> Weather(maxOf(air + 4, 22.0), 1004.0, -4.0, 1.0, 9.0, 4.0, Sky.THUNDER)
+        }
+        return Conditions(weather, t, place.lat, place.lon, zone)
+    }
+
     private fun today(): Long = LocalDate.now(zone).toEpochDay()
 
     private var visitedDay = -1L
@@ -365,6 +433,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     suspend fun refresh(force: Boolean) {
         val place = fishingPlace(store.current()) ?: return
         demoScene?.let { _conditions.value = demoConditions(it, place); return }
+        admin.value.takeUnless { it.real }?.let { w ->
+            // The forecast is still fetched, so a sky or month left real stays real.
+            if (_forecast.value == null) repo.forecast(place, false)?.let { _forecast.value = it }
+            _conditions.value = adminConditions(w, place)
+            return
+        }
         if (forecastFor != place) { _forecast.value = null; forecastFor = place }
         repo.cached(place)?.let { if (_forecast.value == null) { _forecast.value = it; recompute(place) } }
         val f = repo.forecast(place, force)

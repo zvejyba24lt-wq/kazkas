@@ -9,7 +9,7 @@ import androidx.compose.foundation.layout.fillMaxWidth
 import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
-import androidx.compose.foundation.layout.statusBarsPadding
+import lt.marcomultiservices.kimba.ui.safeTopPadding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
 import androidx.compose.material3.MaterialTheme
@@ -43,7 +43,7 @@ fun WelcomeScreen(onPick: (Place) -> Unit) {
     Box(Modifier.fillMaxSize().background(K.Night)) {
         LakeScene(conditions, lake, Modifier.fillMaxSize())
         Box(Modifier.fillMaxSize().background(Brush.verticalGradient(listOf(Color(0x55000000), Color(0x22000000), Color(0xAA000000)))))
-        Column(Modifier.fillMaxSize().statusBarsPadding().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(18.dp)) {
+        Column(Modifier.fillMaxSize().safeTopPadding().navigationBarsPadding().verticalScroll(rememberScrollState()).padding(18.dp)) {
             Spacer(Modifier.height(24.dp))
             Text(t(S.appName), style = MaterialTheme.typography.displaySmall.copy(fontSize = 52.sp), color = K.Text)
             Text(t(S.tagline), color = K.Amber, fontSize = 16.sp, fontWeight = FontWeight.SemiBold)

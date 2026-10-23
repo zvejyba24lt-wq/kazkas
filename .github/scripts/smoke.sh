@@ -128,6 +128,7 @@ demo -e screen book; shot 30f_legendos 3
 demo -e screen forecast; shot 31_prognoze 6
 demo -e screen settings; shot 32_nustatymai 3
 adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/5)) 400; shot 33_nustatymai_toliau 2
+adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/5)) 400; sleep 1; adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/5)) 400; shot 33b_admin 2
 demo -e screen lake; sleep 2
 
 adb shell am force-stop "$PKG"

@@ -5,7 +5,14 @@ import androidx.compose.foundation.background
 import androidx.compose.foundation.border
 import androidx.compose.foundation.layout.Box
 import androidx.compose.foundation.layout.BoxScope
+import androidx.compose.foundation.layout.WindowInsets
+import androidx.compose.foundation.layout.WindowInsetsSides
+import androidx.compose.foundation.layout.displayCutout
+import androidx.compose.foundation.layout.only
 import androidx.compose.foundation.layout.padding
+import androidx.compose.foundation.layout.statusBars
+import androidx.compose.foundation.layout.union
+import androidx.compose.foundation.layout.windowInsetsPadding
 import androidx.compose.foundation.shape.RoundedCornerShape
 import androidx.compose.material3.ButtonDefaults
 import androidx.compose.material3.MaterialTheme
@@ -79,3 +86,9 @@ fun amberButtonColors() = ButtonDefaults.buttonColors(containerColor = K.Amber, 
 fun SectionTitle(text: String, modifier: Modifier = Modifier) {
     Text(text.uppercase(), modifier, color = K.Amber, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.4.sp)
 }
+
+/**
+ * Room at the top for the status bar when it shows, and for the camera cut-out when the game
+ * runs full screen with the bars hidden.
+ */
+fun Modifier.safeTopPadding(): Modifier = windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout).only(WindowInsetsSides.Top))

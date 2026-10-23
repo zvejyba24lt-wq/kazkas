@@ -28,6 +28,7 @@ class MainActivity : AppCompatActivity() {
         installSplashScreen()
         super.onCreate(savedInstanceState)
         enableEdgeToEdge()
+        fullScreen()
         handleDemo(intent)
         // Screenshot runs on the emulator skip the consent form so it cannot cover the game.
         if (!(BuildConfig.DEMO_HOOKS && intent?.getBooleanExtra("noConsent", false) == true)) AdsConsent.gather(this) { app.ads.preload() }
@@ -38,6 +39,26 @@ class MainActivity : AppCompatActivity() {
                 KimbaTheme { AppRoot(vm, startScreen.value) }
             }
         }
+    }
+
+    /**
+     * A game takes the whole screen: the status bar and the back/home buttons hide, and a swipe
+     * from the edge brings them back for a moment.
+     */
+    private fun fullScreen() {
+        if (android.os.Build.VERSION.SDK_INT >= 28) {
+            window.attributes = window.attributes.apply { layoutInDisplayCutoutMode = android.view.WindowManager.LayoutParams.LAYOUT_IN_DISPLAY_CUTOUT_MODE_SHORT_EDGES }
+        }
+        androidx.core.view.WindowCompat.getInsetsController(window, window.decorView).apply {
+            systemBarsBehavior = androidx.core.view.WindowInsetsControllerCompat.BEHAVIOR_SHOW_TRANSIENT_BARS_BY_SWIPE
+            hide(androidx.core.view.WindowInsetsCompat.Type.systemBars())
+        }
+    }
+
+    // Dialogs, the share sheet or an ad can bring the bars back; hide them again on return.
+    override fun onWindowFocusChanged(hasFocus: Boolean) {
+        super.onWindowFocusChanged(hasFocus)
+        if (hasFocus) fullScreen()
     }
 
     override fun onResume() {

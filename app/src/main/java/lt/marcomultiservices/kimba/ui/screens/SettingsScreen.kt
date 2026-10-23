@@ -49,6 +49,8 @@ import androidx.core.os.LocaleListCompat
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import kotlinx.coroutines.launch
 import lt.marcomultiservices.kimba.BuildConfig
+import lt.marcomultiservices.kimba.core.DayPhase
+import lt.marcomultiservices.kimba.core.Sky
 import lt.marcomultiservices.kimba.ads.AdsConsent
 import lt.marcomultiservices.kimba.app
 import lt.marcomultiservices.kimba.findActivity
@@ -115,6 +117,11 @@ fun SettingsScreen(vm: GameViewModel, onBack: () -> Unit) {
             ) { Text(t(S.privacyPolicy), color = K.Text) }
             Spacer(Modifier.height(18.dp))
             Text(t(S.metCredit), color = Color(0x88B4BCC6), fontSize = 11.sp)
+            // Only in test builds: never part of the Play build.
+            if (BuildConfig.DEMO_HOOKS) {
+                Spacer(Modifier.height(26.dp))
+                AdminPanel(vm, saved?.progress?.level ?: 1)
+            }
         }
     }
 }
@@ -197,5 +204,52 @@ fun PlacePicker(selected: Place?, onPick: (Place) -> Unit) {
         if (failed) Text(t(S.noLocation), color = K.Amber, fontSize = 12.sp, modifier = Modifier.padding(top = 6.dp))
         Spacer(Modifier.height(10.dp))
         Chips(Places.cities.map { it.name }, selected = Places.cities.indexOfFirst { it.name == selected?.name && selected?.fromDevice != true }) { onPick(Places.cities[it]) }
+    }
+}
+
+/** A temporary test menu: level, coins, casts, all gear, and any month, time of day, sky or ice. */
+@Composable
+private fun AdminPanel(vm: GameViewModel, level: Int) {
+    val world by vm.admin.collectAsStateWithLifecycle()
+    Column(Modifier.fillMaxWidth().clip(RoundedCornerShape(16.dp)).background(Color(0x22FF5A4A)).border(1.dp, Color(0x88FF5A4A), RoundedCornerShape(16.dp)).padding(14.dp)) {
+        Text("ADMIN (laikinas, tik testinėje versijoje)", color = Color(0xFFFF8A7A), fontSize = 12.sp, fontWeight = FontWeight.Bold)
+        Spacer(Modifier.height(10.dp))
+        Text("Lygis (dabar $level)", color = K.Muted, fontSize = 12.sp)
+        Spacer(Modifier.height(6.dp))
+        val levels = listOf(1, 2, 3, 5, 7, 10, 12, 15, 20, 25, 30)
+        Chips(levels.map { "$it" }, levels.indexOf(level)) { vm.adminLevel(levels[it]) }
+        Spacer(Modifier.height(12.dp))
+        Text("Monetos ir užmetimai", color = K.Muted, fontSize = 12.sp)
+        Spacer(Modifier.height(6.dp))
+        val money = listOf("+1 000" to 1_000, "+10 000" to 10_000, "+100 000" to 100_000, "Į nulį" to -100_000_000)
+        Chips(money.map { it.first } + listOf("+10 užmetimų", "Visos meškerės ir masalai"), -1) { i ->
+            when {
+                i < money.size -> vm.adminCoins(money[i].second)
+                i == money.size -> vm.adminCasts()
+                else -> vm.adminAllGear()
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        Text("Mėnuo (metų laikas)", color = K.Muted, fontSize = 12.sp)
+        Spacer(Modifier.height(6.dp))
+        val months = listOf("Sau", "Vas", "Kov", "Bal", "Geg", "Bir", "Lie", "Rgp", "Rgs", "Spa", "Lap", "Gru")
+        Chips(listOf("Tikras") + months, world.month ?: 0) { vm.setAdminWorld(world.copy(month = it.takeIf { m -> m > 0 })) }
+        Spacer(Modifier.height(12.dp))
+        Text("Paros metas", color = K.Muted, fontSize = 12.sp)
+        Spacer(Modifier.height(6.dp))
+        val phases = listOf(DayPhase.DAWN, DayPhase.DAY, DayPhase.DUSK, DayPhase.NIGHT)
+        Chips(listOf("Tikras") + phases.map { t(S.phase(it)) }, world.phase?.let { phases.indexOf(it) + 1 } ?: 0) { vm.setAdminWorld(world.copy(phase = phases.getOrNull(it - 1))) }
+        Spacer(Modifier.height(12.dp))
+        Text("Orai", color = K.Muted, fontSize = 12.sp)
+        Spacer(Modifier.height(6.dp))
+        val skies = Sky.entries
+        Chips(listOf("Tikri") + skies.map { t(S.sky(it)) }, world.sky?.let { skies.indexOf(it) + 1 } ?: 0) { vm.setAdminWorld(world.copy(sky = skies.getOrNull(it - 1))) }
+        Spacer(Modifier.height(12.dp))
+        Text("Ledas namų ežere", color = K.Muted, fontSize = 12.sp)
+        Spacer(Modifier.height(6.dp))
+        val ice = listOf<Pair<String, Double?>>("Tikras" to null, "Nėra" to 0.0, "Kraštuose 5 cm" to 5.0, "Laiko 16 cm" to 16.0)
+        Chips(ice.map { it.first }, -1) { vm.adminIce(ice[it].second) }
+        Spacer(Modifier.height(10.dp))
+        Text("Orai ir metų laikas lieka, kol paspausi „Tikras“ arba iš naujo paleisi žaidimą.", color = K.Muted, fontSize = 11.sp)
     }
 }
