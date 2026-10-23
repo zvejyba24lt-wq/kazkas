@@ -34,7 +34,11 @@ import lt.marcomultiservices.kimba.core.GoldenWindow
 import lt.marcomultiservices.kimba.core.Destination
 import lt.marcomultiservices.kimba.core.Destinations
 import lt.marcomultiservices.kimba.core.Economy
+import lt.marcomultiservices.kimba.core.Invites
 import lt.marcomultiservices.kimba.core.Item
+import lt.marcomultiservices.kimba.core.acceptInvite
+import lt.marcomultiservices.kimba.core.shared
+import lt.marcomultiservices.kimba.core.thank
 import lt.marcomultiservices.kimba.core.Progress
 import lt.marcomultiservices.kimba.core.Quest
 import lt.marcomultiservices.kimba.core.Quests
@@ -124,7 +128,11 @@ sealed class GameEvent {
     class LevelUp(val level: Int) : GameEvent()
     class QuestsDone(val quests: List<Quest>, val all: Boolean) : GameEvent()
     class Achieved(val list: List<Achievement>) : GameEvent()
+    class Gift(val kind: GiftKind, val coins: Int, val casts: Int) : GameEvent()
 }
+
+/** Why a [GameEvent.Gift] came: a friend's code, a friend's thank-you code, a shared catch. */
+enum class GiftKind { FRIEND, THANKS, SHARE }
 
 class GameViewModel(application: Application) : AndroidViewModel(application) {
     private val store = application.app.store
@@ -172,6 +180,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 _saved.value = it
                 sfx.enabled = it.sound
                 if (it.onboarded) dailyVisit()
+                if (it.progress.inviteCode.isEmpty()) makeInviteCode()
+                if (!it.referrerChecked) readReferrer()
             }
         }
         viewModelScope.launch {
@@ -217,6 +227,83 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun consumeEvent() = _events.update { it.drop(1) }
+
+    // ---- Friends -------------------------------------------------------------------------
+
+    private var codeMade = false
+    private var referrerAsked = false
+
+    private fun makeInviteCode() {
+        if (codeMade) return
+        codeMade = true
+        viewModelScope.launch {
+            store.update { s -> if (s.progress.inviteCode.isEmpty()) s.copy(progress = s.progress.copy(inviteCode = Invites.newCode(rng))) else s }
+        }
+    }
+
+    /** A friend's store link carries `kimba=CODE`; Google Play passes it on once, on first start. */
+    private fun readReferrer() {
+        if (referrerAsked) return
+        referrerAsked = true
+        val client = runCatching { com.android.installreferrer.api.InstallReferrerClient.newBuilder(getApplication<Application>()).build() }.getOrNull() ?: return
+        runCatching {
+            client.startConnection(object : com.android.installreferrer.api.InstallReferrerStateListener {
+                override fun onInstallReferrerSetupFinished(code: Int) {
+                    val ok = com.android.installreferrer.api.InstallReferrerClient.InstallReferrerResponse.OK
+                    val unavailable = com.android.installreferrer.api.InstallReferrerClient.InstallReferrerResponse.SERVICE_UNAVAILABLE
+                    val referrer = if (code == ok) runCatching { client.installReferrer.installReferrer }.getOrNull() else null
+                    runCatching { client.endConnection() }
+                    if (code == unavailable) return
+                    viewModelScope.launch {
+                        store.update { it.copy(referrerChecked = true) }
+                        referrer?.let { Regex("kimba=([A-Za-z0-9]{6})").find(it)?.groupValues?.get(1) }?.let { enterCode(it) }
+                    }
+                }
+
+                override fun onInstallReferrerServiceDisconnected() {}
+            })
+        }
+    }
+
+    enum class CodeResult { FRIEND, THANKS, BAD }
+
+    /** A friend's code (six letters) or a friend's thank-you code (ten). */
+    fun enterCode(code: String, done: (CodeResult) -> Unit = {}) = viewModelScope.launch {
+        var result = CodeResult.BAD
+        store.update { s ->
+            val now = System.currentTimeMillis()
+            s.progress.acceptInvite(code)?.let { p ->
+                result = CodeResult.FRIEND
+                return@update s.copy(progress = p, baits = s.baits.add(Invites.NEWCOMER_CASTS, now, p.boxSize))
+            }
+            s.progress.thank(code)?.let { p ->
+                result = CodeResult.THANKS
+                return@update s.copy(progress = p, baits = s.baits.add(Invites.THANKS_CASTS, now, p.boxSize))
+            }
+            s
+        }
+        when (result) {
+            CodeResult.FRIEND -> GameEvent.Gift(GiftKind.FRIEND, Invites.NEWCOMER_COINS, Invites.NEWCOMER_CASTS)
+            CodeResult.THANKS -> GameEvent.Gift(GiftKind.THANKS, Invites.THANKS_COINS, Invites.THANKS_CASTS)
+            CodeResult.BAD -> null
+        }?.let { e -> _events.update { it + e } }
+        done(result)
+    }
+
+    /** The player shared a catch: the first share of the day pays a few casts. */
+    fun sharedCatch() = viewModelScope.launch {
+        var paid = false
+        store.update { s ->
+            s.progress.shared(today())?.let { p ->
+                paid = true
+                s.copy(progress = p, baits = s.baits.add(Invites.SHARE_CASTS, System.currentTimeMillis(), p.boxSize))
+            } ?: s
+        }
+        if (paid) _events.update { it + GameEvent.Gift(GiftKind.SHARE, 0, Invites.SHARE_CASTS) }
+    }
+
+    /** Demo hook: shows the share picture of the catch on screen. */
+    val demoSharePreview = MutableStateFlow(false)
 
     /** Pays and announces goals reached outside a catch (streak, trips). */
     private suspend fun checkAchievements() {

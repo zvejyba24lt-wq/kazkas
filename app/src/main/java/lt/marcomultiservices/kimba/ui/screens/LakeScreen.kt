@@ -102,7 +102,12 @@ import lt.marcomultiservices.kimba.audio.Sfx
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.compose.foundation.interaction.collectIsPressedAsState
 import lt.marcomultiservices.kimba.findActivity
+import lt.marcomultiservices.kimba.share.ShareCard
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.ui.graphics.asImageBitmap
+import kotlinx.coroutines.launch
 import lt.marcomultiservices.kimba.game.GameEvent
+import lt.marcomultiservices.kimba.game.GiftKind
 import lt.marcomultiservices.kimba.ui.LocalLang
 import lt.marcomultiservices.kimba.ui.fish.FishPicture
 import androidx.compose.ui.platform.LocalContext
@@ -155,6 +160,17 @@ fun LakeScreen(
     /** Rewarded video, or the reward right away for players who bought "no ads". */
     fun rewarded(then: () -> Unit) {
         if (progress.noAds || activity == null) then() else context.app.ads.showRewarded(activity, then)
+    }
+    val lang = LocalLang.current
+    val scope = androidx.compose.runtime.rememberCoroutineScope()
+    /** The catch as a picture with the player's friend code, to the share sheet. */
+    fun shareCatch(c: Catch) {
+        val code = progress.inviteCode
+        scope.launch {
+            val bmp = kotlinx.coroutines.withContext(kotlinx.coroutines.Dispatchers.Default) { ShareCard.render(context, c, lang, code) }
+            val text = S.shareText[lang].format(ShareCard.name(c, lang), ShareCard.weight(c, lang), code, ShareCard.link(code))
+            if (runCatching { ShareCard.send(context, bmp, text, S.shareChooser[lang]) }.isSuccess) vm.sharedCatch()
+        }
     }
     fun next() {
         if (activity != null && vm.interstitialDue()) context.app.ads.showInterstitial(activity) { vm.dismissResult() } else vm.dismissResult()
@@ -281,7 +297,7 @@ fun LakeScreen(
         AnimatedVisibility(stage == Stage.CAUGHT || stage == Stage.LOST, enter = fadeIn() + scaleIn(initialScale = 0.9f), exit = fadeOut()) {
             Box(Modifier.fillMaxSize().background(Color(0x66000000)).clickable(enabled = false) {}, contentAlignment = Alignment.Center) {
                 if (lake.caught != null && stage == Stage.CAUGHT) {
-                    CatchCard(lake.caught, lake.newSpecies, lake.record, lake.reward, lake.doubled, progress.noAds, onDouble = { rewarded { vm.doubleCoins() } }) { next() }
+                    CatchCard(lake.caught, lake.newSpecies, lake.record, lake.reward, lake.doubled, progress.noAds, onDouble = { rewarded { vm.doubleCoins() } }, onShare = { shareCatch(lake.caught) }) { next() }
                 } else if (lake.lost != null) LostCard(lake.lost) { next() }
             }
         }
@@ -298,6 +314,16 @@ fun LakeScreen(
         val event = events.firstOrNull()
         if (event != null && stage != Stage.CAUGHT && stage != Stage.FIGHT) {
             EventDialog(event) { vm.consumeEvent() }
+        }
+
+        // Demo hook: the share picture of the catch, as other apps would get it.
+        val preview by vm.demoSharePreview.collectAsStateWithLifecycle()
+        val shown = lake.caught
+        if (preview && shown != null) {
+            val img = remember(shown) { ShareCard.render(context, shown, lang, progress.inviteCode).asImageBitmap() }
+            Box(Modifier.fillMaxSize().background(Color.Black).clickable { vm.demoSharePreview.value = false }, contentAlignment = Alignment.Center) {
+                androidx.compose.foundation.Image(img, null, Modifier.fillMaxWidth())
+            }
         }
     }
 }
@@ -673,7 +699,7 @@ private fun CastButton(charging: Boolean, chargeStart: Long, onPress: () -> Unit
 }
 
 @Composable
-private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?, doubled: Boolean, noAds: Boolean, onDouble: () -> Unit, onNext: () -> Unit) {
+private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?, doubled: Boolean, noAds: Boolean, onDouble: () -> Unit, onShare: () -> Unit, onNext: () -> Unit) {
     val species = Fish.byId(c.species) ?: return
     val golden = c.golden?.let { Fish.goldenById(it) }
     val time = lt.marcomultiservices.kimba.ui.scene.rememberSceneTime()
@@ -776,6 +802,13 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?
                 }
                 Spacer(Modifier.height(8.dp))
             }
+            // Anglers love to show a fish off: the picture carries the friend code to whoever sees it.
+            OutlinedButton(onShare, modifier = Modifier.fillMaxWidth().height(46.dp)) {
+                Icon(Icons.Rounded.Share, null, tint = K.Text, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(8.dp))
+                Text(t(S.shareCatch), color = K.Text)
+            }
+            Spacer(Modifier.height(8.dp))
             Button(onNext, colors = amberButtonColors(), modifier = Modifier.fillMaxWidth().height(50.dp)) { Text(t(S.again)) }
         }
     }
@@ -792,6 +825,14 @@ private fun EventDialog(event: GameEvent, onClose: () -> Unit) {
                 if (event.all) "\n\n" + t(S.allQuestsDone, Economy.ALL_QUESTS_COINS, Economy.ALL_QUESTS_CASTS) else ""
             )
         is GameEvent.Achieved -> t(S.achieved) to event.list.joinToString("\n\n") { "🏆 " + it.title[lang] + "\n" + it.text[lang] + "  +" + it.coins }
+        is GameEvent.Gift -> {
+            val gifts = listOfNotNull(if (event.coins > 0) S.plusCoins(event.coins)[lang] else null, S.plusCasts(event.casts)[lang]).joinToString("   ")
+            when (event.kind) {
+                GiftKind.FRIEND -> t(S.giftFriendTitle) to gifts + "\n\n" + t(S.giftFriendNote)
+                GiftKind.THANKS -> t(S.giftThanksTitle) to gifts
+                GiftKind.SHARE -> t(S.giftShareTitle) to gifts
+            }
+        }
     }
     val sfx = LocalContext.current.app.sfx
     LaunchedEffect(event) { sfx.play(if (event is GameEvent.LevelUp) Sfx.Fx.LEVEL else Sfx.Fx.COIN) }

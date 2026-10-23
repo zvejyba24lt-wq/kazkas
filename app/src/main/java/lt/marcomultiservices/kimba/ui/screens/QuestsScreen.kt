@@ -50,6 +50,19 @@ import lt.marcomultiservices.kimba.ui.LocalLang
 import lt.marcomultiservices.kimba.ui.S
 import lt.marcomultiservices.kimba.ui.SectionTitle
 import lt.marcomultiservices.kimba.ui.t
+import androidx.compose.foundation.text.KeyboardOptions
+import androidx.compose.material.icons.rounded.Share
+import androidx.compose.material3.Button
+import androidx.compose.material3.OutlinedButton
+import androidx.compose.material3.OutlinedTextField
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.remember
+import androidx.compose.runtime.setValue
+import androidx.compose.ui.platform.LocalContext
+import androidx.compose.ui.text.input.KeyboardCapitalization
+import lt.marcomultiservices.kimba.core.Invites
+import lt.marcomultiservices.kimba.share.ShareCard
+import lt.marcomultiservices.kimba.ui.amberButtonColors
 import java.time.LocalDate
 
 @Composable
@@ -94,6 +107,10 @@ fun QuestsScreen(vm: GameViewModel, onBack: () -> Unit) {
                     }
                 }
             }
+            Spacer(Modifier.height(26.dp))
+            SectionTitle(t(S.friendsTitle))
+            Spacer(Modifier.height(10.dp))
+            FriendsCard(p) { code, done -> vm.enterCode(code) { done(it != GameViewModel.CodeResult.BAD) } }
             Spacer(Modifier.height(26.dp))
             SectionTitle(t(S.trophies))
             Spacer(Modifier.height(10.dp))
@@ -215,5 +232,75 @@ private fun AchievementRow(a: Achievement, earned: Boolean, value: Int) {
         Spacer(Modifier.width(8.dp))
         CoinIcon(Modifier.size(14.dp))
         Text(" ${a.coins}", color = if (earned) K.Gold else K.Muted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+/** The player's friend code to send, a field for a friend's code, and the thank-you code to give back. */
+@Composable
+private fun FriendsCard(p: Progress, onCode: (String, (Boolean) -> Unit) -> Unit) {
+    val lang = LocalLang.current
+    val context = LocalContext.current
+    val shape = RoundedCornerShape(16.dp)
+    var entry by remember { mutableStateOf("") }
+    var bad by remember { mutableStateOf(false) }
+    Column(
+        Modifier.fillMaxWidth().clip(shape)
+            .background(Brush.verticalGradient(listOf(Color(0x332F6F8F), Color(0x14FFFFFF))))
+            .border(1.dp, Color(0x5578B8D8), shape)
+            .padding(14.dp),
+    ) {
+        Text(t(S.friendsBody), color = K.Muted, fontSize = 13.sp, lineHeight = 18.sp)
+        Spacer(Modifier.height(12.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            Column(Modifier.weight(1f)) {
+                Text(t(S.yourCode).uppercase(), color = K.Muted, fontSize = 11.sp, fontWeight = FontWeight.Bold, letterSpacing = 1.5.sp)
+                Text(p.inviteCode, color = K.Text, fontSize = 28.sp, fontWeight = FontWeight.Black, letterSpacing = 4.sp)
+            }
+            Button(
+                {
+                    runCatching { ShareCard.sendText(context, S.inviteText[lang].format(p.inviteCode, ShareCard.link(p.inviteCode)), S.inviteChooser[lang]) }
+                },
+                enabled = p.inviteCode.isNotEmpty(),
+                colors = amberButtonColors(),
+            ) {
+                Icon(Icons.Rounded.Share, null, modifier = Modifier.size(18.dp))
+                Spacer(Modifier.width(6.dp))
+                Text(t(S.invite))
+            }
+        }
+        Spacer(Modifier.height(12.dp))
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            OutlinedTextField(
+                entry, { entry = it.uppercase().take(12); bad = false },
+                Modifier.weight(1f),
+                singleLine = true,
+                label = { Text(t(S.enterCode), fontSize = 12.sp) },
+                isError = bad,
+                keyboardOptions = KeyboardOptions(capitalization = KeyboardCapitalization.Characters, autoCorrectEnabled = false),
+            )
+            Spacer(Modifier.width(8.dp))
+            OutlinedButton({ onCode(entry) { ok -> if (ok) entry = "" else bad = true } }, enabled = entry.length >= 6) {
+                Text(t(S.redeem), color = K.Text)
+            }
+        }
+        if (bad) {
+            Spacer(Modifier.height(4.dp))
+            Text(t(S.codeBad), color = K.Danger, fontSize = 12.sp)
+        }
+        // A newcomer gives the friend who brought them a code back.
+        val inviter = p.invitedBy
+        if (inviter != null && p.inviteCode.isNotEmpty()) {
+            val thanks = Invites.thanks(inviter, p.inviteCode)
+            Spacer(Modifier.height(14.dp))
+            Text(t(S.thanksTitle), color = K.Amber, fontSize = 14.sp, fontWeight = FontWeight.Bold)
+            Text(t(S.thanksBody), color = K.Muted, fontSize = 12.sp)
+            Spacer(Modifier.height(6.dp))
+            Row(verticalAlignment = Alignment.CenterVertically) {
+                Text(thanks, color = K.Text, fontSize = 22.sp, fontWeight = FontWeight.Black, letterSpacing = 2.sp, modifier = Modifier.weight(1f))
+                OutlinedButton({ runCatching { ShareCard.sendText(context, S.thanksText[lang].format(thanks), S.thanksTitle[lang]) } }) {
+                    Text(t(S.send), color = K.Text)
+                }
+            }
+        }
     }
 }

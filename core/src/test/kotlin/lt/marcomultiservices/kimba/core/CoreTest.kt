@@ -407,4 +407,31 @@ class CoreTest {
         assertEquals(FightResult.LANDED, f.result)
         assertTrue(f.netReady)
     }
+
+    @Test
+    fun friendCodesWorkOnceAndOnlyForTheirOwner() {
+        val rng = Random(7)
+        val rob = Progress(inviteCode = Invites.newCode(rng))
+        val friend = Progress(inviteCode = Invites.newCode(rng))
+        assertTrue(Invites.isCode(rob.inviteCode))
+        // The newcomer takes the code once, typed loosely, but never their own.
+        val joined = friend.acceptInvite(rob.inviteCode.lowercase().chunked(3).joinToString("-"))!!
+        assertEquals(friend.coins + Invites.NEWCOMER_COINS, joined.coins)
+        assertEquals(null, joined.acceptInvite(rob.inviteCode))
+        assertEquals(null, friend.acceptInvite(friend.inviteCode))
+        assertEquals(null, friend.acceptInvite("ABC"))
+        // The thank-you code pays the inviter once, and nobody else.
+        val thanks = Invites.thanks(rob.inviteCode, friend.inviteCode)
+        val paid = rob.thank(thanks)!!
+        assertEquals(rob.coins + Invites.THANKS_COINS, paid.coins)
+        assertEquals(null, paid.thank(thanks))
+        assertEquals(null, friend.thank(thanks))
+        val forged = thanks.dropLast(1) + (if (thanks.last() == 'A') 'B' else 'A')
+        assertEquals(null, rob.thank(forged))
+        // Sharing pays once a day.
+        val day = 20_000L
+        val s = rob.shared(day)!!
+        assertEquals(null, s.shared(day))
+        assertTrue(s.shared(day + 1) != null)
+    }
 }

@@ -61,6 +61,8 @@ demo -e scene night -e trip ruegen; shot 17_riugenas_naktis 5
 demo -e scene day -e trip bodensee; shot 18_bodensee 5
 demo -e water lake; sleep 5
 demo -e catch moon_pike; shot 19_auksine_lydeka 5
+demo --ez sharepreview true; shot 19b_pasigyrimas 4
+demo --ez sharepreview false; sleep 1
 demo -e catch trout; shot 20_upetakis 5
 demo -e catch grayling; shot 21_kirslys 5
 demo -e catch flounder; shot 22_pleksne 5
@@ -72,6 +74,9 @@ adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/5)) 400; shot 26_knyga_t
 demo -e screen shop; shot 27_parduotuve 4
 adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/5)) 400; shot 28_parduotuve_toliau 2
 demo -e screen map; shot 29_zemelapis 5
+demo -e screen lake; sleep 2
+demo -e friend QWERTY; shot 29b_draugo_dovana 4
+tap $((W/2)) $((H/2)); sleep 1
 demo -e screen quests; shot 30_uzduotys 3
 adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/8)) 400; shot 30b_trofejai 2
 adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/8)) 400; shot 30c_pasiekimai 2

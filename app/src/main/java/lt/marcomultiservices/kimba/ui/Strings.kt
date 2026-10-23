@@ -248,6 +248,57 @@ object S {
     val trophy = L("Trofėjus", "Trophäe", "Trophy")
     val caughtIn = L("Pagauta: %s, %d°, %s", "Gefangen: %s, %d°, %s", "Caught: %s, %d°, %s")
 
+    // Sharing a catch and inviting friends
+    val shareCatch = L("Pasigirk draugams", "Zeig's deinen Freunden", "Show your friends")
+    val shareBonusNote = L("Pirmas pasigyrimas per dieną: +3 užmetimai", "Erstes Teilen am Tag: +3 Würfe", "First share of the day: +3 casts")
+    val shareHeader = L("MANO LAIMIKIS", "MEIN FANG", "MY CATCH")
+    val shareCodeLabel = L("Draugo kodas", "Freundescode", "Friend code")
+    val shareChooser = L("Pasigirk laimikiu", "Fang teilen", "Share your catch")
+    /** Name, weight, friend code, link. */
+    val shareText = L(
+        "Mano laimikis: %s, %s! 🎣 Žvejoju „Kimba!“ – žaidime žuvys kimba pagal tikrą orą. Pabandyk pranokti! Įvesk mano kodą %s ir gausi dovanų.\n%s",
+        "Mein Fang: %s, %s! 🎣 Ich angle bei „Wetterbiss“ – hier beißen die Fische nach echtem Wetter. Schaffst du mehr? Mit meinem Code %s gibt's ein Geschenk.\n%s",
+        "My catch: %s, %s! 🎣 I fish in “Kimba!”, where fish bite by the real weather. Can you beat it? Use my code %s for a gift.\n%s",
+    )
+    val friendsTitle = L("Pakviesk draugų", "Freunde einladen", "Invite friends")
+    val friendsBody = L(
+        "Draugas įveda tavo kodą ir gauna 250 monetų bei 10 užmetimų. Tada jo žaidimas parodo padėkos kodą: įvedęs jį čia, gausi 300 monetų ir 5 užmetimus.",
+        "Dein Freund gibt deinen Code ein und bekommt 250 Münzen und 10 Würfe. Sein Spiel zeigt dann einen Dankescode: Gibst du ihn hier ein, bekommst du 300 Münzen und 5 Würfe.",
+        "Your friend enters your code and gets 250 coins and 10 casts. Their game then shows a thank-you code: enter it here for 300 coins and 5 casts.",
+    )
+    val yourCode = L("Tavo kodas", "Dein Code", "Your code")
+    val invite = L("Pakviesti", "Einladen", "Invite")
+    val inviteChooser = L("Pakviesk draugą", "Freund einladen", "Invite a friend")
+    val inviteText = L(
+        "Žaisk „Kimba!“ kartu su manim – žvejyba pagal tikrą orą 🎣 Įvesk mano kodą %s ir gausi 250 monetų bei 10 užmetimų.\n%s",
+        "Spiel „Wetterbiss“ mit mir – Angeln mit echtem Wetter 🎣 Gib meinen Code %s ein und du bekommst 250 Münzen und 10 Würfe.\n%s",
+        "Play “Kimba!” with me – fishing with real weather 🎣 Enter my code %s to get 250 coins and 10 casts.\n%s",
+    )
+    val enterCode = L("Draugo arba padėkos kodas", "Freundes- oder Dankescode", "Friend or thank-you code")
+    val redeem = L("Gauti", "Einlösen", "Redeem")
+    val codeBad = L("Kodas netinka arba jau panaudotas.", "Der Code passt nicht oder wurde schon benutzt.", "That code doesn't fit or was used already.")
+    val thanksTitle = L("Padėkok draugui", "Bedank dich beim Freund", "Thank your friend")
+    val thanksBody = L(
+        "Nusiųsk šį kodą draugui, kuris tave pakvietė: jis gaus 300 monetų.",
+        "Schick diesen Code dem Freund, der dich eingeladen hat: Er bekommt 300 Münzen.",
+        "Send this code to the friend who invited you: they get 300 coins.",
+    )
+    val thanksText = L(
+        "Ačiū, kad pakvietei į „Kimba!“ 🎣 Mano padėkos kodas tau: %s",
+        "Danke für die Einladung zu „Wetterbiss“ 🎣 Mein Dankescode für dich: %s",
+        "Thanks for inviting me to “Kimba!” 🎣 My thank-you code for you: %s",
+    )
+    val send = L("Siųsti", "Senden", "Send")
+    val giftFriendTitle = L("Draugo dovana!", "Geschenk vom Freund!", "A gift from your friend!")
+    val giftThanksTitle = L("Draugas prisijungė!", "Dein Freund ist dabei!", "Your friend joined!")
+    val giftShareTitle = L("Ačiū, kad pasigyrei!", "Danke fürs Teilen!", "Thanks for sharing!")
+    val giftFriendNote = L(
+        "Padėkos kodą draugui rasi skiltyje „Dienos užduotys“.",
+        "Den Dankescode für deinen Freund findest du bei den Tagesaufgaben.",
+        "You'll find the thank-you code for your friend under Daily quests.",
+    )
+    fun plusCasts(n: Int) = L("+$n ${Plural.lt(n, "užmetimas", "užmetimai", "užmetimų")}", "+$n ${if (n == 1) "Wurf" else "Würfe"}", "+$n ${if (n == 1) "cast" else "casts"}")
+
     fun sky(s: Sky) = when (s) {
         Sky.CLEAR -> L("Giedra", "Klar", "Clear")
         Sky.PARTLY -> L("Mažai debesuota", "Wolkig", "Partly cloudy")

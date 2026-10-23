@@ -43,6 +43,17 @@
             </intent-filter>
         </activity>
 
+        <!-- Hands the shared catch picture to the app the player shares it with. -->
+        <provider
+            android:name="androidx.core.content.FileProvider"
+            android:authorities="${applicationId}.share"
+            android:exported="false"
+            android:grantUriPermissions="true">
+            <meta-data
+                android:name="android.support.FILE_PROVIDER_PATHS"
+                android:resource="@xml/share_paths" />
+        </provider>
+
         <!-- Lets AppCompat persist the in-app language choice on Android 12 and lower. -->
         <service
             android:name="androidx.appcompat.app.AppLocalesMetadataHolderService"

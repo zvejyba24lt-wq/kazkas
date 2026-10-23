@@ -35,6 +35,8 @@ data class Saved(
     val notified: Set<String> = emptySet(),
     /** First-play tips the player has already learned (see `game.Tip`). */
     val tips: Set<String> = emptySet(),
+    /** Google Play's install referrer was read (it may carry a friend code). */
+    val referrerChecked: Boolean = false,
 )
 
 /** Everything the game remembers, in one DataStore. */
@@ -50,6 +52,7 @@ class Store(private val context: Context) {
     private val kSound = booleanPreferencesKey("sound")
     private val kNotified = stringPreferencesKey("notified")
     private val kTips = stringPreferencesKey("tips")
+    private val kReferrer = booleanPreferencesKey("referrer_checked")
 
     val flow: Flow<Saved> = context.dataStore.data.map(::read)
 
@@ -67,6 +70,7 @@ class Store(private val context: Context) {
             p[kSound] = s.sound
             p[kNotified] = s.notified.takeLast(40).joinToString("|")
             p[kTips] = s.tips.joinToString("|")
+            p[kReferrer] = s.referrerChecked
         }
     }
 
@@ -82,6 +86,7 @@ class Store(private val context: Context) {
         sound = p[kSound] ?: true,
         notified = p[kNotified]?.split("|")?.filter { it.isNotEmpty() }?.toSet() ?: emptySet(),
         tips = p[kTips]?.split("|")?.filter { it.isNotEmpty() }?.toSet() ?: emptySet(),
+        referrerChecked = p[kReferrer] ?: false,
     )
 }
 

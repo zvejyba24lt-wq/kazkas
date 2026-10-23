@@ -27,6 +27,14 @@ data class Progress(
     val caught: Int = 0,
     /** Keys of the [Achievement]s already earned. */
     val achieved: Set<String> = emptySet(),
+    /** This player's friend code (see [Invites]); made on first start. */
+    val inviteCode: String = "",
+    /** The friend code this player joined with, once. */
+    val invitedBy: String? = null,
+    /** Newcomers whose thank-you codes were redeemed. */
+    val thanked: Set<String> = emptySet(),
+    /** Epoch day of the last share that paid casts. */
+    val shareDay: Long = 0,
 ) {
     val level: Int get() = Levels.levelOf(xp)
     val gear: Gear get() = Gear(bait, tackle, rod, reel, line, Upgrade.BOAT.key in owned)
