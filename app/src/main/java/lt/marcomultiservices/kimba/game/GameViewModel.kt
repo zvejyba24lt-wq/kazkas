@@ -546,7 +546,6 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 Bite(rolled.species, rolled.golden, rolled.cm, rolled.waitSeconds.coerceIn(8.0, 11.0), listOf(3.0, 5.5), rolled.condition)
             learn(Tip.CAST)
             val tackle = p.gearHere.tackle
-            // A spinning lure is wound straight back: the take comes sooner, with fewer knocks before it.
             // A spinning lure is hunted while it is worked: the take comes sooner, with fewer knocks before it.
             val cast = if (tackle != Tackle.SPIN) bite else {
                 val wait = (bite.waitSeconds * 0.5).coerceIn(3.0, 7.0)
@@ -710,7 +709,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         // near the bank, leaves less line to wind in. A little room stays for the fight itself.
         val st = _lake.value
         val out = (st.castDist * (1.0 - (if (st.tackle == Tackle.SPIN) st.takenAt.toDouble() else 0.0))).coerceIn(0.12, 1.0)
-        val fight = Fight(bite.pull, rng, gear?.strength ?: 1.0, gear?.reel?.speed ?: 1.0, out)
+        // The net reaches about two and a half metres out, whatever rod it is.
+        val netAt = 2.5 / lt.marcomultiservices.kimba.core.Reach.metres(st.tackle)
+        val fight = Fight(bite.pull, rng, gear?.strength ?: 1.0, gear?.reel?.speed ?: 1.0, out, netAt)
         _lake.update { it.copy(stage = Stage.FIGHT, dip = 0f, tension = 0.3f, fightDistance = out.toFloat(), fightStart = out.toFloat(), alarm = false) }
         learn(Tip.STRIKE)
         thump(45, bite.pull)
@@ -817,7 +818,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     private suspend fun landed(bite: Bite) {
-        val c = _conditions.value ?: return
+        // Without the weather the catch can't be logged; never leave the fight hanging on screen.
+        val c = _conditions.value ?: run { _lake.update { it.copy(stage = Stage.LOST, lost = LostReason.ESCAPED) }; return }
         _lake.value.surprise?.let { landedSurprise(it); return }
         val back = returning?.takeIf { it.species == bite.species.id }
         returning = null
@@ -842,7 +844,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val record = !isNew && previous.all { it.cm < base.cm }
         // The fish of the moment pays double.
         val hot = Fish.hotSpecies(c, spot, saved.progress.onIce) == bite.species
-        val catch = base.copy(coins = Economy.coins(bite.species, bite.golden, bite.grams) * (if (hot) 2 else 1))
+        val catch = base.copy(coins = Economy.fishCoins(bite.species, bite.golden, bite.grams, hot, c.weather.sky))
         var reward: Reward? = null
         var achieved: List<Achievement> = emptyList()
         store.update { s ->

@@ -113,9 +113,11 @@ class Fight(
     private val reelSpeed: Double = 1.0,
     /** How far out the fish took the bait: 1 = a full cast, less when it bit close to the bank. */
     start: Double = 1.0,
+    /** How close (0..1 of a full cast) the landing net reaches: about 2.5 m from the angler. */
+    private val netAt: Double = 0.1,
 ) {
     /** Remaining distance to the landing net, 0..1 of a full cast. */
-    var distance = start.coerceIn(0.05, 1.0); private set
+    var distance = start.coerceIn(netAt + 0.02, 1.0); private set
     /** Line tension 0..1+, snaps when held above ~1. */
     var tension = 0.3; private set
     var stamina = 1.0; private set
@@ -132,7 +134,7 @@ class Fight(
     /** Becomes true for one step when the fish turns (for a cue). */
     var turned = false; private set
     /** Close in at the bank: the fish must be led into the landing net. */
-    val atNet: Boolean get() = distance < 0.1
+    val atNet: Boolean get() = distance < netAt
     /** The fish is calm and in front of the angler, where the net can take it. */
     val netReady: Boolean get() = abs(side) < 0.4 && !running
 

@@ -23,7 +23,9 @@ object Challenge {
     fun species(day: Long, month: Int): Species {
         val summer = listOf(Fish.roach, Fish.perch, Fish.bream, Fish.pike, Fish.rudd, Fish.tench, Fish.crucian, Fish.bleak)
         val winter = listOf(Fish.roach, Fish.perch, Fish.bream, Fish.pike, Fish.bleak, Fish.rudd)
-        val list = if (month in setOf(12, 1, 2)) winter else summer
+        // Tench, crucian carp and rudd hardly feed in cold water: spring and autumn leave them out.
+        val cold = listOf(Fish.roach, Fish.perch, Fish.bream, Fish.pike, Fish.bleak)
+        val list = when (month) { 12, 1, 2 -> winter; 3, 4, 10, 11 -> cold; else -> summer }
         val h = (day * 2654435761L) ushr 7
         return list[(h % list.size).toInt()]
     }
