@@ -89,7 +89,7 @@ class MainActivity : AppCompatActivity() {
         if (extras.getBoolean("widget", false)) lifecycleScope.launch {
             val saved = app.store.current()
             val forecast = saved.place?.let { app.weather.forecast(it) }
-            val v = lt.marcomultiservices.kimba.widget.BiteWidget.views(this@MainActivity, saved, forecast).apply(this@MainActivity, null)
+            val v = lt.marcomultiservices.kimba.widget.BiteWidget.views(applicationContext, saved, forecast).apply(applicationContext, null)
             val px = (resources.displayMetrics.density).let { d -> android.widget.FrameLayout.LayoutParams((320 * d).toInt(), (150 * d).toInt()) }
             val box = android.widget.FrameLayout(this@MainActivity).apply { setPadding(40, 40, 40, 40); addView(v, px) }
             android.app.AlertDialog.Builder(this@MainActivity).setView(box).show()
