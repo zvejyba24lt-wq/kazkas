@@ -6,7 +6,6 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.BlendMode
 import androidx.compose.ui.graphics.Brush
 import androidx.compose.ui.graphics.Color
-import androidx.compose.ui.graphics.Path
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.withTransform
 import lt.marcomultiservices.kimba.ui.scene.ArtPack
@@ -29,8 +28,8 @@ private val Flame = Color(0xFFFFC46B)
 fun nightStrength(colors: SceneColors): Float = ((1f - colors.daylight - 0.35f) / 0.5f).coerceIn(0f, 1f)
 
 /**
- * The headlamp beam from the angler (just below the bottom edge) to [target], the float or where
- * the line enters, with a bright pool of light on the water around it.
+ * The headlamp's light on [target], the float or where the line enters: a bright pool on the
+ * water around it.
  */
 fun DrawScope.drawHeadlamp(geo: SceneGeometry, colors: SceneColors, target: Offset, t: Float) {
     val k = nightStrength(colors)
@@ -38,26 +37,9 @@ fun DrawScope.drawHeadlamp(geo: SceneGeometry, colors: SceneColors, target: Offs
     // The head moves a little as the angler breathes and watches.
     val sway = sin(t * 0.45f) * geo.w * 0.006f
     val at = Offset(target.x + sway, target.y)
-    val from = Offset(geo.w * 0.6f, geo.h * 1.04f)
     val s = geo.scaleAt(at.y)
-    // In clear night air the beam itself barely shows: a faint shaft, feathered at the edges by
-    // drawing it several times wider and fainter, strongest out where it meets the water.
-    for (i in 0 until 4) {
-        val spread = geo.w * (0.035f + 0.03f * i) * s
-        val cone = Path().apply {
-            moveTo(from.x - geo.w * 0.01f, from.y)
-            lineTo(at.x - spread, at.y)
-            lineTo(at.x + spread, at.y)
-            lineTo(from.x + geo.w * 0.01f, from.y)
-            close()
-        }
-        drawPath(
-            cone,
-            Brush.linearGradient(listOf(Beam.copy(alpha = 0f), Beam.copy(alpha = 0.022f * k)), from, at),
-            blendMode = BlendMode.Screen,
-        )
-    }
-    // The pool on the water, flattened by the angle.
+    // In clear night air the beam itself doesn't show, only the pool where it falls on the
+    // water, flattened by the angle.
     val r = geo.w * 0.2f * s
     withTransform({ scale(1f, 0.36f, pivot = at) }) {
         drawCircle(
