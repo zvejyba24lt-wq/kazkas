@@ -34,6 +34,7 @@ class KimbaApp : Application() {
     override fun onCreate() {
         super.onCreate()
         ArtPack.init(this)
+        lt.marcomultiservices.kimba.play.PlayGames.init(this)
         val nm = getSystemService(NotificationManager::class.java)
         nm.createNotificationChannel(
             NotificationChannel(BiteWorker.CHANNEL, getString(R.string.channel_bites), NotificationManager.IMPORTANCE_DEFAULT),

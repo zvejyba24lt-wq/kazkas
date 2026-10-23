@@ -295,6 +295,9 @@ object S {
         "Bei dir hat es tagelang gefroren, das Eis ist schon %d cm dick. Jetzt angelst du durchs Eisloch mit der Eisangel: Barsche, Rotaugen und Quappen beißen am besten, Karpfen und Schleien ruhen im Schlamm.\n\nIm echten Leben betritt das Eis erst ab 10 cm Dicke, und nie allein.",
         "It has been freezing where you are for days, and the ice is already %d cm thick. Now you fish through a hole with an ice rod: perch, roach and burbot bite best, while carp and tench rest in the mud.\n\nIn real life only step onto ice thicker than 10 cm, and never alone.",
     )
+    // Play Games
+    val leaderboards = L("🏆 Lyderių lentelės", "🏆 Bestenlisten", "🏆 Leaderboards")
+    val playAchievements = L("Play pasiekimai", "Play-Erfolge", "Play achievements")
     // Storm
     val stormSoon = L("⚡ Perkūnija po ~%d val. · kimba", "⚡ Gewitter in ~%d Std. · Beißzeit", "⚡ Storm in ~%d h · fish feeding")
     val stormNow = L("⚡ Perkūnija · monetos ×2", "⚡ Gewitter · Münzen ×2", "⚡ Thunderstorm · coins ×2")

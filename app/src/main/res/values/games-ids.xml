@@ -1,0 +1,39 @@
+<?xml version="1.0" encoding="utf-8"?>
+<!--
+  Play Games Services IDs, all empty until the game is set up in Play Console.
+  While game_services_project_id is empty the game never touches Play Games and works as before.
+  Fill in from Play Console > Play Games Services > Setup (project ID) and from each
+  leaderboard and achievement page (their IDs look like CgkI...). See docs/PLAY-CONSOLE.md.
+-->
+<resources>
+    <string name="game_services_project_id" translatable="false"></string>
+
+    <string name="leaderboard_biggest_fish" translatable="false"></string>
+    <string name="leaderboard_daily_challenge" translatable="false"></string>
+    <string name="leaderboard_fish_caught" translatable="false"></string>
+    <string name="leaderboard_experience" translatable="false"></string>
+
+    <string name="achievement_first_fish" translatable="false"></string>
+    <string name="achievement_fish_25" translatable="false"></string>
+    <string name="achievement_fish_100" translatable="false"></string>
+    <string name="achievement_fish_500" translatable="false"></string>
+    <string name="achievement_species_5" translatable="false"></string>
+    <string name="achievement_species_12" translatable="false"></string>
+    <string name="achievement_species_all" translatable="false"></string>
+    <string name="achievement_kilo" translatable="false"></string>
+    <string name="achievement_five_kilo" translatable="false"></string>
+    <string name="achievement_ten_kilo" translatable="false"></string>
+    <string name="achievement_golden" translatable="false"></string>
+    <string name="achievement_legend" translatable="false"></string>
+    <string name="achievement_all_waters" translatable="false"></string>
+    <string name="achievement_rain" translatable="false"></string>
+    <string name="achievement_storm" translatable="false"></string>
+    <string name="achievement_fog" translatable="false"></string>
+    <string name="achievement_snow" translatable="false"></string>
+    <string name="achievement_ice_fish" translatable="false"></string>
+    <string name="achievement_stamps_10" translatable="false"></string>
+    <string name="achievement_stamps_40" translatable="false"></string>
+    <string name="achievement_traveler" translatable="false"></string>
+    <string name="achievement_streak_7" translatable="false"></string>
+    <string name="achievement_level_10" translatable="false"></string>
+</resources>

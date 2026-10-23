@@ -332,6 +332,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             if (new.isEmpty()) s else s.copy(progress = p)
         }
         if (got.isNotEmpty()) _events.update { it + GameEvent.Achieved(got) }
+        reportToPlay(store.current())
     }
 
     /** Remembers that the player has done the step of [tip], so its tip is not shown again. */
@@ -792,6 +793,26 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             r.levelUp?.let { l -> _events.update { it + GameEvent.LevelUp(l) } }
         }
         if (achieved.isNotEmpty()) _events.update { it + GameEvent.Achieved(achieved) }
+        reportToPlay(store.current())
+        // A good moment to ask for a rating: a record or a new kind, once the player is hooked.
+        val now = store.current()
+        if ((record || isNew) && now.progress.caught >= 15 && "review" !in now.notified) {
+            store.update { it.copy(notified = it.notified + "review") }
+            delay(1500)
+            lt.marcomultiservices.kimba.play.PlayReview.ask()
+        }
+    }
+
+    /** Sends the player's best numbers and achievements to Play Games (nothing until it is set up). */
+    private fun reportToPlay(s: Saved) {
+        val play = lt.marcomultiservices.kimba.play.PlayGames
+        if (!play.enabled) return
+        val p = s.progress
+        s.catches.maxOfOrNull { it.grams }?.let { play.score(lt.marcomultiservices.kimba.play.PlayGames.Board.BIGGEST_FISH, it.toLong()) }
+        if (p.challenge.day == today()) play.score(lt.marcomultiservices.kimba.play.PlayGames.Board.DAILY_CHALLENGE, p.challenge.grams.toLong())
+        play.score(lt.marcomultiservices.kimba.play.PlayGames.Board.FISH_CAUGHT, p.caught.toLong())
+        play.score(lt.marcomultiservices.kimba.play.PlayGames.Board.EXPERIENCE, p.xp.toLong())
+        p.achieved.forEach { play.unlock(it) }
     }
 
     /** Test money and experience for screenshots. */

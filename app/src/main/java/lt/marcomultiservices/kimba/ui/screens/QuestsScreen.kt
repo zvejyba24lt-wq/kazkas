@@ -49,6 +49,7 @@ import lt.marcomultiservices.kimba.ui.K
 import lt.marcomultiservices.kimba.ui.LocalLang
 import lt.marcomultiservices.kimba.ui.S
 import lt.marcomultiservices.kimba.ui.SectionTitle
+import lt.marcomultiservices.kimba.findActivity
 import lt.marcomultiservices.kimba.ui.t
 import androidx.compose.foundation.text.KeyboardOptions
 import androidx.compose.material.icons.rounded.Share
@@ -79,6 +80,19 @@ fun QuestsScreen(vm: GameViewModel, onBack: () -> Unit) {
                 Text(t(S.streakNow, p.streak), color = K.Amber, fontSize = 14.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.height(14.dp))
+            // Play Games leaderboards and achievements, once the game is set up in Play Console.
+            if (lt.marcomultiservices.kimba.play.PlayGames.enabled) {
+                val activity = LocalContext.current.findActivity()
+                Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(10.dp)) {
+                    OutlinedButton({ activity?.let { lt.marcomultiservices.kimba.play.PlayGames.showLeaderboards(it) } }, Modifier.weight(1f).height(46.dp)) {
+                        Text(t(S.leaderboards), color = K.Text, fontSize = 13.sp, maxLines = 1)
+                    }
+                    OutlinedButton({ activity?.let { lt.marcomultiservices.kimba.play.PlayGames.showAchievements(it) } }, Modifier.weight(1f).height(46.dp)) {
+                        Text(t(S.playAchievements), color = K.Text, fontSize = 13.sp, maxLines = 1)
+                    }
+                }
+                Spacer(Modifier.height(14.dp))
+            }
             ChallengeCard(p)
             Spacer(Modifier.height(10.dp))
             for (q in quests.list) {

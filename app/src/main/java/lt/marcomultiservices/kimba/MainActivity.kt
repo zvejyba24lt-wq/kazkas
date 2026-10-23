@@ -38,6 +38,16 @@ class MainActivity : AppCompatActivity() {
         }
     }
 
+    override fun onResume() {
+        super.onResume()
+        lt.marcomultiservices.kimba.play.PlayGames.attach(this)
+    }
+
+    override fun onPause() {
+        lt.marcomultiservices.kimba.play.PlayGames.detach(this)
+        super.onPause()
+    }
+
     override fun onNewIntent(intent: Intent) {
         super.onNewIntent(intent)
         handleDemo(intent)

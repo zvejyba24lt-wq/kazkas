@@ -117,6 +117,8 @@ dependencies {
     implementation("com.google.android.ump:user-messaging-platform:3.2.0")
     implementation("com.android.billingclient:billing-ktx:8.0.0")
     implementation("com.android.installreferrer:installreferrer:2.2")
+    implementation("com.google.android.gms:play-services-games-v2:20.1.2")
+    implementation("com.google.android.play:review-ktx:2.0.2")
 
     implementation("org.jetbrains.kotlinx:kotlinx-serialization-json:1.8.1")
     implementation("org.jetbrains.kotlinx:kotlinx-coroutines-android:1.10.2")
