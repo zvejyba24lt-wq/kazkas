@@ -372,4 +372,17 @@ class CoreTest {
         assertEquals(m, m.migrated())
         assertEquals(Progress(), Progress().migrated())
     }
+
+    @Test
+    fun aFishHookedCloseNeedsLessWinding() {
+        val far = Fight(0.3, Random(1))
+        val near = Fight(0.3, Random(1), start = 0.35)
+        assertEquals(1.0, far.distance, 1e-9)
+        assertEquals(0.35, near.distance, 1e-9)
+        var steps = 0
+        while (near.result == null && steps < 10_000) { near.step(0.05, reeling = near.tension < 0.85); steps++ }
+        var farSteps = 0
+        while (far.result == null && farSteps < 10_000) { far.step(0.05, reeling = far.tension < 0.85); farSteps++ }
+        assertTrue(steps < farSteps)
+    }
 }

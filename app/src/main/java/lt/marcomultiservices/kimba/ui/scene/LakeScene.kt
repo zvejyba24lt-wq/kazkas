@@ -156,8 +156,18 @@ fun LakeScene(
                     Offset(from.x + (target.x - from.x) * e, from.y + (target.y - from.y) * f - sin(PI.toFloat() * f) * arc)
                 }
                 s.stage == Stage.FIGHT -> {
-                    val k = 1f - s.fightDistance
-                    Offset(hookAt.x + (geo.w * 0.58f - hookAt.x) * k, hookAt.y + (geo.h * 0.93f - hookAt.y) * k)
+                    // From where it was hooked in to the bank below the angler; a fish that wins line
+                    // swims on out past that point towards the far shore.
+                    val bank = Offset(geo.w * 0.58f, geo.h * 0.93f)
+                    val start = s.fightStart.coerceAtLeast(0.05f)
+                    if (s.fightDistance <= start) {
+                        val k = s.fightDistance / start
+                        Offset(bank.x + (hookAt.x - bank.x) * k, bank.y + (hookAt.y - bank.y) * k)
+                    } else {
+                        val far = Offset(hookAt.x, geo.hy + geo.h * 0.04f)
+                        val k = ((s.fightDistance - start) / (1f - start).coerceAtLeast(0.01f)).coerceIn(0f, 1f)
+                        Offset(hookAt.x + (far.x - hookAt.x) * k, hookAt.y + (far.y - hookAt.y) * k)
+                    }
                 }
                 s.stage == Stage.LANDING -> {
                     val l = lift.value

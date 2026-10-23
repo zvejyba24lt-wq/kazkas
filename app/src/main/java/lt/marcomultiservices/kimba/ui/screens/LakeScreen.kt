@@ -209,7 +209,8 @@ fun LakeScreen(
             Spacer(Modifier.weight(1f))
             // First-play tips: each shows until the player has done that step once.
             val known = saved?.tips
-            fun tip(t: Tip) = known != null && t.name !in known
+            // A tip waits while a dialog (daily gift, level up) is open, so the two never overlap.
+            fun tip(t: Tip) = known != null && t.name !in known && events.isEmpty()
             when (stage) {
                 Stage.IDLE, Stage.CHARGING -> if (tip(Tip.CAST)) Coach(Tip.CAST, arrow = true)
                 Stage.WAITING -> if (!lake.hint && tip(Tip.WAIT)) Coach(Tip.WAIT, tackle = lake.tackle) else Hint(
@@ -221,8 +222,8 @@ fun LakeScreen(
                     },
                     warn = lake.hint,
                 )
-                Stage.BITE -> { if (tip(Tip.STRIKE)) Coach(Tip.STRIKE); StrikeBanner() }
-                Stage.FIGHT -> { if (tip(Tip.REEL)) { Coach(Tip.REEL); Spacer(Modifier.height(8.dp)) }; FightHud(lake.tension, lake.fightDistance, lake.running) }
+                Stage.BITE -> if (tip(Tip.STRIKE)) Coach(Tip.STRIKE)
+                Stage.FIGHT -> { if (tip(Tip.REEL)) { Coach(Tip.REEL); Spacer(Modifier.height(8.dp)) }; FightHud(lake.tension, lake.fightDistance, lake.running, lake.tackle) }
                 else -> Unit
             }
             Spacer(Modifier.height(10.dp))
@@ -251,6 +252,9 @@ fun LakeScreen(
                 }
             }
         }
+
+        // The strike call sits above the middle of the screen, clear of the thumbs.
+        if (stage == Stage.BITE) Box(Modifier.fillMaxSize(), contentAlignment = androidx.compose.ui.BiasAlignment(0f, -0.3f)) { StrikeBanner() }
 
         AnimatedVisibility(stage == Stage.CAUGHT || stage == Stage.LOST, enter = fadeIn() + scaleIn(initialScale = 0.9f), exit = fadeOut()) {
             Box(Modifier.fillMaxSize().background(Color(0x66000000)).clickable(enabled = false) {}, contentAlignment = Alignment.Center) {
@@ -469,7 +473,7 @@ private fun Coach(tip: Tip, arrow: Boolean = false, tackle: Tackle = Tackle.FLOA
 @Composable
 private fun StrikeBanner() {
     val pulse by rememberInfiniteTransition(label = "strike").animateFloat(0.92f, 1.12f, infiniteRepeatable(tween(220), RepeatMode.Reverse), label = "s")
-    Box(Modifier.fillMaxWidth().padding(bottom = 60.dp), contentAlignment = Alignment.Center) {
+    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
         Text(
             t(S.strike), color = K.Amber, fontSize = 54.sp, fontWeight = FontWeight.Black,
             style = MaterialTheme.typography.displaySmall.copy(shadow = androidx.compose.ui.graphics.Shadow(Color.Black, Offset(0f, 4f), 12f)),
@@ -479,11 +483,14 @@ private fun StrikeBanner() {
 }
 
 @Composable
-private fun FightHud(tension: Float, distance: Float, running: Boolean) {
+private fun FightHud(tension: Float, distance: Float, running: Boolean, tackle: Tackle) {
     Glass(Modifier.fillMaxWidth(), padding = 14.dp) {
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 Text(if (running) t(S.fishRuns) else t(S.reelHint), color = if (running) K.Danger else K.Text, fontSize = 14.sp, fontWeight = if (running) FontWeight.Bold else FontWeight.Normal, modifier = Modifier.weight(1f))
+                // Line still out, in metres: a float is fished close, a feeder far out.
+                val full = when (tackle) { Tackle.FEEDER -> 60; Tackle.SPIN -> 45; else -> 25 }
+                Text("${(distance.coerceIn(0f, 1f) * full).toInt().coerceAtLeast(1)} m", color = K.Amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
             }
             Spacer(Modifier.height(10.dp))
             // Line tension: green is safe, red snaps.

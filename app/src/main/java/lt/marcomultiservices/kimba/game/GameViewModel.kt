@@ -88,6 +88,8 @@ data class LakeState(
     val alarm: Boolean = false,
     val tension: Float = 0f,
     val fightDistance: Float = 1f,
+    /** Where the fish was hooked, on the same scale as [fightDistance]. */
+    val fightStart: Float = 1f,
     val running: Boolean = false,
     val bite: Bite? = null,
     val lost: LostReason? = null,
@@ -349,9 +351,11 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private suspend fun waitForBite(bite: Bite) = kotlinx.coroutines.coroutineScope {
         _lake.update { it.copy(stage = Stage.WAITING, dip = 0f) }
-        val start = System.currentTimeMillis()
+        var start = System.currentTimeMillis()
         val nibbles = ArrayDeque(bite.nibbles)
         while (true) {
+            // In the background the wait holds still, so the bite is not missed unseen.
+            if (paused) { delay(200); start += 200; continue }
             val t = (System.currentTimeMillis() - start) / 1000.0
             if (t >= bite.waitSeconds) break
             val next = nibbles.firstOrNull()
@@ -383,13 +387,16 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         sfx.play(Sfx.Fx.BITE, rate = if (bite.pull > 0.6) 0.85f else 1f)
         // A beginner gets more time to strike.
         val tackle = _lake.value.tackle
-        delay(when {
+        val window = when {
             !knows(Tip.STRIKE) -> 1700L
             tackle == Tackle.FEEDER -> 1300L
             tackle == Tackle.SPIN -> 800L
             bite.golden != null || bite.pull > 0.8 -> 750L
             else -> 950L
-        })
+        }
+        // Only time in front of the player counts towards the strike window.
+        var left = window
+        while (left > 0) { delay(50); if (!paused) left -= 50 }
         if (_lake.value.stage == Stage.BITE) {
             _lake.update { it.copy(stage = Stage.LOST, lost = LostReason.MISSED, dip = 0f, alarm = false) }
         }
@@ -424,8 +431,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         job?.cancel()
         reeling = false
         val gear = _saved.value?.progress?.gear
-        val fight = Fight(bite.pull, rng, gear?.strength ?: 1.0, gear?.reel?.speed ?: 1.0)
-        _lake.update { it.copy(stage = Stage.FIGHT, dip = 0f, tension = 0.3f, fightDistance = 1f, alarm = false) }
+        // The fish is played in from where it took the bait: a short cast, or a spinner taken
+        // near the bank, leaves less line to wind in. A little room stays for the fight itself.
+        val st = _lake.value
+        val out = (st.castDist * (1.0 - (if (st.tackle == Tackle.SPIN) st.takenAt.toDouble() else 0.0))).coerceIn(0.3, 1.0)
+        val fight = Fight(bite.pull, rng, gear?.strength ?: 1.0, gear?.reel?.speed ?: 1.0, out)
+        _lake.update { it.copy(stage = Stage.FIGHT, dip = 0f, tension = 0.3f, fightDistance = out.toFloat(), fightStart = out.toFloat(), alarm = false) }
         learn(Tip.STRIKE)
         buzz(40)
         sfx.play(Sfx.Fx.SPLASH, 0.45f, rate = 1.2f)

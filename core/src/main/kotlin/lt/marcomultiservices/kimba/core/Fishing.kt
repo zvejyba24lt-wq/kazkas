@@ -88,9 +88,11 @@ class Fight(
     private val strength: Double = 1.0,
     /** Reel speed multiplier. */
     private val reelSpeed: Double = 1.0,
+    /** How far out the fish took the bait: 1 = a full cast, less when it bit close to the bank. */
+    start: Double = 1.0,
 ) {
-    /** Remaining distance to the landing net, 1 = where it was hooked. */
-    var distance = 1.0; private set
+    /** Remaining distance to the landing net, 0..1 of a full cast. */
+    var distance = start.coerceIn(0.05, 1.0); private set
     /** Line tension 0..1+, snaps when held above ~1. */
     var tension = 0.3; private set
     var stamina = 1.0; private set
