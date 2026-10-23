@@ -107,6 +107,7 @@ object ShareCard {
             cv.drawCircle(W / 2f, cy + fh * 0.42f, fw * 0.5f, p)
             cv.restore()
             p.shader = null
+            p.color = 0xFF000000.toInt()
             if (golden) p.colorFilter = ColorMatrixColorFilter(GOLD)
             cv.drawBitmap(fish, null, RectF(W / 2f - fw / 2, cy - fh / 2, W / 2f + fw / 2, cy + fh / 2), p)
             p.colorFilter = null
