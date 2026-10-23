@@ -940,6 +940,47 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         updateProgress { it.copy(trips = it.trips + d.id, trip = d.id) }.invokeOnCompletion { afterMove() }
     }
 
+    /** The friend whose camp is being visited, or null for the player's own. */
+    val visiting = MutableStateFlow<lt.marcomultiservices.kimba.core.FriendCard?>(null)
+
+    /** The player's own card for friends: as a message with the code and the game's link. */
+    suspend fun myCardText(lang: lt.marcomultiservices.kimba.core.Lang): String {
+        val s = store.current()
+        val card = lt.marcomultiservices.kimba.core.FriendCards.make(s.progress, s.catches, today(), zone)
+        val sp = lt.marcomultiservices.kimba.core.Tournament.species(card.week).name[lang]
+        val result = if (card.grams > 0) lt.marcomultiservices.kimba.core.Plural.kg(card.grams, lang) else "–"
+        return lt.marcomultiservices.kimba.ui.S.cardText[lang].format(sp, result, lt.marcomultiservices.kimba.share.ShareCard.link(s.progress.inviteCode), lt.marcomultiservices.kimba.core.FriendCards.encode(card))
+    }
+
+    enum class CardResult { ADDED, OWN, NONE }
+
+    /** Reads a friend's card out of pasted text and keeps it. */
+    fun addFriendCard(text: String, done: (CardResult) -> Unit) {
+        val card = lt.marcomultiservices.kimba.core.FriendCards.find(text)
+        if (card == null) { done(CardResult.NONE); return }
+        viewModelScope.launch {
+            var added = false
+            store.update { s -> lt.marcomultiservices.kimba.core.FriendCards.add(s.progress, card)?.let { added = true; s.copy(progress = it) } ?: s }
+            done(if (added) CardResult.ADDED else CardResult.OWN)
+        }
+    }
+
+    /** Puts a made-up friend on the table (for screenshots). */
+    fun demoFriendCard() {
+        val week = lt.marcomultiservices.kimba.core.Tournament.week(today())
+        val card = lt.marcomultiservices.kimba.core.FriendCard(
+            "QWERTY", week, 1840, listOf("FIRE", "TENT", "DOG", "FLAG"),
+            listOf(lt.marcomultiservices.kimba.core.FishMark("pike", 78.0), lt.marcomultiservices.kimba.core.FishMark("carp", 61.0), lt.marcomultiservices.kimba.core.FishMark("perch", 33.0)), 9,
+        )
+        updateProgress { p -> lt.marcomultiservices.kimba.core.FriendCards.add(p, card) }
+    }
+
+    /** Opens the made-up friend's camp (for screenshots). */
+    fun demoVisit() = viewModelScope.launch {
+        delay(400)
+        visiting.value = store.current().progress.friendCards.lastOrNull()
+    }
+
     /** Shows a surprise catch coming out (for screenshots). */
     fun demoSurprise(name: String) {
         val found = lt.marcomultiservices.kimba.core.Surprise.entries.firstOrNull { it.name.equals(name, true) } ?: return

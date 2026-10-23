@@ -64,9 +64,13 @@ import kotlin.math.sin
 fun CampScreen(vm: GameViewModel, onBack: () -> Unit) {
     val saved by vm.saved.collectAsStateWithLifecycle()
     val conditions by vm.conditions.collectAsStateWithLifecycle()
-    val p = saved?.progress ?: Progress()
+    // Visiting a friend: their camp pieces and their best fish, from the card they shared.
+    val visit by vm.visiting.collectAsStateWithLifecycle()
+    val friend = visit
+    val p = if (friend != null) Progress(owned = friend.camp.map { "camp:$it" }.toSet()) else saved?.progress ?: Progress()
+    val visitCatches = friend?.best?.mapNotNull { m -> lt.marcomultiservices.kimba.core.Fish.byId(m.species)?.let { sp -> lt.marcomultiservices.kimba.core.Catch(m.species, m.golden, m.cm, sp.grams(m.cm), 0L, lt.marcomultiservices.kimba.core.Sky.CLEAR, 0.0, "") } }
     val time = lt.marcomultiservices.kimba.ui.scene.rememberSceneTime()
-    ScreenFrame(t(S.campTitle), onBack) {
+    ScreenFrame(if (friend != null) t(S.friendCamp, friend.code) else t(S.campTitle), { onBack(); vm.visiting.value = null }) {
         LazyColumn(Modifier.navigationBarsPadding(), contentPadding = PaddingValues(16.dp, 4.dp, 16.dp, 24.dp)) {
             item {
                 val colors = conditions?.let { SceneColors(it) }
@@ -74,7 +78,7 @@ fun CampScreen(vm: GameViewModel, onBack: () -> Unit) {
                     drawCamp(p, colors, time.floatValue)
                 }
                 // The keep pond: the biggest fish of each kind caught, swimming.
-                val best = (saved?.catches ?: emptyList()).groupBy { it.golden ?: it.species }.values.map { l -> l.maxBy { it.grams } }.sortedByDescending { it.grams }.take(10)
+                val best = (visitCatches ?: saved?.catches ?: emptyList()).groupBy { it.golden ?: it.species }.values.map { l -> l.maxBy { it.grams } }.sortedByDescending { it.grams }.take(10)
                 Spacer(Modifier.height(14.dp))
                 lt.marcomultiservices.kimba.ui.SectionTitle(t(S.pondTitle))
                 Spacer(Modifier.height(4.dp))
@@ -82,16 +86,16 @@ fun CampScreen(vm: GameViewModel, onBack: () -> Unit) {
                 Spacer(Modifier.height(8.dp))
                 Canvas(Modifier.fillMaxWidth().height(200.dp).clip(RoundedCornerShape(20.dp))) { drawKeepPond(best, time.floatValue) }
                 Spacer(Modifier.height(10.dp))
-                Row(verticalAlignment = Alignment.CenterVertically) {
+                if (friend == null) Row(verticalAlignment = Alignment.CenterVertically) {
                     CoinsLabel(p.coins, 20)
                     Spacer(Modifier.weight(1f))
                     Text(t(S.campIncome, CampItem.DAILY_PER_ITEM * p.campCount()), color = K.Gold, fontSize = 13.sp, fontWeight = FontWeight.Bold)
                 }
                 Spacer(Modifier.height(6.dp))
-                Text(t(S.campNote), color = K.Muted, fontSize = 13.sp, lineHeight = 18.sp)
+                Text(if (friend != null) t(S.friendCampNote, friend.level) else t(S.campNote), color = K.Muted, fontSize = 13.sp, lineHeight = 18.sp)
                 Spacer(Modifier.height(12.dp))
             }
-            items(CampItem.entries.toList(), key = { it.name }) { item ->
+            if (friend == null) items(CampItem.entries.toList(), key = { it.name }) { item ->
                 CampRow(item, p) { vm.buyCamp(item) }
                 Spacer(Modifier.height(8.dp))
             }

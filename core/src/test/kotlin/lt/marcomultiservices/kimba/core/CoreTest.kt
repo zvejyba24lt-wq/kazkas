@@ -591,5 +591,29 @@ class CoreTest {
         val (p3, _) = Story.advance(busy, day, 20_000L, zone)!!
         assertTrue(p3.opened(Water.RIVER) && !Progress().opened(Water.RIVER))
     }
+
+    @Test
+    fun friendCardsTravelAsText() {
+        val zone = java.time.ZoneId.of("Europe/Vilnius")
+        val day = java.time.LocalDate.of(2026, 10, 21).toEpochDay()
+        val week = Tournament.week(day)
+        assertEquals(Tournament.week(java.time.LocalDate.of(2026, 10, 19).toEpochDay()), week)
+        assertEquals(week + 1, Tournament.week(java.time.LocalDate.of(2026, 10, 26).toEpochDay()))
+        assertEquals(5, Tournament.daysLeft(day))
+        val sp = Tournament.species(week).id
+        val millis = java.time.LocalDate.ofEpochDay(day).atStartOfDay(zone).toInstant().toEpochMilli() + 3_600_000
+        val catches = listOf(Catch(sp, null, 40.0, 900, millis, Sky.CLEAR, 10.0, "x"), Catch(sp, null, 30.0, 400, millis, Sky.CLEAR, 10.0, "x"))
+        val me = Progress(inviteCode = "ABCDEF", owned = setOf(CampItem.FIRE.key))
+        val card = FriendCards.make(me, catches, day, zone)
+        assertEquals(900, card.grams)
+        assertEquals(listOf("FIRE"), card.camp)
+        val text = "Mano Kimba rezultatas! " + FriendCards.encode(card) + " parsisiųsk žaidimą"
+        val back = FriendCards.find(text)!!
+        assertEquals(card, back)
+        assertEquals(null, FriendCards.add(me, back))
+        val friend = FriendCards.add(Progress(inviteCode = "ZZZZZZ"), back)!!
+        assertEquals(1, FriendCards.add(friend, back.copy(grams = 1000))!!.friendCards.size)
+        assertEquals(null, FriendCards.find("KIMBA1:@@@"))
+    }
 }
 

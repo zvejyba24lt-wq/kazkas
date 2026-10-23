@@ -41,6 +41,8 @@ data class Progress(
     val jonasWaters: Set<Water> = emptySet(),
     /** Jonas told every legend's clues at once. */
     val allClues: Boolean = false,
+    /** Friends' shared cards: the weekly table and their camps to visit. */
+    val friendCards: List<FriendCard> = emptyList(),
     /** This player's friend code (see [Invites]); made on first start. */
     val inviteCode: String = "",
     /** The friend code this player joined with, once. */

@@ -365,6 +365,27 @@ object S {
         "Mein Fang: %s, %s! 🎣 Ich angle bei „Wetterbiss“ – hier beißen die Fische nach echtem Wetter. Schaffst du mehr? Mit meinem Code %s gibt's ein Geschenk.\n%s",
         "My catch: %s, %s! 🎣 I fish in “Kimba!”, where fish bite by the real weather. Can you beat it? Use my code %s for a gift.\n%s",
     )
+    // Weekly friends tournament and friends' camps
+    val tourTitle = L("Savaitės turnyras su draugais", "Wochenturnier mit Freunden", "Weekly tournament with friends")
+    val tourFish = L("Savaitės žuvis: %s (sveriama sunkiausia)", "Fisch der Woche: %s (der schwerste zählt)", "Fish of the week: %s (heaviest counts)")
+    val tourLeft = L("liko dienų: %d", "noch %d Tage", "%d days left")
+    val tourYou = L("Tu", "Du", "You")
+    val tourNone = L("Dar nėra draugų lentelėje. Nusiųsk savo rezultatą draugui, o jo atsakymą įklijuok čia.", "Noch keine Freunde in der Tabelle. Schick deinem Freund dein Ergebnis und füge seine Antwort hier ein.", "No friends on the table yet. Send your result to a friend and paste their reply here.")
+    val tourOld = L("praėjusios savaitės", "von letzter Woche", "last week's")
+    val tourSend = L("Siųsti rezultatą", "Ergebnis senden", "Send result")
+    val tourPaste = L("Įklijuoti draugo", "Vom Freund einfügen", "Paste a friend's")
+    val tourAdded = L("Draugas pridėtas – gali aplankyti jo stovyklą.", "Freund hinzugefügt – du kannst sein Lager besuchen.", "Friend added – you can visit their camp.")
+    val tourOwn = L("Tai tavo paties kodas.", "Das ist dein eigener Code.", "That's your own code.")
+    val tourNoCard = L("Iškarpinėje nėra draugo kodo (KIMBA1:…).", "In der Zwischenablage ist kein Freundescode (KIMBA1:…).", "No friend code (KIMBA1:…) on the clipboard.")
+    val tourVisit = L("Aplankyti draugų stovyklas", "Lager von Freunden besuchen", "Visit friends' camps")
+    val tourLevel = L("%d lygis", "Level %d", "level %d")
+    val cardText = L(
+        "Savaitės turnyras „Kimba!“: žuvis – %s, mano rezultatas – %s. Pabandyk aplenkti! 🎣\nŽaidimas: %s\nĮklijuok šį kodą žaidime (Užduotys → Turnyras):\n%s",
+        "Wochenturnier „Wetterbiss“: Fisch der Woche %s, mein Ergebnis %s. Schlag mich! 🎣\nSpiel: %s\nFüge diesen Code im Spiel ein (Aufgaben → Turnier):\n%s",
+        "“Kimba!” weekly tournament: fish of the week %s, my result %s. Beat me! 🎣\nGame: %s\nPaste this code in the game (Quests → Tournament):\n%s",
+    )
+    val friendCamp = L("Draugo %s stovykla", "Lager von %s", "%s's camp")
+    val friendCampNote = L("Draugas pasiekė %d lygį. Žemiau – jo geriausios žuvys.", "Dein Freund ist auf Level %d. Unten seine besten Fische.", "Your friend is at level %d. Below are their best fish.")
     val friendsTitle = L("Pakviesk draugų", "Freunde einladen", "Invite friends")
     val friendsBody = L(
         "Draugas įveda tavo kodą ir gauna 250 monetų bei 10 užmetimų. Tada jo žaidimas parodo padėkos kodą: įvedęs jį čia, gausi 300 monetų ir 5 užmetimus.",

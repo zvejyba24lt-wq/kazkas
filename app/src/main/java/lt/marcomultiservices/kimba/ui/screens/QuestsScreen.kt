@@ -66,9 +66,15 @@ import lt.marcomultiservices.kimba.core.Challenge
 import lt.marcomultiservices.kimba.share.ShareCard
 import lt.marcomultiservices.kimba.ui.amberButtonColors
 import java.time.LocalDate
+import androidx.compose.foundation.clickable
+import androidx.compose.runtime.rememberCoroutineScope
+import kotlinx.coroutines.launch
+import lt.marcomultiservices.kimba.core.FriendCard
+import lt.marcomultiservices.kimba.core.Tournament
+import java.time.ZoneId
 
 @Composable
-fun QuestsScreen(vm: GameViewModel, onBack: () -> Unit) {
+fun QuestsScreen(vm: GameViewModel, onVisit: () -> Unit = {}, onBack: () -> Unit) {
     val saved by vm.saved.collectAsStateWithLifecycle()
     val p = saved?.progress ?: Progress()
     val quests = Quests.today(p.quests, LocalDate.now().toEpochDay(), p.level)
@@ -126,6 +132,10 @@ fun QuestsScreen(vm: GameViewModel, onBack: () -> Unit) {
                     }
                 }
             }
+            Spacer(Modifier.height(26.dp))
+            SectionTitle(t(S.tourTitle))
+            Spacer(Modifier.height(10.dp))
+            TournamentCard(vm, p, saved?.catches ?: emptyList()) { vm.visiting.value = it; onVisit() }
             Spacer(Modifier.height(26.dp))
             SectionTitle(t(S.friendsTitle))
             Spacer(Modifier.height(10.dp))
@@ -251,6 +261,106 @@ private fun AchievementRow(a: Achievement, earned: Boolean, value: Int) {
         Spacer(Modifier.width(8.dp))
         CoinIcon(Modifier.size(14.dp))
         Text(" ${a.coins}", color = if (earned) K.Gold else K.Muted, fontSize = 12.sp, fontWeight = FontWeight.Bold)
+    }
+}
+
+/**
+ * The weekly tournament among friends: the fish of the week, the player and every friend whose
+ * card is from this week ranked by weight, and buttons to send the player's own card and paste a
+ * friend's. Tapping a friend opens their camp.
+ */
+@Composable
+private fun TournamentCard(vm: GameViewModel, p: Progress, catches: List<Catch>, onVisit: (FriendCard) -> Unit) {
+    val lang = LocalLang.current
+    val context = LocalContext.current
+    val scope = rememberCoroutineScope()
+    val shape = RoundedCornerShape(16.dp)
+    val zone = remember { ZoneId.systemDefault() }
+    val day = LocalDate.now().toEpochDay()
+    val week = Tournament.week(day)
+    val species = Tournament.species(week)
+    val mine = Tournament.best(catches, week, zone)
+    var note by remember { mutableStateOf<String?>(null) }
+    // The player plus friends, this week's results first, heaviest on top.
+    val rows = (listOf<FriendCard?>(null) + p.friendCards).sortedByDescending { c ->
+        if (c == null) mine else if (c.week == week) c.grams else -1
+    }
+    Column(
+        Modifier.fillMaxWidth().clip(shape)
+            .background(Brush.verticalGradient(listOf(Color(0x33C9A24A), Color(0x14FFFFFF))))
+            .border(1.dp, Color(0x66E0B860), shape)
+            .padding(14.dp),
+    ) {
+        Row(verticalAlignment = Alignment.CenterVertically) {
+            FishPicture(species.id, false, null, Modifier.size(64.dp, 34.dp))
+            Spacer(Modifier.width(10.dp))
+            Column(Modifier.weight(1f)) {
+                Text(t(S.tourFish, species.name[lang]), color = K.Text, fontSize = 14.sp, fontWeight = FontWeight.Bold, lineHeight = 18.sp)
+                Text(t(S.tourLeft, Tournament.daysLeft(day)), color = K.Muted, fontSize = 12.sp)
+            }
+        }
+        Spacer(Modifier.height(10.dp))
+        rows.forEachIndexed { i, c ->
+            val you = c == null
+            val grams = if (c == null) mine else if (c.week == week) c.grams else 0
+            Row(
+                Modifier.fillMaxWidth().clip(RoundedCornerShape(10.dp))
+                    .background(if (you) Color(0x26E0B860) else Color.Transparent)
+                    .then(if (c != null) Modifier.clickable { onVisit(c) } else Modifier)
+                    .padding(8.dp, 7.dp),
+                verticalAlignment = Alignment.CenterVertically,
+            ) {
+                Text("${i + 1}.", color = if (i == 0) K.Gold else K.Muted, fontSize = 14.sp, fontWeight = FontWeight.Bold, modifier = Modifier.width(28.dp))
+                Column(Modifier.weight(1f)) {
+                    Text(if (you) t(S.tourYou) else c!!.code, color = K.Text, fontSize = 14.sp, fontWeight = if (you) FontWeight.Bold else FontWeight.Normal)
+                    if (c != null) Text(t(S.tourLevel, c.level) + if (c.week != week) " · " + t(S.tourOld) else "", color = K.Muted, fontSize = 11.sp)
+                }
+                Text(if (grams > 0) lt.marcomultiservices.kimba.core.Plural.kg(grams, lang) else "–", color = if (grams > 0) K.Gold else K.Muted, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+                if (c != null) Text("  ›", color = K.Muted, fontSize = 16.sp)
+            }
+        }
+        if (p.friendCards.isEmpty()) {
+            Spacer(Modifier.height(6.dp))
+            Text(t(S.tourNone), color = K.Muted, fontSize = 12.sp, lineHeight = 17.sp)
+        }
+        Spacer(Modifier.height(12.dp))
+        Row(horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+            Button(
+                {
+                    scope.launch {
+                        val text = vm.myCardText(lang)
+                        runCatching { ShareCard.sendText(context, text, S.tourSend[lang]) }
+                    }
+                },
+                Modifier.weight(1f),
+                enabled = p.inviteCode.isNotEmpty(),
+                colors = amberButtonColors(),
+            ) {
+                Icon(Icons.Rounded.Share, null, modifier = Modifier.size(16.dp))
+                Spacer(Modifier.width(4.dp))
+                Text(t(S.tourSend), fontSize = 13.sp, maxLines = 1)
+            }
+            OutlinedButton(
+                {
+                    val cm = context.getSystemService(android.content.Context.CLIPBOARD_SERVICE) as? android.content.ClipboardManager
+                    val text = runCatching { cm?.primaryClip?.getItemAt(0)?.coerceToText(context)?.toString() }.getOrNull().orEmpty()
+                    vm.addFriendCard(text) { r ->
+                        note = when (r) {
+                            GameViewModel.CardResult.ADDED -> S.tourAdded[lang]
+                            GameViewModel.CardResult.OWN -> S.tourOwn[lang]
+                            GameViewModel.CardResult.NONE -> S.tourNoCard[lang]
+                        }
+                    }
+                },
+                Modifier.weight(1f),
+            ) {
+                Text(t(S.tourPaste), color = K.Text, fontSize = 13.sp, maxLines = 1)
+            }
+        }
+        note?.let {
+            Spacer(Modifier.height(6.dp))
+            Text(it, color = K.Amber, fontSize = 12.sp)
+        }
     }
 }
 

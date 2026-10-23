@@ -61,9 +61,9 @@ fun AppRoot(vm: GameViewModel, startScreen: Pair<Screen, Long>?) {
                 { screen = Screen.MAP }, { screen = Screen.SHOP }, { screen = Screen.QUESTS },
             )
             Screen.SHOP -> ShopScreen(vm) { screen = Screen.LAKE }
-            Screen.MAP -> MapScreen(vm, { screen = Screen.LAKE }, onCamp = { screen = Screen.CAMP }) { screen = Screen.LAKE }
-            Screen.CAMP -> lt.marcomultiservices.kimba.ui.screens.CampScreen(vm) { screen = Screen.MAP }
-            Screen.QUESTS -> QuestsScreen(vm) { screen = Screen.LAKE }
+            Screen.MAP -> MapScreen(vm, { screen = Screen.LAKE }, onCamp = { vm.visiting.value = null; screen = Screen.CAMP }) { screen = Screen.LAKE }
+            Screen.CAMP -> lt.marcomultiservices.kimba.ui.screens.CampScreen(vm) { screen = if (vm.visiting.value != null) Screen.QUESTS else Screen.MAP }
+            Screen.QUESTS -> QuestsScreen(vm, onVisit = { screen = Screen.CAMP }) { screen = Screen.LAKE }
             Screen.BOOK -> BookScreen(vm) { screen = Screen.LAKE }
             Screen.FORECAST -> ForecastScreen(vm) { screen = Screen.LAKE }
             Screen.SETTINGS -> SettingsScreen(vm) { screen = Screen.LAKE }
