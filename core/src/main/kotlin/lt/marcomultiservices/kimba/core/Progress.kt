@@ -35,9 +35,18 @@ data class Progress(
     val thanked: Set<String> = emptySet(),
     /** Epoch day of the last share that paid casts. */
     val shareDay: Long = 0,
+    /** Ice on the home waters, from the real temperatures (see [Ice]). */
+    val ice: IceLog = IceLog(),
 ) {
     val level: Int get() = Levels.levelOf(xp)
     val gear: Gear get() = Gear(bait, tackle, rod, reel, line, Upgrade.BOAT.key in owned)
+
+    /** At home on frozen water the player fishes through the ice with a short winter float rod. */
+    val onIce: Boolean get() = trip == null && Ice.frozen(water, ice)
+
+    /** The gear actually fished with here: on the ice a float rod with a bait that fits it. */
+    val gearHere: Gear get() = if (!onIce) gear else
+        Gear(if (Tackle.FLOAT in lure.tackle && owns(lure)) lure else Lure.WORM, Tackle.FLOAT, rod, reel, line, boat = false, ice = true)
 
     /** The bait actually on the hook: the chosen one if it fits the rod, else the first owned one that does. */
     val bait: Lure get() = if (tackle in lure.tackle) lure else baitsFor(tackle).firstOrNull() ?: Lure.WORM

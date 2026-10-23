@@ -434,4 +434,28 @@ class CoreTest {
         assertEquals(null, s.shared(day))
         assertTrue(s.shared(day + 1) != null)
     }
+
+    @Test
+    fun iceGrowsInFrostAndMeltsInThaw() {
+        var log = IceLog(0.0, 100)
+        // A week at -5 makes walkable ice on a lake; a pond freezes sooner, a river never.
+        log = Ice.update(log, 107, -5.0, 0.0, 1)
+        assertTrue(log.cm in 13.0..17.0, "cm=${log.cm}")
+        assertTrue(Ice.frozen(Water.LAKE, log))
+        assertTrue(!Ice.frozen(Water.RIVER, log))
+        assertTrue(Ice.frozen(Water.POND, IceLog(8.5, 1)) && !Ice.frozen(Water.LAKE, IceLog(8.5, 1)))
+        // The same day changes nothing; thaw and rain take it away.
+        assertEquals(log, Ice.update(log, 107, 20.0, 9.0, 1))
+        val thaw = Ice.update(log, 110, 4.0, 3.0, 3)
+        assertTrue(thaw.cm < 1.0, "cm=${thaw.cm}")
+        // A first start in deep midwinter frost begins on ice, in autumn on open water.
+        assertTrue(Ice.update(IceLog(), 5, -8.0, 0.0, 1).cm >= Ice.SAFE_CM)
+        assertEquals(0.0, Ice.update(IceLog(), 5, 6.0, 0.0, 10).cm)
+        // On the ice the rod is a float rod and carp hardly bite.
+        val p = Progress(ice = IceLog(20.0, 1), lure = Lure.BOILIE, owned = Shop.starter + Lure.BOILIE.key + Tackle.FEEDER.key, tackle = Tackle.FEEDER)
+        assertTrue(p.onIce)
+        assertEquals(Tackle.FLOAT, p.gearHere.tackle)
+        assertEquals(Lure.WORM, p.gearHere.lure)
+        assertTrue(Ice.affinity(Fish.byId("carp")!!) < 0.1)
+    }
 }

@@ -24,6 +24,13 @@ class Forecast(val hours: List<Hour>) {
         return Weather(h.tempC, h.pressureHpa, trend, h.cloud, h.windMs, h.precipMm, h.sky)
     }
 
+    /** Mean temperature and total rain over the forecast hours of [day] (local epoch day); null if none. */
+    fun dayMean(day: Long, zone: java.time.ZoneId): Pair<Double, Double>? {
+        val list = hours.filter { Instant.ofEpochMilli(it.epochMillis).atZone(zone).toLocalDate().toEpochDay() == day }
+        if (list.isEmpty()) return null
+        return list.sumOf { it.tempC } / list.size to list.sumOf { if (it.sky == Sky.SNOW || it.sky == Sky.SLEET) 0.0 else it.precipMm }
+    }
+
     companion object {
         private val json = Json { ignoreUnknownKeys = true }
 

@@ -46,6 +46,13 @@ demo --ez box true; shot 06b_dezute 6
 demo -e screen lake -e tackle spin; sleep 6
 demo -e cast 0.8; shot 06c_spiningas 5
 demo -e screen lake -e tackle float; sleep 2
+# Real frost: the lake freezes and the player fishes through a hole in the ice.
+demo -e scene snow -e screen lake -e ice 16; shot 06e_ezeras_uzsalo 5
+tap $((W/2)) $((H*62/100)); sleep 2
+demo -e cast 0.5; shot 06f_ekete 9
+demo -e fight perch; shot 06g_ledo_kova 3
+demo -e screen lake -e ice 5 -e scene day; shot 06h_ledas_formuojasi 5
+demo -e ice 0; sleep 2
 
 demo --ei coins 25000 --ei xp 11000 -e scene storm; shot 07_perkunija 4
 demo -e scene dawnfog; shot 08_rukas_ausra 4

@@ -240,6 +240,24 @@ object S {
     val notifyTitle = L("%s kimba dabar!", "%s beißt jetzt!", "%s is biting now!")
     val notifyBody = L("%s. Langas baigsis apie %s.", "%s. Das Zeitfenster endet gegen %s.", "%s. The window closes around %s.")
 
+    // Ice
+    val iceOn = L("❄ Ledas %d cm · žvejyba iš eketės", "❄ Eis %d cm · Eisangeln", "❄ Ice %d cm · ice fishing")
+    val iceForming = L("❄ Ežeras stingsta: ledas %d cm", "❄ Der See friert zu: Eis %d cm", "❄ The lake is freezing: ice %d cm")
+    val holeLead = L("Eketė! Įvesk galvą į eketę", "Eisloch! Kopf ins Loch führen", "The hole! Lead its head into the hole")
+    val lower = L("Nuleisti", "Ablassen", "Lower")
+    val winterRod = L("Žieminė meškerėlė", "Eisangel", "Ice rod")
+    val frozenTitle = L("Ežeras užšalo!", "Der See ist zugefroren!", "The lake has frozen!")
+    val frozenBody = L(
+        "Pas tave kelias dienas šalo, ir ledas jau %d cm storio. Dabar žvejoji iš eketės su žiemine meškerėle: geriausiai kimba ešeriai, kuojos ir vėgėlės, o karpiai ir lynai miega dumble.\n\nTikrame gyvenime ant ledo eik tik tada, kai jis storesnis nei 10 cm, ir niekada vienas.",
+        "Bei dir hat es tagelang gefroren, das Eis ist schon %d cm dick. Jetzt angelst du durchs Eisloch mit der Eisangel: Barsche, Rotaugen und Quappen beißen am besten, Karpfen und Schleien ruhen im Schlamm.\n\nIm echten Leben betritt das Eis erst ab 10 cm Dicke, und nie allein.",
+        "It has been freezing where you are for days, and the ice is already %d cm thick. Now you fish through a hole with an ice rod: perch, roach and burbot bite best, while carp and tench rest in the mud.\n\nIn real life only step onto ice thicker than 10 cm, and never alone.",
+    )
+    val reportTitle = L("Dabar kimba: %s ×2", "Jetzt beißt: %s ×2", "Biting now: %s ×2")
+    val reportBody = L(
+        "%s, %d°, kibimas %d. Pas tave tikras oras – ir žuvys kimba pagal jį.",
+        "%s, %d°, Beißindex %d. Bei dir ist echtes Wetter – und die Fische beißen danach.",
+        "%s, %d°, bite index %d. Real weather where you are, and the fish bite by it.",
+    )
     val hotNow = L("Dabar kimba: %s ×2", "Beißt jetzt: %s ×2", "Biting now: %s ×2")
     val rarityCommon = L("Įprasta", "Häufig", "Common")
     val rarityUncommon = L("Retesnė", "Seltener", "Uncommon")

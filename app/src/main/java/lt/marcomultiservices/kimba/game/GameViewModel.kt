@@ -129,6 +129,7 @@ sealed class GameEvent {
     class QuestsDone(val quests: List<Quest>, val all: Boolean) : GameEvent()
     class Achieved(val list: List<Achievement>) : GameEvent()
     class Gift(val kind: GiftKind, val coins: Int, val casts: Int) : GameEvent()
+    class Frozen(val cm: Int) : GameEvent()
 }
 
 /** Why a [GameEvent.Gift] came: a friend's code, a friend's thank-you code, a shared catch. */
@@ -339,6 +340,29 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         _offline.value = f == null || f.weatherAt(System.currentTimeMillis()) == null
         if (f != null) _forecast.value = f
         recompute(place)
+        if (f != null && demoIce == null) store.current().place?.let { home -> repo.cached(home)?.let { growIce(it) } }
+    }
+
+    /** Demo hook: ice thickness in cm, or null for the real one. */
+    private var demoIce: Double? = null
+
+    fun setDemoIce(cm: Double) {
+        demoIce = cm
+        afterMove()
+        updateProgress { it.copy(ice = lt.marcomultiservices.kimba.core.IceLog(cm, today())) }
+        if (cm >= lt.marcomultiservices.kimba.core.Ice.SAFE_CM) _events.update { it + GameEvent.Frozen(cm.toInt()) }
+    }
+
+    /** Once a day the home water's ice grows or melts with the real temperature. */
+    private suspend fun growIce(f: Forecast) {
+        val day = today()
+        if (_saved.value?.progress?.ice?.day == day) return
+        val (mean, rain) = f.dayMean(day, zone) ?: return
+        val wasFrozen = _saved.value?.progress?.onIce == true
+        store.update { s -> s.copy(progress = s.progress.copy(ice = lt.marcomultiservices.kimba.core.Ice.update(s.progress.ice, day, mean, rain, LocalDate.now(zone).monthValue))) }
+        val p = store.current().progress
+        if (p.onIce != wasFrozen && _lake.value.stage == Stage.IDLE) afterMove()
+        if (p.onIce && !wasFrozen) _events.update { it + GameEvent.Frozen(lt.marcomultiservices.kimba.core.Ice.on(p.water, p.ice).toInt()) }
     }
 
     private fun recompute(place: Place) {
@@ -424,7 +448,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun releaseCast(uptime: Long) {
         val s = _lake.value
         if (s.stage != Stage.CHARGING) return
-        val power = castPower(uptime - s.chargeStart).toDouble()
+        // Through the ice the bait is simply lowered into the hole.
+        val power = if (_saved.value?.progress?.onIce == true) ICE_DIST else castPower(uptime - s.chargeStart).toDouble()
         val c = _conditions.value ?: return
         job?.cancel()
         val p = _saved.value?.progress ?: return
@@ -433,12 +458,12 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             store.update { saved -> saved.baits.use(System.currentTimeMillis(), saved.progress.boxSize)?.let { saved.copy(baits = it) } ?: saved }
         }
         job = viewModelScope.launch {
-            val rolled = BiteEngine.roll(c, power, rng, p.spot, p.gear)
+            val rolled = BiteEngine.roll(c, power, rng, p.spot, p.gearHere)
             // The very first fish comes soon, after two clear nibbles, so the tips can teach it.
             val bite = if (knows(Tip.STRIKE)) rolled else
                 Bite(rolled.species, rolled.golden, rolled.cm, rolled.waitSeconds.coerceIn(8.0, 11.0), listOf(3.0, 5.5), rolled.condition)
             learn(Tip.CAST)
-            val tackle = p.tackle
+            val tackle = p.gearHere.tackle
             // A spinning lure is wound straight back: the take comes sooner, with fewer knocks before it.
             // A spinning lure is hunted while it is worked: the take comes sooner, with fewer knocks before it.
             val cast = if (tackle != Tackle.SPIN) bite else {
@@ -598,7 +623,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         job?.cancel()
         reeling = false
         rodAim = 0f
-        val gear = _saved.value?.progress?.gear
+        val gear = _saved.value?.progress?.gearHere
         // The fish is played in from where it took the bait: a short cast, or a spinner taken
         // near the bank, leaves less line to wind in. A little room stays for the fight itself.
         val st = _lake.value
@@ -680,7 +705,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         val isNew = previous.isEmpty()
         val record = !isNew && previous.all { it.cm < base.cm }
         // The fish of the moment pays double.
-        val hot = Fish.hotSpecies(c, spot) == bite.species
+        val hot = Fish.hotSpecies(c, spot, saved.progress.onIce) == bite.species
         val catch = base.copy(coins = Economy.coins(bite.species, bite.golden, bite.grams) * (if (hot) 2 else 1))
         var reward: Reward? = null
         var achieved: List<Achievement> = emptyList()
@@ -847,6 +872,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         const val LANDING_MS = 1600L
 
         /** Power meter: rises and falls every 3.2 s while the button is held. */
+        /** Where the hole in the ice is, on the cast-distance scale. */
+        const val ICE_DIST = 0.42
+
         fun castPower(heldMs: Long): Float {
             val p = (heldMs % 3200L) / 1600f
             return (if (p <= 1f) p else 2f - p).coerceIn(0.05f, 1f)

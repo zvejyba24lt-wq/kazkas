@@ -167,6 +167,8 @@ data class Gear(
     val reel: Reel = Reel.BASIC,
     val line: Line = Line.THIN,
     val boat: Boolean = false,
+    /** Fishing through a hole in the ice. */
+    val ice: Boolean = false,
 ) {
     val strength: Double get() = rod.strength + line.strength
 }

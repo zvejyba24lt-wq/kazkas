@@ -200,7 +200,10 @@ fun LakeScreen(
     }
 
     Box(Modifier.fillMaxSize().background(K.Night)) {
-        conditions?.let { LakeScene(it, lakeState, Modifier.fillMaxSize(), progress.spot.water, progress.float, progress.tackle, progress.owns(lt.marcomultiservices.kimba.core.Upgrade.ALARM)) }
+        conditions?.let { LakeScene(
+                it, lakeState, Modifier.fillMaxSize(), progress.spot.water, progress.float, progress.gearHere.tackle, progress.owns(lt.marcomultiservices.kimba.core.Upgrade.ALARM),
+                iceCm = if (progress.trip == null) lt.marcomultiservices.kimba.core.Ice.on(progress.water, progress.ice) else 0.0,
+            ) }
 
         // Taps on the lake strike; holding during the fight reels in.
         Box(
@@ -254,7 +257,7 @@ fun LakeScreen(
                     else -> Unit
                 }
                 Stage.BITE -> if (tip(Tip.STRIKE)) Coach(Tip.STRIKE)
-                Stage.FIGHT -> if (tip(Tip.REEL)) Coach(Tip.REEL) else FightCue(lake.running, lake.atNet, lake.fishSide, lake.fishHeading, lake.steer)
+                Stage.FIGHT -> if (tip(Tip.REEL)) Coach(Tip.REEL) else FightCue(lake.running, lake.atNet, lake.fishSide, lake.fishHeading, lake.steer, progress.onIce)
                 else -> Unit
             }
             Spacer(Modifier.weight(1f))
@@ -267,7 +270,7 @@ fun LakeScreen(
                         NavButton(Icons.Rounded.Map, t(S.map), onMap)
                     }
                     Spacer(Modifier.weight(1f))
-                    CastButton(stage == Stage.CHARGING, lake.chargeStart,
+                    CastButton(stage == Stage.CHARGING, lake.chargeStart, ice = progress.onIce,
                         onPress = {
                             val b = saved?.baitsNow()
                             if (b == null || b.count <= 0) noCasts = true else vm.pressCast(SystemClock.uptimeMillis())
@@ -367,8 +370,16 @@ private fun TopHud(c: Conditions, place: String, progress: Progress, baits: Bait
                     Icon(Icons.Rounded.Insights, t(S.forecast), tint = K.Amber, modifier = Modifier.size(18.dp))
                 }
                 // The fish the weather suits best right now, worth double.
-                Fish.hotSpecies(c, progress.spot)?.let { h ->
+                Fish.hotSpecies(c, progress.spot, progress.onIce)?.let { h ->
                     Text(t(S.hotNow, t(h.name)), color = K.Gold, fontSize = 12.sp, fontWeight = FontWeight.Bold, maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 6.dp).width(190.dp))
+                }
+                // The ice on the home water, grown from the real frost.
+                val ice = if (progress.trip == null) lt.marcomultiservices.kimba.core.Ice.on(progress.water, progress.ice) else 0.0
+                if (ice >= lt.marcomultiservices.kimba.core.Ice.RIM_CM) {
+                    Text(
+                        t(if (progress.onIce) S.iceOn else S.iceForming, ice.roundToInt()), color = Color(0xFFBFE3FF), fontSize = 12.sp, fontWeight = FontWeight.Bold,
+                        maxLines = 1, overflow = TextOverflow.Ellipsis, modifier = Modifier.padding(top = 4.dp).width(190.dp),
+                    )
                 }
                 if (offline) Text(t(S.offline), color = K.Muted, fontSize = 10.sp, modifier = Modifier.padding(top = 4.dp).width(190.dp))
             }
@@ -536,11 +547,11 @@ private fun StrikeBanner() {
 
 /** One line high on the screen during the fight: what the fish does and which way to lead the rod. */
 @Composable
-private fun FightCue(running: Boolean, atNet: Boolean, side: Float, heading: Float, steer: Float) {
+private fun FightCue(running: Boolean, atNet: Boolean, side: Float, heading: Float, steer: Float, ice: Boolean = false) {
     val (cue, color) = when {
         running -> t(S.fishRuns) to K.Danger
         atNet && kotlin.math.abs(side) >= 0.4f -> t(if (side > 0f) S.steerLeft else S.steerRight) to K.Amber
-        atNet -> t(S.netLead) to Color(0xFF8DC26F)
+        atNet -> t(if (ice) S.holeLead else S.netLead) to Color(0xFF8DC26F)
         steer > 0.35f -> t(S.steerGood) to Color(0xFF8DC26F)
         heading > 0f -> t(S.steerLeft) to K.Amber
         else -> t(S.steerRight) to K.Amber
@@ -658,7 +669,7 @@ private fun NavButton(icon: ImageVector, label: String, onClick: () -> Unit, bad
 
 /** Hold to charge the cast; the ring shows the power, release to throw. */
 @Composable
-private fun CastButton(charging: Boolean, chargeStart: Long, onPress: () -> Unit, onRelease: () -> Unit) {
+private fun CastButton(charging: Boolean, chargeStart: Long, ice: Boolean = false, onPress: () -> Unit, onRelease: () -> Unit) {
     val press by rememberUpdatedState(onPress)
     val release by rememberUpdatedState(onRelease)
     var now by remember { mutableLongStateOf(SystemClock.uptimeMillis()) }
@@ -694,7 +705,7 @@ private fun CastButton(charging: Boolean, chargeStart: Long, onPress: () -> Unit
             }
             Icon(Icons.Rounded.Phishing, null, tint = Color(0xFF2A1A06), modifier = Modifier.size(40.dp))
         }
-        Text(if (charging) "${(power * 100).roundToInt()} %" else t(S.cast), color = K.Text, fontSize = 13.sp, fontWeight = FontWeight.Bold)
+        Text(if (ice) t(S.lower) else if (charging) "${(power * 100).roundToInt()} %" else t(S.cast), color = K.Text, fontSize = 13.sp, fontWeight = FontWeight.Bold)
     }
 }
 
@@ -825,6 +836,7 @@ private fun EventDialog(event: GameEvent, onClose: () -> Unit) {
                 if (event.all) "\n\n" + t(S.allQuestsDone, Economy.ALL_QUESTS_COINS, Economy.ALL_QUESTS_CASTS) else ""
             )
         is GameEvent.Achieved -> t(S.achieved) to event.list.joinToString("\n\n") { "🏆 " + it.title[lang] + "\n" + it.text[lang] + "  +" + it.coins }
+        is GameEvent.Frozen -> t(S.frozenTitle) to t(S.frozenBody, event.cm)
         is GameEvent.Gift -> {
             val gifts = listOfNotNull(if (event.coins > 0) S.plusCoins(event.coins)[lang] else null, S.plusCasts(event.casts)[lang]).joinToString("   ")
             when (event.kind) {

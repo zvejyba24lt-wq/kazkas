@@ -37,10 +37,12 @@ object BiteEngine {
         val act = Fish.activities(c, spot)
         // A boat takes the bait further out, where the deep-water fish are.
         // A feeder is thrown further, to the deeper bottom.
-        val reach = (cast + (if (gear.boat) 0.2 else 0.0) + (if (gear.tackle == Tackle.FEEDER) 0.12 else 0.0)).coerceAtMost(1.2)
+        // A hole in the ice is drilled over middling depth.
+        val reach = if (gear.ice) 0.55 else (cast + (if (gear.boat) 0.2 else 0.0) + (if (gear.tackle == Tackle.FEEDER) 0.12 else 0.0)).coerceAtMost(1.2)
         val weights = act.mapValues { (s, a) ->
             val d = (s.depth - reach) / 0.35
-            a * gear.lure.affinity(s) * gear.tackle.affinity(s) * (exp(-d * d) + 0.04) * (if (s.shy) gear.line.shyFactor else 1.0)
+            a * gear.lure.affinity(s) * gear.tackle.affinity(s) * (exp(-d * d) + 0.04) * (if (s.shy) gear.line.shyFactor else 1.0) *
+                (if (gear.ice) Ice.affinity(s) else 1.0)
         }
         var r = rng.nextDouble() * weights.values.sum()
         var species = weights.keys.last()
