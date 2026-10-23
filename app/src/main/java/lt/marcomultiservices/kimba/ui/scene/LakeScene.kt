@@ -120,7 +120,7 @@ fun LakeScene(
             val spinEnd = Offset(geo.w * 0.6f, geo.h * 0.9f)
             val spinFrac = when {
                 kind != Tackle.SPIN -> 0f
-                s.stage == Stage.WAITING && s.retrieve > 0f -> ((android.os.SystemClock.uptimeMillis() - s.landedAt) / 1000f / s.retrieve).coerceIn(0f, 1f)
+                s.stage == Stage.WAITING -> s.spin
                 s.stage == Stage.BITE || s.stage == Stage.FIGHT -> s.takenAt
                 else -> 0f
             }
@@ -244,9 +244,11 @@ fun LakeScene(
                 kind == Tackle.FLOAT -> drawFloatOnWater(geo, floatPos, dip, t, s.stage == Stage.BITE, floatStyle, colors.daylight, tremble)
                 kind == Tackle.FEEDER -> drawLineEntry(geo, floatPos, t, dip)
                 s.stage == Stage.BITE -> drawFightSplash(geo, floatPos, t, true)
-                else -> drawSpinWake(geo, floatPos, t)
+                s.winding -> drawSpinWake(geo, floatPos, t)
+                else -> drawBubbles(geo, floatPos, t, 0.25f)
             }
             if (s.stage == Stage.WAITING && splash.value < 1f) drawCastSplash(geo, floatPos, splash.value)
+            if (s.stage == Stage.FIGHT && s.atNet) drawLandingNet(geo, colors, t)
             if (s.stage == Stage.FIGHT) {
                 s.bite?.let { b -> drawHookedFish(geo, floatPos, t, b.species.id, b.golden != null, (b.cm / 60.0).toFloat(), s.fishHeading, s.running, colors) }
                 drawFightSplash(geo, floatPos, t, s.running)

@@ -112,6 +112,10 @@ class Fight(
     var steer = 0.0; private set
     /** Becomes true for one step when the fish turns (for a cue). */
     var turned = false; private set
+    /** Close in at the bank: the fish must be led into the landing net. */
+    val atNet: Boolean get() = distance < 0.1
+    /** The fish is calm and in front of the angler, where the net can take it. */
+    val netReady: Boolean get() = abs(side) < 0.4 && !running
 
     private var runLeft = 0.0
     private var calmLeft = 1.0 + rng.nextDouble() * 1.5
@@ -152,7 +156,7 @@ class Fight(
         tension += (target - tension) * min(1.0, dt * 4)
         distance += if (reeling) -dt * 0.16 * reelSpeed * (1 - min(0.85, p * 0.45)) * (1 - 0.5 * with) else dt * 0.05 * p
         if (with > 0) distance += dt * 0.03 * p * with
-        distance = distance.coerceAtMost(1.0)
+        distance = distance.coerceIn(0.0, 1.0)
         stamina = (stamina - dt * (if (running) 0.06 else 0.025) * (if (reeling) 1.4 else 0.8) * (1 + 1.2 * against)).coerceAtLeast(0.0)
         overload = if (tension > 0.97) overload + dt else 0.0
         slack = if (tension < 0.12) slack + dt else (slack - dt * 2).coerceAtLeast(0.0)
@@ -160,7 +164,7 @@ class Fight(
         result = when {
             overload > 0.35 -> FightResult.SNAPPED
             slack > 2.2 || idle > IDLE_LIMIT -> FightResult.ESCAPED
-            distance <= 0 -> FightResult.LANDED
+            distance <= 0 && netReady -> FightResult.LANDED
             else -> null
         }
     }

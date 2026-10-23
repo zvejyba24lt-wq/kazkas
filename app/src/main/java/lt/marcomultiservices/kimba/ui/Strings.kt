@@ -41,6 +41,8 @@ object S {
     val fishRuns = L("Tempia!", "Er zieht!", "It runs!")
     val steerLeft = L("◀ Kreipk meškerę kairėn", "◀ Rute nach links", "◀ Rod to the left")
     val steerRight = L("Kreipk meškerę dešinėn ▶", "Rute nach rechts ▶", "Rod to the right ▶")
+    val netLead = L("Graibštas! Vesk žuvį į vidurį", "Kescher! Führ den Fisch zur Mitte", "Net! Lead the fish to the middle")
+    val netCalm = L("Palauk, kol nurims…", "Warte, bis er ruhig wird…", "Wait until it calms…")
     val steerGood = L("Gerai! Žuvis pavargsta", "Gut! Der Fisch ermüdet", "Good! The fish is tiring")
     val noCasts = L("Užmetimai baigėsi", "Keine Würfe mehr", "Out of casts")
     val noCastsBody = L("Naujas užmetimas atsiras po %s.", "Ein neuer Wurf kommt in %s.", "A new cast arrives in %s.")
@@ -77,12 +79,12 @@ object S {
         "The bait lies on the bottom. Watch the bright rod tip: a small nod is only a nibble. When it bends right over, strike!",
     )
     val tipWaitSpin = L(
-        "Blizgė pati grįžta į krantą. Lengvi stuktelėjimai reiškia, kad plėšrūnas seka. Kirsk tik tada, kai stipriai trūktels!",
-        "Der Blinker läuft von selbst zurück. Leichte Zupfer heißen, dass ein Räuber folgt. Schlag erst beim harten Ruck an!",
-        "The spinner comes back by itself. Light taps mean a predator is following. Strike only on the hard knock!",
+        "Laikyk pirštą, ir blizgė vyniojasi. Retkarčiais atleisk: blizgė plazdėdama krenta, ir plėšrūnas puola. Stuktelėjimai reiškia, kad žuvis seka.",
+        "Finger halten, dann läuft der Blinker. Lass ab und zu los: er taumelt ab, und der Räuber schlägt zu. Zupfer heißen, ein Fisch folgt.",
+        "Hold your finger to wind the spoon in. Let go now and then: it flutters down and predators strike. Taps mean a fish is following.",
     )
     val waitFeeder = L("Stebėk meškerės galūnę…", "Beobachte die Rutenspitze…", "Watch the rod tip…")
-    val waitSpin = L("Blizgė grįžta… lauk smūgio", "Der Blinker läuft… warte auf den Ruck", "Winding in… wait for the knock")
+    val waitSpin = L("Laikyk – vyniok, atleisk – pauzė", "Halten – kurbeln, loslassen – Pause", "Hold to wind, let go to pause")
     val tooEarlyTip = L("Per anksti! Palauk, kol galūnė smarkiai nusilenks.", "Zu früh! Warte, bis sich die Spitze kräftig biegt.", "Too early! Wait until the tip bends right over.")
 
     // Tackle box
@@ -113,6 +115,8 @@ object S {
     val snappedHint = L("Kai žuvis tempia, paleisk ritę.", "Wenn der Fisch zieht, lass die Rolle los.", "When the fish runs, let go of the reel.")
     val escaped = L("Žuvis nusikabino", "Der Fisch ist ausgeschlitzt", "The fish got off")
     val escapedHint = L("Neleisk valui per ilgai kabėti laisvai.", "Lass die Schnur nicht zu lange locker.", "Don't leave the line slack for too long.")
+    val empty = L("Blizgė grįžo tuščia", "Der Blinker kam leer zurück", "The spoon came back empty")
+    val emptyHint = L("Vyniok su pauzėmis: plėšrūnas puola krentančią blizgę.", "Mit Pausen kurbeln: Räuber packen den absinkenden Blinker.", "Wind with pauses: predators take a spoon as it flutters down.")
     val missed = L("Nespėjai kirsti", "Anhieb verpasst", "Missed the strike")
     val missedHint = L("Kai plūdė panyra – kirsk iškart.", "Taucht die Pose ab – sofort anschlagen.", "When the float goes under, strike at once.")
     val again = L("Užmesti dar", "Nochmal", "Cast again")

@@ -398,4 +398,13 @@ class CoreTest {
         assertTrue(good.stamina < bad.stamina)
         assertTrue(good.result == FightResult.LANDED || good.distance < bad.distance)
     }
+
+    @Test
+    fun theNetTakesOnlyACalmFishInFront() {
+        val f = Fight(0.2, Random(5), start = 0.05)
+        var steps = 0
+        while (f.result == null && steps < 20_000) { f.step(0.05, reeling = f.tension < 0.8, rod = -f.heading); steps++ }
+        assertEquals(FightResult.LANDED, f.result)
+        assertTrue(f.netReady)
+    }
 }

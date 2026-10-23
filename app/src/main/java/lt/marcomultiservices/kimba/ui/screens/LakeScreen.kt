@@ -204,7 +204,12 @@ fun LakeScreen(
                         vm.setReeling(false)
                     }
                     when (vm.lake.value.stage) {
-                        Stage.WAITING -> vm.strike()
+                        // A spinning lure is wound in while the finger is down, and pauses when it lifts.
+                        Stage.WAITING -> if (vm.lake.value.tackle == Tackle.SPIN) {
+                            vm.setWinding(true)
+                            waitForUpOrCancellation()
+                            vm.setWinding(false)
+                        } else vm.strike()
                         Stage.BITE -> { vm.strike(); play(down.position) }
                         Stage.FIGHT -> play(down.position)
                         else -> Unit
@@ -236,7 +241,7 @@ fun LakeScreen(
                     warn = lake.hint,
                 )
                 Stage.BITE -> if (tip(Tip.STRIKE)) Coach(Tip.STRIKE)
-                Stage.FIGHT -> { if (tip(Tip.REEL)) { Coach(Tip.REEL); Spacer(Modifier.height(8.dp)) }; FightHud(lake.tension, lake.fightDistance, lake.running, lake.tackle, lake.fishHeading, lake.steer) }
+                Stage.FIGHT -> { if (tip(Tip.REEL)) { Coach(Tip.REEL); Spacer(Modifier.height(8.dp)) }; FightHud(lake.tension, lake.fightDistance, lake.running, lake.tackle, lake.fishHeading, lake.steer, lake.atNet, lake.fishSide) }
                 else -> Unit
             }
             Spacer(Modifier.height(10.dp))
@@ -496,13 +501,15 @@ private fun StrikeBanner() {
 }
 
 @Composable
-private fun FightHud(tension: Float, distance: Float, running: Boolean, tackle: Tackle, heading: Float, steer: Float) {
+private fun FightHud(tension: Float, distance: Float, running: Boolean, tackle: Tackle, heading: Float, steer: Float, atNet: Boolean, side: Float) {
     Glass(Modifier.fillMaxWidth(), padding = 14.dp) {
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
                 // The cue says which way to lead the rod: against the fish's swim.
                 val (cue, color) = when {
                     running -> t(S.fishRuns) to K.Danger
+                    atNet && kotlin.math.abs(side) >= 0.4f -> t(if (side > 0f) S.steerLeft else S.steerRight) to K.Amber
+                    atNet -> t(S.netLead) to Color(0xFF8DC26F)
                     steer > 0.35f -> t(S.steerGood) to Color(0xFF8DC26F)
                     heading > 0f -> t(S.steerLeft) to K.Amber
                     else -> t(S.steerRight) to K.Amber
@@ -733,6 +740,7 @@ private fun LostCard(reason: LostReason, onNext: () -> Unit) {
         LostReason.SNAPPED -> S.snapped to S.snappedHint
         LostReason.ESCAPED -> S.escaped to S.escapedHint
         LostReason.MISSED, LostReason.EARLY -> S.missed to S.missedHint
+        LostReason.EMPTY -> S.empty to S.emptyHint
     }
     Glass(Modifier.padding(28.dp).fillMaxWidth(), radius = 26.dp, padding = 22.dp) {
         Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {

@@ -89,6 +89,36 @@ internal fun DrawScope.drawHookedFish(geo: SceneGeometry, mouth: Offset, t: Floa
     )
 }
 
+/** The landing net held out into the water at the bank, waiting under the fish. */
+internal fun DrawScope.drawLandingNet(geo: SceneGeometry, colors: SceneColors, t: Float) {
+    val hoop = Offset(geo.w * 0.56f, geo.h * 0.915f + sin(t * 2.2f) * geo.h * 0.003f)
+    val rx = geo.w * 0.15f
+    val ry = rx * 0.32f
+    // The handle comes in from the angler at the bottom left.
+    drawLine(colors.lit(Color(0xFF2B2B2E)), Offset(geo.w * 0.08f, geo.h * 1.02f), Offset(hoop.x - rx * 0.95f, hoop.y + ry * 0.2f), strokeWidth = geo.w * 0.016f, cap = StrokeCap.Round)
+    drawLine(colors.lit(Color(0xFF6F6F78)).copy(alpha = 0.6f), Offset(geo.w * 0.09f, geo.h * 1.01f), Offset(hoop.x - rx * 0.95f, hoop.y + ry * 0.05f), strokeWidth = geo.w * 0.004f, cap = StrokeCap.Round)
+    // The mesh hangs under the water, seen through it.
+    val bag = Path().apply {
+        moveTo(hoop.x - rx, hoop.y)
+        quadraticTo(hoop.x - rx * 0.5f, hoop.y + ry * 3.2f, hoop.x + rx * 0.1f, hoop.y + ry * 3.0f)
+        quadraticTo(hoop.x + rx * 0.8f, hoop.y + ry * 2.4f, hoop.x + rx, hoop.y)
+        close()
+    }
+    drawPath(bag, colors.lit(Color(0xFF203833)).copy(alpha = 0.35f))
+    for (i in 1..6) {
+        val u = i / 7f
+        val x = hoop.x - rx + 2 * rx * u
+        drawLine(colors.lit(Color(0xFF9DB7AE)).copy(alpha = 0.22f), Offset(x, hoop.y), Offset(hoop.x - rx * 0.2f + (x - hoop.x) * 0.3f, hoop.y + ry * 2.9f), strokeWidth = 1.2f)
+    }
+    for (j in 1..3) {
+        val k = j / 4f
+        drawOval(colors.lit(Color(0xFF9DB7AE)).copy(alpha = 0.18f), Offset(hoop.x - rx * (1 - 0.45f * k), hoop.y + ry * 2.6f * k - ry * 0.3f), Size(rx * 2 * (1 - 0.45f * k), ry * 0.7f), style = Stroke(1.2f))
+    }
+    // The hoop itself on the surface.
+    drawOval(colors.lit(Color(0xFF1E1E22)), Offset(hoop.x - rx, hoop.y - ry), Size(rx * 2, ry * 2), style = Stroke(geo.w * 0.007f))
+    drawOval(colors.lit(Color(0xFF8A8A94)).copy(alpha = 0.5f), Offset(hoop.x - rx, hoop.y - ry * 1.06f), Size(rx * 2, ry * 2), style = Stroke(geo.w * 0.0018f))
+}
+
 /** During a run the fish leaps clear of the water now and then. */
 internal fun DrawScope.drawFishJump(geo: SceneGeometry, pos: Offset, t: Float, species: String, golden: Boolean, size: Float) {
     val period = 2.6f

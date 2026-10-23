@@ -59,7 +59,7 @@ import kotlin.random.Random
 
 enum class Stage { IDLE, CHARGING, FLYING, WAITING, BITE, FIGHT, LANDING, CAUGHT, LOST }
 
-enum class LostReason { EARLY, MISSED, SNAPPED, ESCAPED }
+enum class LostReason { EARLY, MISSED, SNAPPED, ESCAPED, EMPTY }
 
 /** First-play tips, each shown until the player has done that step once. */
 enum class Tip { CAST, WAIT, STRIKE, REEL }
@@ -84,6 +84,10 @@ data class LakeState(
     val retrieve: Float = 0f,
     /** How far the spinning lure had come back (0..1) when the fish took it. */
     val takenAt: Float = 0f,
+    /** A spinning lure on its way back: 0 where it landed, 1 at the bank. */
+    val spin: Float = 0f,
+    /** The player is winding the spinning reel. */
+    val winding: Boolean = false,
     /** The electronic bite alarm is beeping. */
     val alarm: Boolean = false,
     val tension: Float = 0f,
@@ -97,6 +101,9 @@ data class LakeState(
     val rodAim: Float = 0f,
     /** -1..1: how well the rod is held against the fish. */
     val steer: Float = 0f,
+    /** The fish is at the bank, to be led into the landing net. */
+    val atNet: Boolean = false,
+    val netReady: Boolean = false,
     val running: Boolean = false,
     val bite: Bite? = null,
     val lost: LostReason? = null,
@@ -148,6 +155,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private var job: Job? = null
     private var reeling = false
     @Volatile private var rodAim = 0f
+    /** The finger winds a spinning lure in while it is held. */
+    @Volatile private var winding = false
     /** The app is in the background: a fight waits instead of going on without the player. */
     @Volatile private var paused = false
     private var resultsSinceAd = 0
@@ -341,8 +350,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             learn(Tip.CAST)
             val tackle = p.tackle
             // A spinning lure is wound straight back: the take comes sooner, with fewer knocks before it.
+            // A spinning lure is hunted while it is worked: the take comes sooner, with fewer knocks before it.
             val cast = if (tackle != Tackle.SPIN) bite else {
-                val wait = (bite.waitSeconds * 0.5).coerceIn(3.5, 9.0)
+                val wait = (bite.waitSeconds * 0.5).coerceIn(3.0, 7.0)
                 Bite(bite.species, bite.golden, bite.cm, wait, bite.nibbles.map { it * 0.5 }.filter { it < wait - 0.8 }.take(2), bite.condition)
             }
             _lake.value = LakeState(stage = Stage.FLYING, castDist = power, castId = s.castId + 1, bite = cast, tackle = tackle)
@@ -350,8 +360,66 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             delay(FLIGHT_MS)
             sfx.play(Sfx.Fx.PLOP, (if (tackle == Tackle.FEEDER) 0.8f else 0.5f) + 0.4f * (1 - power.toFloat()), rate = (if (tackle == Tackle.FEEDER) 0.75f else 0.9f) + 0.2f * rng.nextFloat())
             _lake.update { it.copy(landedAt = android.os.SystemClock.uptimeMillis(), retrieve = if (tackle == Tackle.SPIN) (cast.waitSeconds + 2.5).toFloat() else 0f) }
-            waitForBite(cast)
+            if (tackle == Tackle.SPIN) spinRetrieve(cast) else waitForBite(cast)
         }
+    }
+
+    fun setWinding(on: Boolean) { winding = on }
+
+    /**
+     * The spinning lure comes back only while the player winds. A predator takes a lure that is
+     * worked: wound with pauses now and then (the lure flutters down on a stop) it is hunted at
+     * full rate, wound on and on without a stop at half. Brought to the bank untouched, the
+     * cast is empty.
+     */
+    private suspend fun spinRetrieve(bite: Bite) = kotlinx.coroutines.coroutineScope {
+        _lake.update { it.copy(stage = Stage.WAITING, dip = 0f, spin = 0f, winding = false) }
+        val length = bite.waitSeconds + 3.0
+        val nibbles = ArrayDeque(bite.nibbles)
+        var pos = 0.0
+        var hunted = 0.0
+        var clock = 0.0
+        var lastStop = -10.0
+        var was = false
+        while (true) {
+            delay(30)
+            if (paused) continue
+            val dt = 0.03
+            clock += dt
+            val w = winding
+            if (was && !w) lastStop = clock
+            was = w
+            val worked = clock - lastStop < 3.0
+            if (w) {
+                pos += dt / length
+                hunted += dt * (if (worked) 1.0 else 0.5)
+            } else if (clock - lastStop < 0.9) hunted += dt * 0.7
+            _lake.update { it.copy(spin = pos.toFloat().coerceAtMost(1f), winding = w) }
+            val next = nibbles.firstOrNull()
+            if (next != null && hunted >= next) {
+                // A knock on the lure: a fish follows and taps it.
+                nibbles.removeFirst()
+                buzz(15)
+                sfx.play(Sfx.Fx.NIBBLE, 0.5f, rate = 1.1f + 0.2f * rng.nextFloat())
+                _lake.update { it.copy(nibbleAt = android.os.SystemClock.uptimeMillis(), nibbles = it.nibbles + 1) }
+            }
+            if (hunted >= bite.waitSeconds) break
+            if (pos >= 1.0) {
+                winding = false
+                _lake.update { it.copy(stage = Stage.LOST, lost = LostReason.EMPTY, winding = false) }
+                return@coroutineScope
+            }
+        }
+        val taken = pos.toFloat().coerceIn(0f, 1f)
+        _lake.update { it.copy(stage = Stage.BITE, dip = 1f, takenAt = taken, winding = false) }
+        learn(Tip.WAIT)
+        buzz(longArrayOf(0, 60, 50, 90))
+        sfx.play(Sfx.Fx.BITE, rate = if (bite.pull > 0.6) 0.85f else 1f)
+        // A hit on a lure that is being wound is felt in the hand: the angler strikes at once.
+        if (winding) { startFight(bite); return@coroutineScope }
+        var left = if (!knows(Tip.STRIKE)) 1700L else 800L
+        while (left > 0) { delay(50); if (!paused) left -= 50 }
+        if (_lake.value.stage == Stage.BITE) _lake.update { it.copy(stage = Stage.LOST, lost = LostReason.MISSED, dip = 0f) }
     }
 
     /** A bite alarm sounds on a bottom rod once it is bought. */
@@ -416,6 +484,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         when (s.stage) {
             Stage.BITE -> startFight(s.bite ?: return)
             Stage.WAITING -> {
+                if (s.tackle == Tackle.SPIN) return
                 // Striking at a nibble scares the fish: the wait starts over, a little longer.
                 val bite = s.bite ?: return
                 job?.cancel()
@@ -477,7 +546,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     sfx.play(Sfx.Fx.STRAIN, 0.5f, minGapMs = 520)
                     if (fight.tension > 0.92) buzzTick()
                 }
-                _lake.update { it.copy(tension = fight.tension.toFloat(), fightDistance = fight.distance.toFloat(), running = fight.running, fishSide = fight.side.toFloat(), fishHeading = fight.heading.toFloat(), rodAim = rodAim, steer = fight.steer.toFloat()) }
+                _lake.update { it.copy(tension = fight.tension.toFloat(), fightDistance = fight.distance.toFloat(), running = fight.running, fishSide = fight.side.toFloat(), fishHeading = fight.heading.toFloat(), rodAim = rodAim, steer = fight.steer.toFloat(), atNet = fight.atNet, netReady = fight.netReady) }
             }
             sfx.hold(Sfx.Fx.REEL, false)
             sfx.hold(Sfx.Fx.DRAG, false)
