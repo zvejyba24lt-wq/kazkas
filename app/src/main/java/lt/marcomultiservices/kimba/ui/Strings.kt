@@ -311,6 +311,14 @@ object S {
     val foundCove = L("Atsivėrė Slaptoji įlanka! Ją rasi žemėlapyje.", "Die Geheime Bucht ist offen! Du findest sie auf der Karte.", "The Secret cove is open! You'll find it on the map.")
     val goCove = L("🗺 Plaukti į įlanką", "🗺 Zur Bucht", "🗺 Go to the cove")
     val secretNote = L("Iš butelio žemėlapio · žuvys didesnės", "Von der Flaschenpost-Karte · größere Fische", "From the bottle's map · bigger fish")
+    // Old Jonas
+    val jonasName = L("Senasis žvejys Jonas", "Der alte Fischer Jonas", "Old Jonas the angler")
+    val jonasDone = L("„Daugiau tavęs nieko neišmokysiu. Dabar tu tikras šio krašto žvejys.“", "„Mehr kann ich dir nicht beibringen. Jetzt bist du ein echter Angler dieser Gegend.“", "\"I have nothing more to teach you. You're a true angler of these parts now.\"")
+    val jonasReward = L("Atlygis: %d monetų", "Belohnung: %d Münzen", "Reward: %d coins")
+    val jonasWell = L("Jonas: „Šaunu!“", "Jonas: „Gut gemacht!“", "Jonas: \"Well done!\"")
+    val jonasOpens = L("Jonas parodė tau naują vandenį: %s. Rasi jį žemėlapyje.", "Jonas hat dir ein neues Gewässer gezeigt: %s. Du findest es auf der Karte.", "Jonas showed you a new water: %s. Find it on the map.")
+    val jonasClues = L("Jonas papasakojo visas legendų užuominas. Pažiūrėk žuvų knygoje.", "Jonas hat dir alle Hinweise zu den Legenden verraten. Schau ins Fischbuch.", "Jonas told you every legend clue. Look in the fish book.")
+    val jonasNext = L("Kita užduotis: %s", "Nächste Aufgabe: %s", "Next task: %s")
     // Play Games
     val leaderboards = L("🏆 Lyderių lentelės", "🏆 Bestenlisten", "🏆 Leaderboards")
     val playAchievements = L("Play pasiekimai", "Play-Erfolge", "Play achievements")

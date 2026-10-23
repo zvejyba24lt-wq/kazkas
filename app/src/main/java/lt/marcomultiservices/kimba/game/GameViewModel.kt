@@ -142,6 +142,8 @@ sealed class GameEvent {
     class Storm(val boat: Boolean) : GameEvent()
     /** A fish put back: good-angler points earned and the total. */
     class Released(val points: Int, val total: Int) : GameEvent()
+    /** Old Jonas: [done] finished, [next] is what he asks now (null when he has taught all). */
+    class Story(val done: lt.marcomultiservices.kimba.core.StoryStep, val next: lt.marcomultiservices.kimba.core.StoryStep?) : GameEvent()
 }
 
 /** Why a [GameEvent.Gift] came: a friend's code, a friend's thank-you code, a shared catch. */
@@ -787,6 +789,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             _lake.update { it.copy(caught = catch.copy(released = true)) }
             _events.update { it + GameEvent.Released(points, total) }
             checkAchievements()
+            checkStory()
         }
     }
 
@@ -865,6 +868,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             r.levelUp?.let { l -> _events.update { it + GameEvent.LevelUp(l) } }
         }
         if (achieved.isNotEmpty()) _events.update { it + GameEvent.Achieved(achieved) }
+        checkStory()
         reportToPlay(store.current())
         // A good moment to ask for a rating: a record or a new kind, once the player is hooked.
         val now = store.current()
@@ -873,6 +877,19 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             delay(1500)
             lt.marcomultiservices.kimba.play.PlayReview.ask()
         }
+    }
+
+    /** Finishes Jonas's task when it is done and says what he asks next. */
+    private suspend fun checkStory() {
+        var done: lt.marcomultiservices.kimba.core.StoryStep? = null
+        var next: lt.marcomultiservices.kimba.core.StoryStep? = null
+        store.update { s ->
+            val r = lt.marcomultiservices.kimba.core.Story.advance(s.progress, s.catches, System.currentTimeMillis(), zone) ?: return@update s
+            done = r.second
+            next = lt.marcomultiservices.kimba.core.Story.current(r.first)
+            s.copy(progress = r.first)
+        }
+        done?.let { d -> _events.update { it + GameEvent.Story(d, next) } }
     }
 
     /** Sends the player's best numbers and achievements to Play Games (nothing until it is set up). */

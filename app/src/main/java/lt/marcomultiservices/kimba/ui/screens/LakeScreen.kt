@@ -892,6 +892,12 @@ private fun EventDialog(event: GameEvent, onClose: () -> Unit) {
             )
         is GameEvent.Achieved -> t(S.achieved) to event.list.joinToString("\n\n") { "🏆 " + it.title[lang] + "\n" + it.text[lang] + "  +" + it.coins }
         is GameEvent.Frozen -> t(S.frozenTitle) to t(S.frozenBody, event.cm)
+        is GameEvent.Story -> t(S.jonasWell) to listOfNotNull(
+            t(S.plusCoins(event.done.coins)),
+            event.done.opens?.let { t(S.jonasOpens, t(it.label)) },
+            if (event.done.revealsClues) t(S.jonasClues) else null,
+            event.next?.let { "„" + t(it.talk) + "“\n\n" + t(S.jonasNext, t(it.task)) } ?: t(S.jonasDone),
+        ).joinToString("\n\n")
         is GameEvent.Released -> t(S.releasedTitle) to t(S.releasedBody, lt.marcomultiservices.kimba.core.Release.XP, event.points, event.total)
         is GameEvent.Storm -> t(S.stormTitle) to (if (event.boat) t(S.stormBoat) + "\n\n" else "") + t(S.stormBody)
         is GameEvent.Gift -> {
@@ -912,6 +918,9 @@ private fun EventDialog(event: GameEvent, onClose: () -> Unit) {
                 when (event) {
                     is GameEvent.LevelUp -> Text("${event.level}", style = MaterialTheme.typography.displaySmall.copy(fontSize = 56.sp), color = Color(0xFF8FD3FF))
                     is GameEvent.Achieved -> TrophyIcon(Modifier.size(56.dp))
+                    is GameEvent.Story -> Canvas(Modifier.size(72.dp).clip(CircleShape).background(Color(0x33FFFFFF))) {
+                        drawJonas(androidx.compose.ui.geometry.Rect(0f, 0f, size.width, size.height), if (event.next == null) 3 else if (event.done.revealsClues) 2 else 3)
+                    }
                     is GameEvent.Storm -> Icon(Icons.Rounded.Thunderstorm, null, tint = Color(0xFFFFE07A), modifier = Modifier.size(52.dp))
                     else -> CoinIcon(Modifier.size(48.dp))
                 }

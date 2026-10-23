@@ -33,6 +33,14 @@ data class Progress(
     val goodAngler: Int = 0,
     /** How many of each [Surprise] came up. */
     val surprises: Map<String, Int> = emptyMap(),
+    /** Old Jonas: the step he is on, when it was given, good-angler points then. */
+    val story: Int = 0,
+    val storySince: Long = 0,
+    val storyAngler: Int = 0,
+    /** Waters Jonas has shown before their level. */
+    val jonasWaters: Set<Water> = emptySet(),
+    /** Jonas told every legend's clues at once. */
+    val allClues: Boolean = false,
     /** This player's friend code (see [Invites]); made on first start. */
     val inviteCode: String = "",
     /** The friend code this player joined with, once. */
@@ -51,7 +59,10 @@ data class Progress(
     val cluesFrom: Long = 0,
 ) {
     /** Clues of each legend known on [day]: one the first day, all three after two more. */
-    fun clues(day: Long): Int = if (cluesFrom == 0L) 1 else (1 + day - cluesFrom).toInt().coerceIn(1, 3)
+    fun clues(day: Long): Int = if (allClues) 3 else if (cluesFrom == 0L) 1 else (1 + day - cluesFrom).toInt().coerceIn(1, 3)
+
+    /** A home water is open by level, or once Jonas has shown it. */
+    fun opened(w: Water): Boolean = level >= w.homeLevel || w in jonasWaters
 
     val level: Int get() = Levels.levelOf(xp)
     val gear: Gear get() = Gear(bait, tackle, rod, reel, line, boat = standHere == Stand.BOAT, stand = standHere)
@@ -130,7 +141,7 @@ data class Progress(
         else -> null
     }
 
-    fun goHome(water: Water): Progress = if (level >= water.homeLevel) copy(trip = null, water = water) else copy(trip = null)
+    fun goHome(water: Water): Progress = if (opened(water)) copy(trip = null, water = water) else copy(trip = null)
 }
 
 object Levels {

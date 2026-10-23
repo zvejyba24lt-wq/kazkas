@@ -93,6 +93,8 @@ fun QuestsScreen(vm: GameViewModel, onBack: () -> Unit) {
                 }
                 Spacer(Modifier.height(14.dp))
             }
+            JonasCard(p, saved?.catches ?: emptyList())
+            Spacer(Modifier.height(10.dp))
             ChallengeCard(p)
             Spacer(Modifier.height(10.dp))
             for (q in quests.list) {

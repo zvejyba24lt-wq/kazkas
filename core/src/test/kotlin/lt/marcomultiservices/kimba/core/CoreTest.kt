@@ -569,5 +569,27 @@ class CoreTest {
         assertEquals(2, p3.surprises["BOTTLE"])
         assertTrue(Destinations.secret !in Destinations.all)
     }
+
+    @Test
+    fun jonasTeachesStepByStep() {
+        val zone = java.time.ZoneId.of("Europe/Vilnius")
+        val roach = Catch("roach", null, 20.0, 120, 1000L, Sky.CLEAR, 15.0, "x")
+        val p = Progress()
+        assertEquals(StoryStep.ROACH, Story.current(p))
+        assertEquals(null, Story.advance(p, listOf(roach, roach), 2000L, zone))
+        val (p1, step) = Story.advance(p, listOf(roach, roach, roach), 2000L, zone)!!
+        assertEquals(StoryStep.ROACH, step)
+        assertEquals(p.coins + 150, p1.coins)
+        assertEquals(StoryStep.PERCH, Story.current(p1))
+        // Old catches don't count for the next step.
+        assertEquals(null, Story.advance(p1, listOf(roach.copy(species = "perch", grams = 300)), 3000L, zone))
+        val (p2, _) = Story.advance(p1, listOf(roach.copy(species = "perch", grams = 300, epochMillis = 2500L)), 3000L, zone)!!
+        assertEquals(StoryStep.WEATHER, Story.current(p2))
+        // Opening a water early.
+        val busy = Progress(story = StoryStep.BUSY_DAY.ordinal)
+        val day = List(5) { roach.copy(epochMillis = 10_000L + it) }
+        val (p3, _) = Story.advance(busy, day, 20_000L, zone)!!
+        assertTrue(p3.opened(Water.RIVER) && !Progress().opened(Water.RIVER))
+    }
 }
 

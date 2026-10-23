@@ -2,7 +2,7 @@ package lt.marcomultiservices.kimba.share
 
 import android.content.Context
 import android.graphics.Bitmap
-import android.graphics.BitmapFactory
+import androidx.compose.ui.graphics.asAndroidBitmap
 import android.graphics.Canvas
 import android.graphics.Paint
 import android.graphics.Path
@@ -25,16 +25,9 @@ object Angler {
     const val HAND_R = 0.78f
     const val HAND_Y = 0.62f
 
-    @Volatile private var art: Bitmap? = null
-    @Volatile private var looked = false
-
-    private fun art(context: Context): Bitmap? {
-        if (!looked) {
-            art = runCatching { context.assets.open("art/angler.webp").use { BitmapFactory.decodeStream(it) } }.getOrNull()
-            looked = true
-        }
-        return art
-    }
+    /** The `angler` picture, its seasonal version first (`angler_winter` wears winter clothes). */
+    @Suppress("UNUSED_PARAMETER")
+    private fun art(context: Context): Bitmap? = runCatching { lt.marcomultiservices.kimba.ui.scene.ArtPack["angler"]?.asAndroidBitmap() }.getOrNull()
 
     /** Hand positions for a figure in [box]: left x, right x, y. */
     fun hands(box: RectF): Triple<Float, Float, Float> =

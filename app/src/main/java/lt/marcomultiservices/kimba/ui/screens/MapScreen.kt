@@ -280,7 +280,7 @@ private fun HomeCard(p: Progress, homeName: String, onGo: (Water) -> Unit, onSta
         Spacer(Modifier.height(10.dp))
         Row(horizontalArrangement = Arrangement.spacedBy(8.dp), modifier = Modifier.fillMaxWidth()) {
             for (w in Water.entries) {
-                val open = p.level >= w.homeLevel
+                val open = p.opened(w)
                 val here = p.trip == null && p.water == w
                 Column(
                     Modifier.weight(1f).clip(RoundedCornerShape(14.dp))
