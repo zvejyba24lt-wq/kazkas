@@ -91,7 +91,7 @@ internal fun DrawScope.drawHookedFish(geo: SceneGeometry, mouth: Offset, t: Floa
 
 /** The landing net held out into the water at the bank, waiting under the fish. */
 internal fun DrawScope.drawLandingNet(geo: SceneGeometry, colors: SceneColors, t: Float) {
-    val hoop = Offset(geo.w * 0.56f, geo.h * 0.915f + sin(t * 2.2f) * geo.h * 0.003f)
+    val hoop = Offset(geo.w * 0.56f, geo.h * 0.88f + sin(t * 2.2f) * geo.h * 0.003f)
     val rx = geo.w * 0.15f
     val ry = rx * 0.32f
     // The handle comes in from the angler at the bottom left.

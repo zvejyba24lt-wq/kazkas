@@ -224,26 +224,24 @@ fun LakeScreen(
                 val placeName = trip?.let { t(it.name) } ?: "${saved?.place?.name ?: ""} · ${t(progress.water.label)}"
                 TopHud(c, placeName, progress, saved?.baitsNow(), vm.offline.collectAsStateWithLifecycle().value, onForecast, onSettings, onBook)
             }
-            Spacer(Modifier.weight(1f))
             // First-play tips: each shows until the player has done that step once.
             val known = saved?.tips
             // A tip waits while a dialog (daily gift, level up) is open, so the two never overlap.
             fun tip(t: Tip) = known != null && t.name !in known && events.isEmpty()
+            // While a cast is out, words sit high on the screen: the bottom belongs to the thumbs.
+            Spacer(Modifier.height(10.dp))
             when (stage) {
-                Stage.IDLE, Stage.CHARGING -> if (tip(Tip.CAST)) Coach(Tip.CAST, arrow = true)
-                Stage.WAITING -> if (!lake.hint && tip(Tip.WAIT)) Coach(Tip.WAIT, tackle = lake.tackle) else Hint(
-                    when {
-                        lake.hint -> t(if (lake.tackle == Tackle.FLOAT) S.tooEarly else S.tooEarlyTip)
-                        lake.tackle == Tackle.FEEDER -> t(S.waitFeeder)
-                        lake.tackle == Tackle.SPIN -> t(S.waitSpin)
-                        else -> t(S.waitForBite)
-                    },
-                    warn = lake.hint,
-                )
+                Stage.WAITING -> when {
+                    !lake.hint && tip(Tip.WAIT) -> Coach(Tip.WAIT, tackle = lake.tackle)
+                    lake.hint -> Hint(t(if (lake.tackle == Tackle.FLOAT) S.tooEarly else S.tooEarlyTip), warn = true)
+                    lake.tackle == Tackle.SPIN && !lake.winding -> Hint(t(S.waitSpin), warn = false)
+                    else -> Unit
+                }
                 Stage.BITE -> if (tip(Tip.STRIKE)) Coach(Tip.STRIKE)
-                Stage.FIGHT -> { if (tip(Tip.REEL)) { Coach(Tip.REEL); Spacer(Modifier.height(8.dp)) }; FightHud(lake.tension, lake.fightDistance, lake.running, lake.tackle, lake.fishHeading, lake.steer, lake.atNet, lake.fishSide) }
+                Stage.FIGHT -> if (tip(Tip.REEL)) Coach(Tip.REEL) else FightCue(lake.running, lake.atNet, lake.fishSide, lake.fishHeading, lake.steer)
                 else -> Unit
             }
+            Spacer(Modifier.weight(1f))
             Spacer(Modifier.height(10.dp))
             if (stage == Stage.IDLE || stage == Stage.CHARGING) {
                 Row(Modifier.fillMaxWidth(), verticalAlignment = Alignment.CenterVertically) {
@@ -269,6 +267,12 @@ fun LakeScreen(
                     }
                 }
             }
+        }
+
+        // The fight: the tension meter at the right edge, the rod's steer track above the thumbs.
+        if (stage == Stage.FIGHT) {
+            TensionGauge(lake.tension, lake.fightDistance, lake.running, lake.tackle, Modifier.align(androidx.compose.ui.BiasAlignment(1f, 0.05f)).padding(end = 10.dp))
+            SteerBar(lake.rodAim, lake.fishHeading, lake.atNet, lake.fishSide, lake.running, Modifier.align(androidx.compose.ui.BiasAlignment(0f, 0.55f)))
         }
 
         // The strike call sits above the middle of the screen, clear of the thumbs.
@@ -500,45 +504,91 @@ private fun StrikeBanner() {
     }
 }
 
+/** One line high on the screen during the fight: what the fish does and which way to lead the rod. */
 @Composable
-private fun FightHud(tension: Float, distance: Float, running: Boolean, tackle: Tackle, heading: Float, steer: Float, atNet: Boolean, side: Float) {
-    Glass(Modifier.fillMaxWidth(), padding = 14.dp) {
-        Column {
-            Row(verticalAlignment = Alignment.CenterVertically) {
-                // The cue says which way to lead the rod: against the fish's swim.
-                val (cue, color) = when {
-                    running -> t(S.fishRuns) to K.Danger
-                    atNet && kotlin.math.abs(side) >= 0.4f -> t(if (side > 0f) S.steerLeft else S.steerRight) to K.Amber
-                    atNet -> t(S.netLead) to Color(0xFF8DC26F)
-                    steer > 0.35f -> t(S.steerGood) to Color(0xFF8DC26F)
-                    heading > 0f -> t(S.steerLeft) to K.Amber
-                    else -> t(S.steerRight) to K.Amber
+private fun FightCue(running: Boolean, atNet: Boolean, side: Float, heading: Float, steer: Float) {
+    val (cue, color) = when {
+        running -> t(S.fishRuns) to K.Danger
+        atNet && kotlin.math.abs(side) >= 0.4f -> t(if (side > 0f) S.steerLeft else S.steerRight) to K.Amber
+        atNet -> t(S.netLead) to Color(0xFF8DC26F)
+        steer > 0.35f -> t(S.steerGood) to Color(0xFF8DC26F)
+        heading > 0f -> t(S.steerLeft) to K.Amber
+        else -> t(S.steerRight) to K.Amber
+    }
+    Box(Modifier.fillMaxWidth(), contentAlignment = Alignment.Center) {
+        Glass(radius = 30.dp, padding = 12.dp) {
+            Text(cue, color = color, fontSize = 16.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+        }
+    }
+}
+
+/**
+ * The line-tension meter standing at the right edge: it fills from the bottom, green while
+ * safe, red in the top band where the line snaps; above it, the line still out in metres.
+ */
+@Composable
+private fun TensionGauge(tension: Float, distance: Float, running: Boolean, tackle: Tackle, modifier: Modifier = Modifier) {
+    val pulse by rememberInfiniteTransition(label = "gauge").animateFloat(0.4f, 1f, infiniteRepeatable(tween(260), RepeatMode.Reverse), label = "p")
+    val full = when (tackle) { Tackle.FEEDER -> 60; Tackle.SPIN -> 45; else -> 25 }
+    Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
+        Glass(radius = 14.dp, padding = 8.dp) {
+            Text("${(distance.coerceIn(0f, 1f) * full).toInt().coerceAtLeast(1)} m", color = K.Amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+        }
+        Spacer(Modifier.height(8.dp))
+        Canvas(Modifier.size(30.dp, 250.dp)) {
+            val r = androidx.compose.ui.geometry.CornerRadius(size.width / 2)
+            val colors = listOf(K.Danger, K.Amber, Color(0xFF8DC26F), Color(0xFF3E8E5A))
+            drawRoundRect(Color(0xB3101A28), cornerRadius = r)
+            drawRoundRect(Brush.verticalGradient(colors, 0f, size.height), cornerRadius = r, alpha = 0.22f)
+            val f = tension.coerceIn(0f, 1f)
+            val top = size.height * (1f - f)
+            drawRoundRect(Brush.verticalGradient(colors, 0f, size.height), topLeft = Offset(0f, top), size = Size(size.width, size.height - top), cornerRadius = r)
+            // The snapping point.
+            val y = size.height * 0.04f
+            drawLine(Color.White, Offset(size.width * 0.15f, y), Offset(size.width * 0.85f, y), strokeWidth = 2.dp.toPx())
+            drawRoundRect(if (running) K.Danger.copy(alpha = pulse) else K.Line, cornerRadius = r, style = Stroke(if (running) 3.dp.toPx() else 1.dp.toPx()))
+        }
+    }
+}
+
+/**
+ * Where the finger leads the rod: a track across the screen with the rod's knob on it and the
+ * side to lead towards lit green, so it is plain that sliding the finger steers.
+ */
+@Composable
+private fun SteerBar(aim: Float, heading: Float, atNet: Boolean, side: Float, running: Boolean, modifier: Modifier = Modifier) {
+    val pulse by rememberInfiniteTransition(label = "steer").animateFloat(0f, 1f, infiniteRepeatable(tween(700)), label = "p")
+    Canvas(modifier.fillMaxWidth(0.82f).height(46.dp)) {
+        val y = size.height / 2
+        val r = androidx.compose.ui.geometry.CornerRadius(size.height / 2)
+        drawRoundRect(Color(0x99101A28), cornerRadius = r)
+        // The good side: against the fish, or the middle when netting.
+        val (from, to) = when {
+            atNet -> if (kotlin.math.abs(side) < 0.4f) -0.25f to 0.25f else if (side > 0f) -1f to -0.2f else 0.2f to 1f
+            heading > 0f -> -1f to -0.15f
+            else -> 0.15f to 1f
+        }
+        fun x(v: Float) = size.width * (0.5f + 0.46f * v)
+        if (!running) {
+            drawRoundRect(Color(0x558DC26F), topLeft = Offset(x(from), 4.dp.toPx()), size = Size(x(to) - x(from), size.height - 8.dp.toPx()), cornerRadius = r)
+            // Chevrons running towards the good side.
+            val dir = if (atNet && kotlin.math.abs(side) < 0.4f) 0f else if ((from + to) < 0f) -1f else 1f
+            if (dir != 0f) for (k in 0..2) {
+                val cx = x(dir * (0.25f + 0.22f * k + 0.1f * pulse))
+                val a = (1f - k * 0.3f) * (0.4f + 0.6f * pulse)
+                val p = androidx.compose.ui.graphics.Path().apply {
+                    moveTo(cx - dir * 6.dp.toPx(), y - 9.dp.toPx())
+                    lineTo(cx + dir * 4.dp.toPx(), y)
+                    lineTo(cx - dir * 6.dp.toPx(), y + 9.dp.toPx())
                 }
-                Text(cue, color = color, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
-                // Line still out, in metres: a float is fished close, a feeder far out.
-                val full = when (tackle) { Tackle.FEEDER -> 60; Tackle.SPIN -> 45; else -> 25 }
-                Text("${(distance.coerceIn(0f, 1f) * full).toInt().coerceAtLeast(1)} m", color = K.Amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
-            }
-            Spacer(Modifier.height(10.dp))
-            // Line tension: green is safe, red snaps.
-            Canvas(Modifier.fillMaxWidth().height(16.dp)) {
-                val r = androidx.compose.ui.geometry.CornerRadius(8.dp.toPx())
-                drawRoundRect(Brush.horizontalGradient(listOf(Color(0xFF3E8E5A), Color(0xFF8DC26F), K.Amber, K.Danger), 0f, size.width), cornerRadius = r, alpha = 0.35f)
-                drawRoundRect(Brush.horizontalGradient(listOf(Color(0xFF3E8E5A), Color(0xFF8DC26F), K.Amber, K.Danger), 0f, size.width), size = Size(size.width * tension.coerceIn(0f, 1f), size.height), cornerRadius = r)
-                val x = size.width * 0.97f
-                drawLine(Color.White, Offset(x, 0f), Offset(x, size.height), strokeWidth = 2.dp.toPx())
-            }
-            Spacer(Modifier.height(10.dp))
-            // Distance to the landing net.
-            Canvas(Modifier.fillMaxWidth().height(22.dp)) {
-                val y = size.height / 2
-                drawLine(Color(0x55FFFFFF), Offset(0f, y), Offset(size.width, y), strokeWidth = 2.dp.toPx(), cap = StrokeCap.Round)
-                drawCircle(K.Reed, 7.dp.toPx(), Offset(6.dp.toPx(), y), style = Stroke(2.dp.toPx()))
-                val fx = 14.dp.toPx() + (size.width - 30.dp.toPx()) * distance.coerceIn(0f, 1f)
-                FishArt.draw(this, "roach", false, Rect(fx - 14.dp.toPx(), y - 7.dp.toPx(), fx + 14.dp.toPx(), y + 7.dp.toPx()), silhouette = true)
-                drawCircle(K.Amber, 3.dp.toPx(), Offset(fx - 14.dp.toPx(), y))
+                drawPath(p, Color(0xFFBFF0A0).copy(alpha = a), style = Stroke(3.dp.toPx(), cap = StrokeCap.Round, join = androidx.compose.ui.graphics.StrokeJoin.Round))
             }
         }
+        // The rod's knob where the finger holds it.
+        val kx = x(aim.coerceIn(-1f, 1f))
+        drawCircle(Color.Black.copy(alpha = 0.3f), 15.dp.toPx(), Offset(kx, y + 2.dp.toPx()))
+        drawCircle(K.Amber, 14.dp.toPx(), Offset(kx, y))
+        drawCircle(Color.White.copy(alpha = 0.8f), 5.dp.toPx(), Offset(kx, y))
     }
 }
 

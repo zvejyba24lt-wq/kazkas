@@ -105,6 +105,9 @@ fun LakeScene(
         // The view closes in on the water while a fish is played and lifted out.
         val zoomTarget by remember { derivedStateOf { if (lake.value.stage == Stage.FIGHT || lake.value.stage == Stage.LANDING) 1.22f else 1f } }
         val zoom by animateFloatAsState(zoomTarget, tween(700, easing = FastOutSlowInEasing), label = "zoom")
+        // At the bank the angler looks down: the view tilts to the landing net and the fish in it.
+        val lookDownTarget by remember { derivedStateOf { val st = lake.value; if ((st.stage == Stage.FIGHT && st.fightDistance < 0.22f) || st.stage == Stage.LANDING) 1f else 0f } }
+        val lookDown by animateFloatAsState(lookDownTarget, tween(900, easing = FastOutSlowInEasing), label = "look")
 
         Canvas(Modifier.fillMaxSize()) {
             val t = time.floatValue
@@ -166,7 +169,7 @@ fun LakeScene(
                 s.stage == Stage.FIGHT -> {
                     // From where it was hooked in to the bank below the angler; a fish that wins line
                     // swims on out past that point towards the far shore.
-                    val bank = Offset(geo.w * 0.58f, geo.h * 0.93f)
+                    val bank = Offset(geo.w * 0.57f, geo.h * 0.885f)
                     val start = s.fightStart.coerceAtLeast(0.05f)
                     val along = if (s.fightDistance <= start) {
                         val k = s.fightDistance / start
@@ -203,8 +206,11 @@ fun LakeScene(
 
             // Layers, back to front, through the camera, which closes in during the fight.
             val sea = waterKind == Water.SEA
-            val pivot = Offset(geo.w * 0.55f, geo.h * 0.78f)
-            drawContext.transform.scale(zoom, zoom, pivot)
+            // Looking down at the bank the view closes in further around the bottom edge, so
+            // nothing past the picture ever shows.
+            val pivot = Offset(geo.w * (0.55f + 0.02f * lookDown), geo.h * (0.78f + 0.22f * lookDown))
+            val cam = zoom + 0.3f * lookDown
+            drawContext.transform.scale(cam, cam, pivot)
             drawSky(geo, colors, conditions, t, sun, moon)
             if (sea) {
                 drawShores(geo, colors, waterKind, t)
@@ -248,7 +254,7 @@ fun LakeScene(
                 else -> drawBubbles(geo, floatPos, t, 0.25f)
             }
             if (s.stage == Stage.WAITING && splash.value < 1f) drawCastSplash(geo, floatPos, splash.value)
-            if (s.stage == Stage.FIGHT && s.atNet) drawLandingNet(geo, colors, t)
+            if (s.stage == Stage.FIGHT && s.fightDistance < 0.22f) drawLandingNet(geo, colors, t)
             if (s.stage == Stage.FIGHT) {
                 s.bite?.let { b -> drawHookedFish(geo, floatPos, t, b.species.id, b.golden != null, (b.cm / 60.0).toFloat(), s.fishHeading, s.running, colors) }
                 drawFightSplash(geo, floatPos, t, s.running)
@@ -272,7 +278,7 @@ fun LakeScene(
             }
             if (!sea) drawReeds(geo, colors, t, back = false)
             drawWeather(geo, colors, conditions, t)
-            drawContext.transform.scale(1f / zoom, 1f / zoom, pivot)
+            drawContext.transform.scale(1f / cam, 1f / cam, pivot)
             drawVignette(geo)
         }
     }

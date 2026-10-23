@@ -68,9 +68,9 @@ object S {
     val tipStrike = L("Plūdė paniro. Bakstelk bet kur ekrane ir kirsk!", "Die Pose ist weg. Tippe irgendwo auf den Bildschirm!", "The float went under. Tap anywhere on the screen!")
     val tipReelTitle = L("Ištrauk žuvį", "Hol den Fisch raus", "Land the fish")
     val tipReel = L(
-        "Laikyk pirštą ir vyniok. Vesk pirštą į priešingą pusę, nei plaukia žuvis: taip ji pavargsta. Kai parausta „Tempia!“, atleisk.",
-        "Finger halten zum Kurbeln. Zieh ihn zur Gegenseite der Fluchtrichtung, das ermüdet den Fisch. Wird „Er zieht!“ rot, lass los.",
-        "Hold to reel. Slide your finger to the side away from where the fish swims to tire it. When “It runs!” turns red, let go.",
+        "Laikyk pirštą ir vyniok. Slink pirštu į šoną taip, kad geltonas taškas būtų žaliame lauke: meškerė traukia prieš žuvį, ir ji pavargsta. Kai „Tempia!“, atleisk.",
+        "Finger halten zum Kurbeln. Schieb ihn zur Seite, bis der gelbe Punkt im grünen Feld ist: die Rute zieht gegen den Fisch und er ermüdet. Bei „Er zieht!“ loslassen.",
+        "Hold to reel. Slide sideways until the yellow dot sits in the green zone: the rod pulls against the fish and tires it. When “It runs!”, let go.",
     )
 
     val tipWaitFeeder = L(
