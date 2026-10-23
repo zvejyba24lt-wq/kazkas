@@ -144,8 +144,8 @@ internal fun DrawScope.drawAim(geo: SceneGeometry, at: Offset, t: Float) {
  */
 internal fun DrawScope.drawRod(geo: SceneGeometry, colors: SceneColors, tip: Offset, quiver: Boolean = false, winter: Boolean = false) {
     // A winter rod is short and slim, held low over the hole, with a small inline reel.
-    val base = if (winter) Offset(geo.w * 0.9f, geo.h * 1.04f) else geo.rodBase
-    val ctrl = if (winter) Offset(geo.w * 0.8f, geo.h * 0.8f) else Offset(geo.w * 0.92f, geo.h * 0.70f)
+    val base = if (winter) Offset(geo.w * 0.86f, geo.h * 1.04f) else geo.rodBase
+    val ctrl = if (winter) Offset(geo.w * 0.76f, geo.h * 0.87f) else Offset(geo.w * 0.92f, geo.h * 0.70f)
     val slim = if (winter) 0.7f else 1f
     val n = 48
     val pts = Array(n + 1) { i ->
@@ -424,12 +424,13 @@ internal fun DrawScope.drawSpinWake(geo: SceneGeometry, pos: Offset, t: Float) {
 internal fun DrawScope.drawRodRest(geo: SceneGeometry, colors: SceneColors, tip: Offset, hasAlarm: Boolean, alarm: Boolean, t: Float) {
     val base = geo.rodBase
     val ctrl = Offset(geo.w * 0.92f, geo.h * 0.70f)
-    val u = 0.36f
+    // Far enough along the rod to stand well inside the view, big enough to read at a glance.
+    val u = 0.48f
     val at = Offset(
         (1 - u) * (1 - u) * base.x + 2 * (1 - u) * u * ctrl.x + u * u * tip.x,
         (1 - u) * (1 - u) * base.y + 2 * (1 - u) * u * ctrl.y + u * u * tip.y,
     )
-    val s = geo.w * 0.022f
+    val s = geo.w * 0.03f
     val ground = geo.h * 0.985f
     // Telescopic pole: a thicker lower part and a thinner upper one.
     drawLine(Brush.horizontalGradient(listOf(colors.lit(Palette.ReelRim), colors.lit(Palette.ReelBody)), at.x - s * 0.3f, at.x + s * 0.3f), Offset(at.x, ground), Offset(at.x, at.y + s * 4f), strokeWidth = s * 0.55f)

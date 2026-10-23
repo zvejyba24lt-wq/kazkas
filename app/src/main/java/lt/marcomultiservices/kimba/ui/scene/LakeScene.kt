@@ -186,7 +186,7 @@ fun LakeScene(
                 val jig = if (kind == Tackle.SPIN && s.stage == Stage.WAITING && s.winding) (0.5f + 0.5f * sin(t * 7f)) * geo.h * 0.03f else 0f
                 Offset(
                     geo.w * 0.6f + (if (s.stage == Stage.FIGHT) rodAim * geo.w * 0.06f else 0f),
-                    geo.h * 0.6f + geo.h * 0.07f * bend - jig + (if (kind == Tackle.SPIN) dip * geo.h * 0.02f else 0f),
+                    geo.h * 0.68f + geo.h * 0.06f * bend - jig + (if (kind == Tackle.SPIN) dip * geo.h * 0.02f else 0f),
                 )
             } else if (resting) {
                 // The quiver tip nods towards the bait on a nibble and pulls right round on a bite.
