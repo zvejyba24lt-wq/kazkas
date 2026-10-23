@@ -39,6 +39,9 @@ object S {
     val tooEarly = L("Per anksti! Palauk, kol plūdė panirs.", "Zu früh! Warte, bis die Pose abtaucht.", "Too early! Wait until the float goes under.")
     val reelHint = L("Laikyk – vyniok. Paleisk, kai žuvis tempia!", "Halten – kurbeln. Loslassen, wenn der Fisch zieht!", "Hold to reel. Let go when the fish runs!")
     val fishRuns = L("Tempia!", "Er zieht!", "It runs!")
+    val steerLeft = L("◀ Kreipk meškerę kairėn", "◀ Rute nach links", "◀ Rod to the left")
+    val steerRight = L("Kreipk meškerę dešinėn ▶", "Rute nach rechts ▶", "Rod to the right ▶")
+    val steerGood = L("Gerai! Žuvis pavargsta", "Gut! Der Fisch ermüdet", "Good! The fish is tiring")
     val noCasts = L("Užmetimai baigėsi", "Keine Würfe mehr", "Out of casts")
     val noCastsBody = L("Naujas užmetimas atsiras po %s.", "Ein neuer Wurf kommt in %s.", "A new cast arrives in %s.")
     val bonusCasts = L("+5 užmetimai", "+5 Würfe", "+5 casts")
@@ -63,9 +66,9 @@ object S {
     val tipStrike = L("Plūdė paniro. Bakstelk bet kur ekrane ir kirsk!", "Die Pose ist weg. Tippe irgendwo auf den Bildschirm!", "The float went under. Tap anywhere on the screen!")
     val tipReelTitle = L("Ištrauk žuvį", "Hol den Fisch raus", "Land the fish")
     val tipReel = L(
-        "Laikyk pirštą ant ekrano, ir valas vyniojasi. Kai užrašas parausta „Tempia!“, atleisk pirštą, kad valas nenutrūktų.",
-        "Finger auf dem Bildschirm halten, dann kurbelst du. Wird „Er zieht!“ rot, lass los, damit die Schnur nicht reißt.",
-        "Keep your finger on the screen to reel. When “It runs!” turns red, let go so the line doesn't snap.",
+        "Laikyk pirštą ir vyniok. Vesk pirštą į priešingą pusę, nei plaukia žuvis: taip ji pavargsta. Kai parausta „Tempia!“, atleisk.",
+        "Finger halten zum Kurbeln. Zieh ihn zur Gegenseite der Fluchtrichtung, das ermüdet den Fisch. Wird „Er zieht!“ rot, lass los.",
+        "Hold to reel. Slide your finger to the side away from where the fish swims to tire it. When “It runs!” turns red, let go.",
     )
 
     val tipWaitFeeder = L(

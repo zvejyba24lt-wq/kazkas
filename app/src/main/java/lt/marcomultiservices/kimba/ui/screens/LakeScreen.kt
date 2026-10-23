@@ -79,6 +79,7 @@ import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.Stroke
 import androidx.compose.ui.graphics.vector.ImageVector
+import androidx.compose.ui.input.pointer.AwaitPointerEventScope
 import androidx.compose.ui.input.pointer.pointerInput
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.text.style.TextAlign
@@ -189,11 +190,23 @@ fun LakeScreen(
         Box(
             Modifier.fillMaxSize().pointerInput(Unit) {
                 awaitEachGesture {
-                    awaitFirstDown()
+                    val down = awaitFirstDown()
+                    // During the fight the finger reels while held and steers the rod by where it is.
+                    suspend fun AwaitPointerEventScope.play(start: androidx.compose.ui.geometry.Offset) {
+                        vm.setReeling(true)
+                        vm.aimRod((start.x / size.width - 0.5f) * 2.4f)
+                        while (true) {
+                            val e = awaitPointerEvent()
+                            val c = e.changes.firstOrNull { it.id == down.id } ?: break
+                            if (!c.pressed) break
+                            vm.aimRod((c.position.x / size.width - 0.5f) * 2.4f)
+                        }
+                        vm.setReeling(false)
+                    }
                     when (vm.lake.value.stage) {
                         Stage.WAITING -> vm.strike()
-                        Stage.BITE -> { vm.strike(); vm.setReeling(true); waitForUpOrCancellation(); vm.setReeling(false) }
-                        Stage.FIGHT -> { vm.setReeling(true); waitForUpOrCancellation(); vm.setReeling(false) }
+                        Stage.BITE -> { vm.strike(); play(down.position) }
+                        Stage.FIGHT -> play(down.position)
                         else -> Unit
                     }
                 }
@@ -223,7 +236,7 @@ fun LakeScreen(
                     warn = lake.hint,
                 )
                 Stage.BITE -> if (tip(Tip.STRIKE)) Coach(Tip.STRIKE)
-                Stage.FIGHT -> { if (tip(Tip.REEL)) { Coach(Tip.REEL); Spacer(Modifier.height(8.dp)) }; FightHud(lake.tension, lake.fightDistance, lake.running, lake.tackle) }
+                Stage.FIGHT -> { if (tip(Tip.REEL)) { Coach(Tip.REEL); Spacer(Modifier.height(8.dp)) }; FightHud(lake.tension, lake.fightDistance, lake.running, lake.tackle, lake.fishHeading, lake.steer) }
                 else -> Unit
             }
             Spacer(Modifier.height(10.dp))
@@ -483,11 +496,18 @@ private fun StrikeBanner() {
 }
 
 @Composable
-private fun FightHud(tension: Float, distance: Float, running: Boolean, tackle: Tackle) {
+private fun FightHud(tension: Float, distance: Float, running: Boolean, tackle: Tackle, heading: Float, steer: Float) {
     Glass(Modifier.fillMaxWidth(), padding = 14.dp) {
         Column {
             Row(verticalAlignment = Alignment.CenterVertically) {
-                Text(if (running) t(S.fishRuns) else t(S.reelHint), color = if (running) K.Danger else K.Text, fontSize = 14.sp, fontWeight = if (running) FontWeight.Bold else FontWeight.Normal, modifier = Modifier.weight(1f))
+                // The cue says which way to lead the rod: against the fish's swim.
+                val (cue, color) = when {
+                    running -> t(S.fishRuns) to K.Danger
+                    steer > 0.35f -> t(S.steerGood) to Color(0xFF8DC26F)
+                    heading > 0f -> t(S.steerLeft) to K.Amber
+                    else -> t(S.steerRight) to K.Amber
+                }
+                Text(cue, color = color, fontSize = 15.sp, fontWeight = FontWeight.Bold, modifier = Modifier.weight(1f))
                 // Line still out, in metres: a float is fished close, a feeder far out.
                 val full = when (tackle) { Tackle.FEEDER -> 60; Tackle.SPIN -> 45; else -> 25 }
                 Text("${(distance.coerceIn(0f, 1f) * full).toInt().coerceAtLeast(1)} m", color = K.Amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)

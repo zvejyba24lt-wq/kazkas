@@ -98,6 +98,13 @@ fun LakeScene(
         }
         val tensionTarget by remember { derivedStateOf { lake.value.tension } }
         val tension by animateFloatAsState(tensionTarget, tween(90), label = "tension")
+        val sideTarget by remember { derivedStateOf { lake.value.fishSide } }
+        val fishSide by animateFloatAsState(sideTarget, tween(140), label = "side")
+        val aimTarget by remember { derivedStateOf { lake.value.rodAim } }
+        val rodAim by animateFloatAsState(aimTarget, spring(dampingRatio = 0.7f, stiffness = Spring.StiffnessMedium), label = "aim")
+        // The view closes in on the water while a fish is played and lifted out.
+        val zoomTarget by remember { derivedStateOf { if (lake.value.stage == Stage.FIGHT || lake.value.stage == Stage.LANDING) 1.22f else 1f } }
+        val zoom by animateFloatAsState(zoomTarget, tween(700, easing = FastOutSlowInEasing), label = "zoom")
 
         Canvas(Modifier.fillMaxSize()) {
             val t = time.floatValue
@@ -141,7 +148,8 @@ fun LakeScene(
                 val d = dip + tremble * sin(t * 48f) * 0.08f
                 Offset(geo.w * (0.62f - 0.04f * d), geo.h * (0.40f + 0.07f * d))
             } else Offset(
-                geo.rodTip.x - geo.w * 0.05f * bend - geo.w * 0.06f * swing + (if (kind == Tackle.SPIN) tremble * sin(t * 50f) * geo.w * 0.004f else 0f),
+                geo.rodTip.x - geo.w * 0.05f * bend - geo.w * 0.06f * swing + (if (kind == Tackle.SPIN) tremble * sin(t * 50f) * geo.w * 0.004f else 0f) +
+                    (if (s.stage == Stage.FIGHT) rodAim * geo.w * 0.16f else 0f),
                 geo.rodTip.y + geo.h * 0.11f * bend + geo.h * 0.07f * swing,
             )
             val hanging = s.stage == Stage.IDLE || s.stage == Stage.CHARGING
@@ -160,7 +168,7 @@ fun LakeScene(
                     // swims on out past that point towards the far shore.
                     val bank = Offset(geo.w * 0.58f, geo.h * 0.93f)
                     val start = s.fightStart.coerceAtLeast(0.05f)
-                    if (s.fightDistance <= start) {
+                    val along = if (s.fightDistance <= start) {
                         val k = s.fightDistance / start
                         Offset(bank.x + (hookAt.x - bank.x) * k, bank.y + (hookAt.y - bank.y) * k)
                     } else {
@@ -168,6 +176,8 @@ fun LakeScene(
                         val k = ((s.fightDistance - start) / (1f - start).coerceAtLeast(0.01f)).coerceIn(0f, 1f)
                         Offset(hookAt.x + (far.x - hookAt.x) * k, hookAt.y + (far.y - hookAt.y) * k)
                     }
+                    // It swims from side to side across the water, less so close in.
+                    Offset(along.x + fishSide * geo.w * 0.34f * geo.scaleAt(along.y) * s.fightDistance.coerceIn(0.25f, 1f), along.y)
                 }
                 s.stage == Stage.LANDING -> {
                     val l = lift.value
@@ -191,8 +201,10 @@ fun LakeScene(
                 else -> 0f
             }
 
-            // Layers, back to front.
+            // Layers, back to front, through the camera, which closes in during the fight.
             val sea = waterKind == Water.SEA
+            val pivot = Offset(geo.w * 0.55f, geo.h * 0.78f)
+            drawContext.transform.scale(zoom, zoom, pivot)
             drawSky(geo, colors, conditions, t, sun, moon)
             if (sea) {
                 drawShores(geo, colors, waterKind, t)
@@ -236,6 +248,7 @@ fun LakeScene(
             }
             if (s.stage == Stage.WAITING && splash.value < 1f) drawCastSplash(geo, floatPos, splash.value)
             if (s.stage == Stage.FIGHT) {
+                s.bite?.let { b -> drawHookedFish(geo, floatPos, t, b.species.id, b.golden != null, (b.cm / 60.0).toFloat(), s.fishHeading, s.running, colors) }
                 drawFightSplash(geo, floatPos, t, s.running)
                 val b = s.bite
                 if (s.running && b != null) drawFishJump(geo, floatPos, t, b.species.id, b.golden != null, (b.cm / 60.0).toFloat())
@@ -257,6 +270,7 @@ fun LakeScene(
             }
             if (!sea) drawReeds(geo, colors, t, back = false)
             drawWeather(geo, colors, conditions, t)
+            drawContext.transform.scale(1f / zoom, 1f / zoom, pivot)
             drawVignette(geo)
         }
     }

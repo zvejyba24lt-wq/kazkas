@@ -90,6 +90,13 @@ data class LakeState(
     val fightDistance: Float = 1f,
     /** Where the fish was hooked, on the same scale as [fightDistance]. */
     val fightStart: Float = 1f,
+    /** The hooked fish across the water, -1 left .. 1 right, and the way it swims. */
+    val fishSide: Float = 0f,
+    val fishHeading: Float = 1f,
+    /** Where the player points the rod, -1 left .. 1 right. */
+    val rodAim: Float = 0f,
+    /** -1..1: how well the rod is held against the fish. */
+    val steer: Float = 0f,
     val running: Boolean = false,
     val bite: Bite? = null,
     val lost: LostReason? = null,
@@ -140,6 +147,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
 
     private var job: Job? = null
     private var reeling = false
+    @Volatile private var rodAim = 0f
     /** The app is in the background: a fight waits instead of going on without the player. */
     @Volatile private var paused = false
     private var resultsSinceAd = 0
@@ -430,6 +438,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     private fun startFight(bite: Bite) {
         job?.cancel()
         reeling = false
+        rodAim = 0f
         val gear = _saved.value?.progress?.gear
         // The fish is played in from where it took the bait: a short cast, or a spinner taken
         // near the bank, leaves less line to wind in. A little room stays for the fight itself.
@@ -452,8 +461,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     last = now
                     continue
                 }
-                fight.step(((now - last) / 1e9).coerceAtMost(0.05), reeling)
+                fight.step(((now - last) / 1e9).coerceAtMost(0.05), reeling, rodAim.toDouble())
                 last = now
+                if (fight.turned) buzz(12)
                 if (fight.runStarted) {
                     buzz(longArrayOf(0, 30, 40, 30, 40, 30))
                     sfx.play(Sfx.Fx.SPLASH, 0.55f, rate = 1.1f + 0.2f * rng.nextFloat())
@@ -467,7 +477,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                     sfx.play(Sfx.Fx.STRAIN, 0.5f, minGapMs = 520)
                     if (fight.tension > 0.92) buzzTick()
                 }
-                _lake.update { it.copy(tension = fight.tension.toFloat(), fightDistance = fight.distance.toFloat(), running = fight.running) }
+                _lake.update { it.copy(tension = fight.tension.toFloat(), fightDistance = fight.distance.toFloat(), running = fight.running, fishSide = fight.side.toFloat(), fishHeading = fight.heading.toFloat(), rodAim = rodAim, steer = fight.steer.toFloat()) }
             }
             sfx.hold(Sfx.Fx.REEL, false)
             sfx.hold(Sfx.Fx.DRAG, false)
@@ -480,6 +490,9 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     fun setReeling(on: Boolean) { reeling = on }
+
+    /** The rod pointed left (-1) or right (1) during a fight. */
+    fun aimRod(aim: Float) { rodAim = aim.coerceIn(-1f, 1f) }
 
     fun setPaused(on: Boolean) {
         paused = on

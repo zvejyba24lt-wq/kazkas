@@ -57,6 +57,38 @@ internal fun DrawScope.drawFishShadow(geo: SceneGeometry, pos: Offset, dip: Floa
     }
 }
 
+/**
+ * The hooked fish seen through the water while it is played: its own picture, dimmed and
+ * tinted by the water, facing the way it swims with a beating tail. The line holds its mouth.
+ */
+internal fun DrawScope.drawHookedFish(geo: SceneGeometry, mouth: Offset, t: Float, species: String, golden: Boolean, size: Float, heading: Float, running: Boolean, colors: SceneColors) {
+    val s = geo.scaleAt(mouth.y)
+    val len = geo.w * 0.2f * s * size.coerceIn(0.5f, 2f)
+    // Pictures face left; the body trails behind the mouth, a little under the surface.
+    val c = Offset(mouth.x - heading * len * 0.42f, mouth.y + len * 0.1f)
+    val wag = sin(t * (if (running) 22f else 12f)) * (if (running) 7f else 4f)
+    val tint = lerp(colors.lit(Color(0xFF7FA9A0)), Color.White, 0.25f)
+    withTransform({
+        rotate(wag, mouth)
+        scale(-heading, 1f, c)
+    }) {
+        val photo = ArtPack.fish(species)
+        val rect = Rect(c.x - len / 2, c.y - len * 0.3f, c.x + len / 2, c.y + len * 0.3f)
+        if (photo != null) {
+            val ht = rect.width * photo.height / photo.width
+            val r = Rect(rect.left, c.y - ht / 2, rect.right, c.y + ht / 2)
+            drawArt(photo, r, light = tint, alpha = if (running) 0.85f else 0.7f, filter = if (golden) lt.marcomultiservices.kimba.ui.fish.FishPhotos.goldFilter else null)
+        } else {
+            lt.marcomultiservices.kimba.ui.fish.FishArt.draw(this, species, golden, rect, t)
+        }
+    }
+    // A veil of water over the back half keeps it under the surface.
+    drawOval(
+        Brush.verticalGradient(listOf(Color.Transparent, colors.lit(Color(0xFF2E5A63)).copy(alpha = 0.35f)), c.y - len * 0.2f, c.y + len * 0.3f),
+        Offset(c.x - len * 0.6f, c.y - len * 0.2f), Size(len * 1.2f, len * 0.5f),
+    )
+}
+
 /** During a run the fish leaps clear of the water now and then. */
 internal fun DrawScope.drawFishJump(geo: SceneGeometry, pos: Offset, t: Float, species: String, golden: Boolean, size: Float) {
     val period = 2.6f

@@ -385,4 +385,17 @@ class CoreTest {
         while (far.result == null && farSteps < 10_000) { far.step(0.05, reeling = far.tension < 0.85); farSteps++ }
         assertTrue(steps < farSteps)
     }
+
+    @Test
+    fun steeringAgainstTheFishTiresIt() {
+        fun play(steerAgainst: Boolean): Fight {
+            val f = Fight(0.6, Random(7))
+            repeat(200) { f.step(0.05, reeling = f.tension < 0.8, rod = if (steerAgainst) -f.heading else f.heading) }
+            return f
+        }
+        val good = play(true)
+        val bad = play(false)
+        assertTrue(good.stamina < bad.stamina)
+        assertTrue(good.result == FightResult.LANDED || good.distance < bad.distance)
+    }
 }

@@ -80,6 +80,10 @@ const val IDLE_LIMIT = 8.0
  * The drill after the strike. The player holds to reel in; the fish pulls, and every few
  * seconds makes a run. Reeling during a run overloads the line; giving no line tension for
  * too long lets the hook fall out.
+ *
+ * The fish also swims from side to side. The player steers the rod ([step]'s `rod`, -1 left
+ * .. 1 right): held against the way the fish swims, side strain turns its head and tires it;
+ * held the same way, the fish swims on with the rod and wins line.
  */
 class Fight(
     private val pull: Double,
@@ -100,9 +104,18 @@ class Fight(
     var result: FightResult? = null; private set
     /** Becomes true for one step when the fish starts a run (for haptics and sound). */
     var runStarted = false; private set
+    /** Where the fish is across the water, -1 left .. 1 right. */
+    var side = 0.0; private set
+    /** Which way it swims: -1 left, 1 right. */
+    var heading = if (rng.nextBoolean()) 1.0 else -1.0; private set
+    /** -1..1: how well the rod is held against the fish (1 = right against it, -1 = with it). */
+    var steer = 0.0; private set
+    /** Becomes true for one step when the fish turns (for a cue). */
+    var turned = false; private set
 
     private var runLeft = 0.0
     private var calmLeft = 1.0 + rng.nextDouble() * 1.5
+    private var turnLeft = 1.2 + rng.nextDouble() * 1.8
     private var overload = 0.0
     private var slack = 0.0
     /** Seconds without reeling: a fish left alone swims into the weeds and gets off. */
@@ -110,9 +123,10 @@ class Fight(
 
     val currentPull: Double get() = pull * (0.35 + 0.65 * stamina) * (if (running) 2.0 else 1.0)
 
-    fun step(dt: Double, reeling: Boolean) {
+    fun step(dt: Double, reeling: Boolean, rod: Double = 0.0) {
         if (result != null) return
         runStarted = false
+        turned = false
         if (running) {
             runLeft -= dt
             if (runLeft <= 0) { running = false; calmLeft = 1.2 + rng.nextDouble() * 2.3 }
@@ -120,12 +134,26 @@ class Fight(
             calmLeft -= dt
             if (calmLeft <= 0) { running = true; runStarted = true; runLeft = 0.5 + rng.nextDouble() * 0.8 }
         }
+        // The fish turns now and then, and always at the edge of the swim.
+        turnLeft -= dt
+        if (turnLeft <= 0 || (side * heading > 0.85)) {
+            heading = -heading
+            turned = true
+            turnLeft = (1.0 + rng.nextDouble() * 2.2) * (0.7 + 0.6 * stamina)
+        }
+        steer = -(rod.coerceIn(-1.0, 1.0) * heading)
+        val against = steer.coerceAtLeast(0.0)
+        val with = (-steer).coerceAtLeast(0.0)
+        // Side strain slows it across the water; a rod pointed its way lets it go.
+        side = (side + heading * dt * (0.25 + 0.35 * pull) * (if (running) 1.6 else 1.0) * (1 - 0.6 * against)).coerceIn(-1.0, 1.0)
+
         val p = currentPull
-        val target = (if (reeling) 0.28 + p * 0.42 else 0.04 + p * 0.18) / strength
+        val target = ((if (reeling) 0.28 + p * 0.42 else 0.04 + p * 0.18) + with * 0.14 - against * 0.05) / strength
         tension += (target - tension) * min(1.0, dt * 4)
-        distance += if (reeling) -dt * 0.16 * reelSpeed * (1 - min(0.85, p * 0.45)) else dt * 0.05 * p
+        distance += if (reeling) -dt * 0.16 * reelSpeed * (1 - min(0.85, p * 0.45)) * (1 - 0.5 * with) else dt * 0.05 * p
+        if (with > 0) distance += dt * 0.03 * p * with
         distance = distance.coerceAtMost(1.0)
-        stamina = (stamina - dt * (if (running) 0.06 else 0.025) * (if (reeling) 1.4 else 0.8)).coerceAtLeast(0.0)
+        stamina = (stamina - dt * (if (running) 0.06 else 0.025) * (if (reeling) 1.4 else 0.8) * (1 + 1.2 * against)).coerceAtLeast(0.0)
         overload = if (tension > 0.97) overload + dt else 0.0
         slack = if (tension < 0.12) slack + dt else (slack - dt * 2).coerceAtLeast(0.0)
         idle = if (reeling) 0.0 else idle + dt
