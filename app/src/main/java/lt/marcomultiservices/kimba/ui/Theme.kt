@@ -91,4 +91,5 @@ fun SectionTitle(text: String, modifier: Modifier = Modifier) {
  * Room at the top for the status bar when it shows, and for the camera cut-out when the game
  * runs full screen with the bars hidden.
  */
+@Composable
 fun Modifier.safeTopPadding(): Modifier = windowInsetsPadding(WindowInsets.statusBars.union(WindowInsets.displayCutout).only(WindowInsetsSides.Top))
