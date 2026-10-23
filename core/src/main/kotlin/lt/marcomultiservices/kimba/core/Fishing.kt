@@ -86,6 +86,12 @@ object BiteEngine {
 
 enum class FightResult { LANDED, SNAPPED, ESCAPED }
 
+/** How far each tackle casts at full power, in metres; cast and fight distances (0..1) scale by it. */
+object Reach {
+    fun metres(tackle: Tackle): Int = when (tackle) { Tackle.FEEDER -> 60; Tackle.SPIN -> 45; Tackle.FLOAT -> 25 }
+    fun metres(distance: Double, tackle: Tackle): Int = kotlin.math.round(distance.coerceIn(0.0, 1.0) * metres(tackle)).toInt()
+}
+
 /** Seconds a hooked fish may be left without reeling before it gets off. */
 const val IDLE_LIMIT = 8.0
 
@@ -149,6 +155,8 @@ class Fight(
             if (runLeft <= 0) { running = false; calmLeft = 1.2 + rng.nextDouble() * 2.3 }
         } else {
             calmLeft -= dt
+            // A tired fish at the net only splashes; it no longer tears off on a run.
+            if (calmLeft <= 0 && atNet && stamina < 0.35) calmLeft = 0.8
             if (calmLeft <= 0) { running = true; runStarted = true; runLeft = 0.5 + rng.nextDouble() * 0.8 }
         }
         // The fish turns now and then, and always at the edge of the swim.
@@ -163,6 +171,8 @@ class Fight(
         val with = (-steer).coerceAtLeast(0.0)
         // Side strain slows it across the water; a rod pointed its way lets it go.
         side = (side + heading * dt * (0.25 + 0.35 * pull) * (if (running) 1.6 else 1.0) * (1 - 0.6 * against)).coerceIn(-1.0, 1.0)
+        // Close in, winding draws the fish round in front of the angler, over the net.
+        if (atNet && reeling && !running) side *= (1 - min(1.0, dt * (1.6 + 2.0 * against)))
 
         val p = currentPull
         val target = ((if (reeling) 0.28 + p * 0.42 else 0.04 + p * 0.18) + with * 0.14 - against * 0.05) / strength

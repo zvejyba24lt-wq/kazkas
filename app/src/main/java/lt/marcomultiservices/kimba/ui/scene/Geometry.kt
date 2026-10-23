@@ -168,15 +168,28 @@ class SceneGeometry(val w: Float, val h: Float) {
     val rodTip = Offset(w * 0.66f, h * 0.575f)
 
     /** Where the float lands for a cast of [dist] 0..1. */
-    fun floatTarget(dist: Double, castId: Int): Offset {
-        val d = dist.coerceIn(0.0, 1.0).pow(0.8).toFloat()
-        return Offset(w * (0.5f + 0.05f * sin(castId * 1.7f)), h * 0.86f + (hy + h * 0.035f - h * 0.86f) * d)
+    fun floatTarget(dist: Double, castId: Int, tackle: lt.marcomultiservices.kimba.core.Tackle? = null): Offset {
+        val x = w * (0.5f + 0.05f * sin(castId * 1.7f))
+        val near = h * 0.86f
+        val far = hy + h * 0.035f
+        if (tackle == null) {
+            val d = dist.coerceIn(0.0, 1.0).pow(0.8).toFloat()
+            return Offset(x, near + (far - near) * d)
+        }
+        // True perspective: the bottom of the picture is the water a metre past the angler's
+        // feet, and each metre further shows less, so 3 m is close in and 60 m far out.
+        val m = dist.coerceIn(0.0, 1.0) * lt.marcomultiservices.kimba.core.Reach.metres(tackle)
+        val v = (PERSPECTIVE_M / (kotlin.math.max(0.0, m - 1.0) + PERSPECTIVE_M)).toFloat()
+        return Offset(x, far + (near - far) * v)
     }
 
     /** Perspective scale at screen height y: small far away, large close by. */
     fun scaleAt(y: Float): Float = 0.35f + 0.8f * ((y - hy) / (h - hy)).coerceIn(0f, 1f)
 
     companion object {
+        /** Metres out at which a cast lands halfway between the angler's feet and the far water. */
+        const val PERSPECTIVE_M = 20.0
+
         /** A layered spruce silhouette with slightly ragged tiers. */
         fun spruce(p: Path, x: Float, base: Float, height: Float, width: Float, rnd: Random) {
             val tiers = 6

@@ -628,4 +628,17 @@ class CoreTest {
         assertTrue(t.hot != null)
         assertEquals(null, Today.of(Forecast(emptyList()), now, 54.7, 25.3, zone))
     }
+
+    @Test
+    fun windingAtTheBankLandsTheFish() {
+        // Whatever side the fish is on when it reaches the bank, steady winding brings it into the net.
+        for (seed in 1..20) {
+            val f = Fight(0.5, kotlin.random.Random(seed), start = 0.15)
+            var t = 0.0
+            while (f.result == null && t < 60) { f.step(0.05, reeling = f.tension < 0.8); t += 0.05 }
+            assertTrue(f.result != FightResult.ESCAPED, "seed $seed escaped after $t s")
+        }
+        assertEquals(25, Reach.metres(1.0, Tackle.FLOAT))
+        assertEquals(3, Reach.metres(0.05, Tackle.FEEDER))
+    }
 }

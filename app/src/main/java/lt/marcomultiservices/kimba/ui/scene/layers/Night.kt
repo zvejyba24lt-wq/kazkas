@@ -79,7 +79,8 @@ fun DrawScope.drawLantern(geo: SceneGeometry, colors: SceneColors, base: Offset,
         )
     }
     val art = ArtPack["lantern"]
-    val flame = Offset(base.x, base.y - hgt * 0.5f)
+    // The flame sits lower in the painted lantern than in the drawn one.
+    val flame = Offset(base.x, base.y - hgt * (if (art != null) 0.38f else 0.5f))
     if (art != null) {
         val w = hgt * art.width / art.height
         drawArt(art, Rect(base.x - w / 2, base.y - hgt, base.x + w / 2, base.y), colors.lit(Color.White, 0.4f))

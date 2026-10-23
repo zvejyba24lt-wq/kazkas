@@ -52,6 +52,7 @@ Koordinatės žemiau pateiktos ekrano dalimis: `w` – ekrano plotis, `h` – au
 | `<bet kuris>_spring`, `_autumn`, `_winter` | Metų laikų versijos | Kaip originalas | Bet kuris paveikslėlis gali turėti metų laiko versiją, pvz. `shore_lake_autumn`, `pier_winter`, `reeds_autumn`, `camp_bg_winter`. Pavasaris kovo–gegužės, ruduo rugsėjo–lapkričio, žiema gruodžio–vasario mėn. |
 | `jonas_1`, `jonas_2`, `jonas_3` | Senasis žvejys Jonas | Kvadratas (600×600 px), permatomas fonas | 1 draugiškas, 2 pasakoja paslaptį, 3 didžiuojasi. Ta pati poza, keičiasi tik veidas. |
 | `angler_winter` | Žvejys žiemos drabužiais | Kaip `angler` | Trofėjaus nuotraukai gruodžio–vasario mėn. Ta pati poza ir delnų vieta. |
+| `landing_net` | Graibštas | apie 1000×800 px, permatomas fonas | Matomas iš viršaus ir iš už žvejo: ovalus lankas viršuje dešinėje užima apie 62 % pločio, po juo kabo tinklo maišas, ilgas kotas eina į apatinį kairį kampą. Be vandens ir be žuvies. |
 | `widget_bg` | Pagrindinio ekrano valdiklio fonas | 4:2 (apie 800×400 px), nepermatomas | Ramus ežeras sutemus, be teksto. Apačia tamsėja savaime, ant jos rašomas kibimas. Be jo – tamsiai mėlynas gradientas. |
 | `item_<rūšis>_<vardas>` | Parduotuvės ikonos | Kvadratas | Pvz. `item_lure_worm`, `item_rod_carbon`, `item_float_glow`, `item_up_boat`. Vardai yra `core/.../Gear.kt` (`Lure`, `Rod`, `Reel`, `Line`, `FloatStyle`, `Upgrade`). |
 

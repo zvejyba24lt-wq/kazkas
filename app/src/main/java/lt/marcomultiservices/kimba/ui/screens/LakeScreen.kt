@@ -295,8 +295,15 @@ fun LakeScreen(
 
         // The fight: the tension meter at the right edge, the rod's steer track above the thumbs.
         if (stage == Stage.FIGHT) {
-            TensionGauge(lake.tension, lake.fightDistance, lake.running, lake.tackle, Modifier.align(androidx.compose.ui.BiasAlignment(1f, 0.32f)).padding(end = 10.dp))
+            TensionGauge(lake.tension, lake.fightDistance, lake.atNet, lake.tackle, Modifier.align(androidx.compose.ui.BiasAlignment(1f, 0.32f)).padding(end = 10.dp))
             SteerBar(lake.rodAim, lake.fishHeading, lake.atNet, lake.fishSide, lake.running, Modifier.align(androidx.compose.ui.BiasAlignment(0f, 1f)).navigationBarsPadding().padding(bottom = 18.dp))
+        }
+
+        // How far the bait went, in metres, while it is out (not on the ice: the hole is right there).
+        if ((stage == Stage.WAITING || stage == Stage.BITE) && !progress.onIce) {
+            Glass(Modifier.align(androidx.compose.ui.BiasAlignment(1f, 0.32f)).padding(end = 10.dp), radius = 14.dp, padding = 8.dp) {
+                Text("${lt.marcomultiservices.kimba.core.Reach.metres(lake.castDist, lake.tackle).coerceAtLeast(1)} m", color = K.Text, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            }
         }
 
         // The strike call sits above the middle of the screen, clear of the thumbs.
@@ -585,12 +592,13 @@ private fun FightCue(running: Boolean, atNet: Boolean, side: Float, heading: Flo
  * safe, red in the top band where the line snaps; above it, the line still out in metres.
  */
 @Composable
-private fun TensionGauge(tension: Float, distance: Float, running: Boolean, tackle: Tackle, modifier: Modifier = Modifier) {
+private fun TensionGauge(tension: Float, distance: Float, atNet: Boolean, tackle: Tackle, modifier: Modifier = Modifier) {
     val pulse by rememberInfiniteTransition(label = "gauge").animateFloat(0.4f, 1f, infiniteRepeatable(tween(260), RepeatMode.Reverse), label = "p")
-    val full = when (tackle) { Tackle.FEEDER -> 60; Tackle.SPIN -> 45; else -> 25 }
     Column(modifier, horizontalAlignment = Alignment.CenterHorizontally) {
         Glass(radius = 14.dp, padding = 8.dp) {
-            Text("${(distance.coerceIn(0f, 1f) * full).toInt().coerceAtLeast(1)} m", color = K.Amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
+            // At the bank the fish is under the rod tip: no more metres to wind, it goes into the net.
+            val m = lt.marcomultiservices.kimba.core.Reach.metres(distance.toDouble(), tackle)
+            Text(if (atNet || m == 0) t(S.atBank) else "$m m", color = if (atNet) Color(0xFF8DC26F) else K.Amber, fontSize = 15.sp, fontWeight = FontWeight.Bold)
         }
         Spacer(Modifier.height(8.dp))
         Canvas(Modifier.size(30.dp, 250.dp)) {

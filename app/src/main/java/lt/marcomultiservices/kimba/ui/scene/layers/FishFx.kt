@@ -118,11 +118,23 @@ internal fun DrawScope.drawHookedFish(geo: SceneGeometry, mouth: Offset, t: Floa
     )
 }
 
-/** The landing net held out into the water at the bank, waiting under the fish. */
-internal fun DrawScope.drawLandingNet(geo: SceneGeometry, colors: SceneColors, t: Float) {
-    val hoop = Offset(geo.w * 0.56f, geo.h * 0.88f + sin(t * 2.2f) * geo.h * 0.003f)
+/**
+ * The landing net held out into the water at the bank, reaching after the fish as it swims
+ * across. Picture slot `landing_net` (see docs/GRAFIKA.md): the net seen from above and behind,
+ * hoop at the top right, handle running out of the bottom left corner.
+ */
+internal fun DrawScope.drawLandingNet(geo: SceneGeometry, colors: SceneColors, t: Float, fish: Offset) {
+    val reach = ((fish.x - geo.w * 0.56f) * 0.45f).coerceIn(-geo.w * 0.12f, geo.w * 0.12f)
+    val hoop = Offset(geo.w * 0.56f + reach, geo.h * 0.88f + sin(t * 2.2f) * geo.h * 0.003f)
     val rx = geo.w * 0.15f
     val ry = rx * 0.32f
+    ArtPack["landing_net"]?.let { img ->
+        // The hoop fills the top right of the picture; the rest is handle and mesh.
+        val w = rx * 2 / 0.62f
+        val h = w * img.height / img.width
+        drawArt(img, androidx.compose.ui.geometry.Rect(hoop.x + rx - w, hoop.y - ry - h * 0.04f, hoop.x + rx + w * 0.02f, hoop.y - ry - h * 0.04f + h), colors.lit(Color.White))
+        return
+    }
     // The handle comes in from the angler at the bottom left.
     drawLine(colors.lit(Color(0xFF2B2B2E)), Offset(geo.w * 0.08f, geo.h * 1.02f), Offset(hoop.x - rx * 0.95f, hoop.y + ry * 0.2f), strokeWidth = geo.w * 0.016f, cap = StrokeCap.Round)
     drawLine(colors.lit(Color(0xFF6F6F78)).copy(alpha = 0.6f), Offset(geo.w * 0.09f, geo.h * 1.01f), Offset(hoop.x - rx * 0.95f, hoop.y + ry * 0.05f), strokeWidth = geo.w * 0.004f, cap = StrokeCap.Round)

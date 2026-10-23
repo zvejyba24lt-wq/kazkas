@@ -41,6 +41,7 @@ object S {
     val fishRuns = L("Tempia!", "Er zieht!", "It runs!")
     val steerLeft = L("◀ Kreipk meškerę kairėn", "◀ Rute nach links", "◀ Rod to the left")
     val steerRight = L("Kreipk meškerę dešinėn ▶", "Rute nach rechts ▶", "Rod to the right ▶")
+    val atBank = L("Prie kranto", "Am Ufer", "At the bank")
     val netLead = L("Graibštas! Vesk žuvį į vidurį", "Kescher! Führ den Fisch zur Mitte", "Net! Lead the fish to the middle")
     val netCalm = L("Palauk, kol nurims…", "Warte, bis er ruhig wird…", "Wait until it calms…")
     val steerGood = L("Gerai! Žuvis pavargsta", "Gut! Der Fisch ermüdet", "Good! The fish is tiring")

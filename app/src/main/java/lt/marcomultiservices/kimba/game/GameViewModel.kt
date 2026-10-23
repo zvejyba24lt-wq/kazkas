@@ -709,7 +709,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         // The fish is played in from where it took the bait: a short cast, or a spinner taken
         // near the bank, leaves less line to wind in. A little room stays for the fight itself.
         val st = _lake.value
-        val out = (st.castDist * (1.0 - (if (st.tackle == Tackle.SPIN) st.takenAt.toDouble() else 0.0))).coerceIn(0.3, 1.0)
+        val out = (st.castDist * (1.0 - (if (st.tackle == Tackle.SPIN) st.takenAt.toDouble() else 0.0))).coerceIn(0.12, 1.0)
         val fight = Fight(bite.pull, rng, gear?.strength ?: 1.0, gear?.reel?.speed ?: 1.0, out)
         _lake.update { it.copy(stage = Stage.FIGHT, dip = 0f, tension = 0.3f, fightDistance = out.toFloat(), fightStart = out.toFloat(), alarm = false) }
         learn(Tip.STRIKE)
