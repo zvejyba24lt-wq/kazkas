@@ -318,6 +318,9 @@ fun LakeScene(
             if (s.stage == Stage.FIGHT && s.fightDistance < 0.22f && !frozen) drawLandingNet(geo, colors, t)
             if (s.stage == Stage.FIGHT && frozen) {
                 drawBubbles(geo, floatPos, t, if (s.running) 0.9f else 0.35f)
+            } else if (s.stage == Stage.FIGHT && s.surprise != null) {
+                // Something heavy and lifeless coming in: no fish to see, only a drag under the surface.
+                drawDraggedThing(floatPos, geo.scaleAt(floatPos.y), t)
             } else if (s.stage == Stage.FIGHT) {
                 s.bite?.let { b -> drawHookedFish(geo, floatPos, t, b.species.id, lt.marcomultiservices.kimba.core.Fish.gold(b.golden?.id), (b.cm / 60.0).toFloat(), s.fishHeading, s.running, colors) }
                 drawFightSplash(geo, floatPos, t, s.running)
@@ -342,7 +345,8 @@ fun LakeScene(
             if (resting) drawRodRest(geo, colors, tip, hasAlarm, s.alarm, t)
             drawRod(geo, colors, tip, quiver = kind == Tackle.FEEDER)
             drawLine(geo, tip, floatPos, s.stage, tension, slack = when (kind) { Tackle.FEEDER -> 0.12f; Tackle.SPIN -> 0.25f; else -> 1f })
-            if (s.stage == Stage.LANDING) s.bite?.let { b -> drawLandedFish(geo, floatPos, t, lift.value, b.species.id, lt.marcomultiservices.kimba.core.Fish.gold(b.golden?.id), (b.cm / 60.0).toFloat()) }
+            if (s.stage == Stage.LANDING && s.surprise != null) drawSurpriseLifted(floatPos, geo.w, geo.h, t, lift.value, s.surprise)
+            else if (s.stage == Stage.LANDING) s.bite?.let { b -> drawLandedFish(geo, floatPos, t, lift.value, b.species.id, lt.marcomultiservices.kimba.core.Fish.gold(b.golden?.id), (b.cm / 60.0).toFloat()) }
             if (hanging || s.stage == Stage.FLYING) {
                 val u = geo.h * 0.016f * geo.scaleAt(geo.h)
                 when (kind) {

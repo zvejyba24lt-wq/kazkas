@@ -305,6 +305,12 @@ object S {
         "+%d experience · +%d good-angler points (%d in total).\n\nReleased fish grow and may bite again, bigger, from tomorrow. A young fish counts double.",
     )
     val returnedTag = L("Sugrįžo! Buvo %d cm, dabar %d cm", "Wieder da! Erst %d cm, jetzt %d cm", "It's back! %d cm then, %d cm now")
+    // Surprises and the secret cove
+    val surpriseHeader = L("Netikėtas laimikis", "Überraschungsfang", "Surprise catch")
+    val foundLure = L("Radai masalą: %s!", "Köder gefunden: %s!", "You found a lure: %s!")
+    val foundCove = L("Atsivėrė Slaptoji įlanka! Ją rasi žemėlapyje.", "Die Geheime Bucht ist offen! Du findest sie auf der Karte.", "The Secret cove is open! You'll find it on the map.")
+    val goCove = L("🗺 Plaukti į įlanką", "🗺 Zur Bucht", "🗺 Go to the cove")
+    val secretNote = L("Iš butelio žemėlapio · žuvys didesnės", "Von der Flaschenpost-Karte · größere Fische", "From the bottle's map · bigger fish")
     // Play Games
     val leaderboards = L("🏆 Lyderių lentelės", "🏆 Bestenlisten", "🏆 Leaderboards")
     val playAchievements = L("Play pasiekimai", "Play-Erfolge", "Play achievements")

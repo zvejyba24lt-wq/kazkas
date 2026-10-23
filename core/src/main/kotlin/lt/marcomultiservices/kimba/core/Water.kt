@@ -56,5 +56,19 @@ object Destinations {
             L("Legendų uola virš srauniausios Reino vietos.", "Der Sagenfelsen über der wildesten Stelle des Rheins.", "The legendary rock above the Rhine's wildest stretch.")),
     )
 
-    fun byId(id: String?): Destination? = all.firstOrNull { it.id == id }
+    /**
+     * The secret cove from the treasure map in a bottle: a quiet bay of the player's own home
+     * water (so it has the home weather), never shown on the map until found. Fish run bigger.
+     */
+    val secret = Destination(
+        "secret", L("Slaptoji įlanka", "Geheime Bucht", "Secret cove"), "", 0.0, 0.0, Water.LAKE, 1,
+        L("Ramus užutekis, pažymėtas sename žemėlapyje. Čia retai kas užsuka, todėl žuvys didesnės.",
+            "Eine stille Bucht von einer alten Karte. Kaum jemand kommt her, darum sind die Fische größer.",
+            "A quiet bay marked on an old map. Hardly anyone comes here, so the fish grow bigger."),
+    )
+
+    /** How much bigger fish run in the secret cove. */
+    const val SECRET_SIZE = 1.12
+
+    fun byId(id: String?): Destination? = if (id == secret.id) secret else all.firstOrNull { it.id == id }
 }

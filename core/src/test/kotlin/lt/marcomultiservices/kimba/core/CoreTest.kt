@@ -555,5 +555,19 @@ class CoreTest {
         assertTrue(Release.caughtAgain(p, back).released.isEmpty())
         assertEquals(null, Release.apply(p, c.copy(golden = "moon_pike"), 10))
     }
+
+    @Test
+    fun surprisesGiveTheirRewards() {
+        val rng = Random(5)
+        val (p1, lure) = Surprise.apply(Progress(), Surprise.SUNKEN_ROD, rng)
+        assertTrue(lure != null && lure.key in p1.owned)
+        val (p2, _) = Surprise.apply(p1, Surprise.BOTTLE, rng)
+        assertTrue(Destinations.secret.id in p2.trips)
+        assertEquals(Destinations.secret, Destinations.byId("secret"))
+        val (p3, _) = Surprise.apply(p2, Surprise.BOTTLE, rng)
+        assertEquals(p2.coins + 600, p3.coins)
+        assertEquals(2, p3.surprises["BOTTLE"])
+        assertTrue(Destinations.secret !in Destinations.all)
+    }
 }
 

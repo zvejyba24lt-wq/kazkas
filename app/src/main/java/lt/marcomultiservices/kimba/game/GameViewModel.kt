@@ -124,6 +124,10 @@ data class LakeState(
     val doubled: Boolean = false,
     /** The fish was one the player released earlier: its length then. */
     val returnedFrom: Double? = null,
+    /** Not a fish: what came up on the line (set from the cast so the scene can show it). */
+    val surprise: lt.marcomultiservices.kimba.core.Surprise? = null,
+    /** The lure found on a sunken rod. */
+    val foundLure: Lure? = null,
 )
 
 /** Things to celebrate in a dialog, one after another. */
@@ -350,7 +354,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     /** Where the player fishes now: a trip destination or home. */
     fun fishingPlace(s: Saved? = _saved.value): Place? {
         val d = Destinations.byId(s?.progress?.trip)
-        return if (d != null) Place(d.id, d.lat, d.lon) else s?.place
+        // The secret cove is a bay of the home water, under the home sky.
+        return if (d != null && d != Destinations.secret) Place(d.id, d.lat, d.lon) else s?.place
     }
 
     suspend fun refresh(force: Boolean) {
@@ -523,7 +528,15 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             val first = BiteEngine.roll(c, power, rng, p.spot, p.gearHere, legends)
             // Now and then the bite is a fish the player released on an earlier day, grown since.
             returning = if (first.golden == null) lt.marcomultiservices.kimba.core.Release.returning(p, first.species.id, p.spot.water, today(), rng) else null
-            val rolled = returning?.let { r -> Bite(first.species, null, lt.marcomultiservices.kimba.core.Release.grown(r, first.species, today()), first.waitSeconds, first.nibbles, first.condition) } ?: first
+            val grown = returning?.let { r -> Bite(first.species, null, lt.marcomultiservices.kimba.core.Release.grown(r, first.species, today()), first.waitSeconds, first.nibbles, first.condition) } ?: first
+            // In the secret cove fish run bigger.
+            val cove = if (p.trip == Destinations.secret.id && grown.golden == null) Bite(grown.species, null, minOf(grown.cm * Destinations.SECRET_SIZE, grown.species.maxCm * 1.1), grown.waitSeconds, grown.nibbles, grown.condition) else grown
+            // Now and then something else takes: a boot, a crayfish, a sunken rod, a bottle.
+            val surprise = if (knows(Tip.STRIKE) && returning == null) lt.marcomultiservices.kimba.core.Surprise.roll(c, p.spot, p.onIce, rng) else null
+            val rolled = if (surprise == null) cove else {
+                val body = Fish.byId(if (surprise == lt.marcomultiservices.kimba.core.Surprise.CRAYFISH) "perch" else "bream") ?: cove.species
+                Bite(body, null, body.minCm.toDouble(), cove.waitSeconds, cove.nibbles.take(1), 1.0)
+            }
             // The very first fish comes soon, after two clear nibbles, so the tips can teach it.
             val bite = if (knows(Tip.STRIKE)) rolled else
                 Bite(rolled.species, rolled.golden, rolled.cm, rolled.waitSeconds.coerceIn(8.0, 11.0), listOf(3.0, 5.5), rolled.condition)
@@ -535,7 +548,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
                 val wait = (bite.waitSeconds * 0.5).coerceIn(3.0, 7.0)
                 Bite(bite.species, bite.golden, bite.cm, wait, bite.nibbles.map { it * 0.5 }.filter { it < wait - 0.8 }.take(2), bite.condition)
             }
-            _lake.value = LakeState(stage = Stage.FLYING, castDist = power, castId = s.castId + 1, bite = cast, tackle = tackle)
+            _lake.value = LakeState(stage = Stage.FLYING, castDist = power, castId = s.castId + 1, bite = cast, tackle = tackle, surprise = surprise)
             sfx.play(Sfx.Fx.CAST, 0.7f + 0.3f * power.toFloat())
             delay(FLIGHT_MS)
             sfx.play(Sfx.Fx.PLOP, (if (tackle == Tackle.FEEDER) 0.8f else 0.5f) + 0.4f * (1 - power.toFloat()), rate = (if (tackle == Tackle.FEEDER) 0.75f else 0.9f) + 0.2f * rng.nextFloat())
@@ -777,8 +790,30 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
     }
 
+    /** Something other than a fish came out: its reward and its own card. */
+    private suspend fun landedSurprise(found: lt.marcomultiservices.kimba.core.Surprise) {
+        var lure: Lure? = null
+        var achieved: List<Achievement> = emptyList()
+        store.update { s ->
+            val (p, l) = lt.marcomultiservices.kimba.core.Surprise.apply(s.progress, found, rng)
+            lure = l
+            val (p2, got) = Achievements.check(p, s.catches)
+            achieved = got
+            s.copy(progress = p2)
+        }
+        buzz(longArrayOf(0, 30, 50, 30))
+        sfx.play(Sfx.Fx.SPLASH)
+        _lake.update { it.copy(stage = Stage.LANDING, tension = 0f) }
+        delay(LANDING_MS)
+        sfx.play(Sfx.Fx.COIN, 0.8f)
+        _lake.update { it.copy(stage = Stage.CAUGHT, caught = null, foundLure = lure) }
+        if (achieved.isNotEmpty()) _events.update { it + GameEvent.Achieved(achieved) }
+        reportToPlay(store.current())
+    }
+
     private suspend fun landed(bite: Bite) {
         val c = _conditions.value ?: return
+        _lake.value.surprise?.let { landedSurprise(it); return }
         val back = returning?.takeIf { it.species == bite.species.id }
         returning = null
         if (back != null) store.update { it.copy(progress = lt.marcomultiservices.kimba.core.Release.caughtAgain(it.progress, back)) }
@@ -886,6 +921,14 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     /** Goes to a destination without paying (for screenshots). */
     fun demoTrip(d: Destination) {
         updateProgress { it.copy(trips = it.trips + d.id, trip = d.id) }.invokeOnCompletion { afterMove() }
+    }
+
+    /** Shows a surprise catch coming out (for screenshots). */
+    fun demoSurprise(name: String) {
+        val found = lt.marcomultiservices.kimba.core.Surprise.entries.firstOrNull { it.name.equals(name, true) } ?: return
+        job?.cancel()
+        _lake.value = LakeState(stage = Stage.FIGHT, surprise = found, castDist = 0.6, bite = Bite(Fish.byId("bream")!!, null, 30.0, 1.0, emptyList()))
+        job = viewModelScope.launch { landedSurprise(found) }
     }
 
     /** Starts a fight with a mid-sized fish directly (for screenshots). */

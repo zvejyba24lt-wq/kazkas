@@ -47,6 +47,9 @@ Koordinatės žemiau pateiktos ekrano dalimis: `w` – ekrano plotis, `h` – au
 | `pond_bg` | Tvenkinio vidus per stiklą iš šono | Platus (1600×700 px), nepermatomas | Stovyklos tvenkinys, kuriame plaukioja geriausios žuvys. Vidurys tuščias. |
 | `lantern` | Senas žibalinis žibintas, stovintis ant žemės | Stačias (apie 300×450 px), permatomas fonas | Naktį dega šalia žvejo. Liepsną ir šviesą prideda kodas. |
 | `angler` | Žvejys iki juosmens, laikantis žuvį | Stačias 4:5 (apie 800×1000 px), permatomas fonas | Trofėjaus nuotrauka laimikio kortelėje ir pasigyrimo paveikslėlyje. Delnai atkišti į priekį ties 22 % ir 78 % pločio, 62 % aukščio. Žuvį į rankas įdeda kodas, todėl paveikslėlyje žuvies nėra. |
+| `surprise_boot`, `surprise_crayfish`, `surprise_rod`, `surprise_bottle` | Netikėti laimikiai | Kvadratas (apie 512×512 px), permatomas fonas | Senas batas, vėžys, nuskendusi meškerė su masalu, butelis su laišku. Kabo ant valo: viršutinis vidurys yra kabinimo taškas. |
+| `leaf_1`, `leaf_2`, … | Rudens lapai | 256×256 px kiekvienas, permatomas fonas | Kiek nori skirtingų (klevo, beržo, ąžuolo, drebulės; raudoni, geltoni, oranžiniai, rudi). Rodomi rugsėjo–lapkričio mėn. |
+| `<bet kuris>_spring`, `_autumn`, `_winter` | Metų laikų versijos | Kaip originalas | Bet kuris paveikslėlis gali turėti metų laiko versiją, pvz. `shore_lake_autumn`, `pier_winter`, `reeds_autumn`, `camp_bg_winter`. Pavasaris kovo–gegužės, ruduo rugsėjo–lapkričio, žiema gruodžio–vasario mėn. |
 | `item_<rūšis>_<vardas>` | Parduotuvės ikonos | Kvadratas | Pvz. `item_lure_worm`, `item_rod_carbon`, `item_float_glow`, `item_up_boat`. Vardai yra `core/.../Gear.kt` (`Lure`, `Rod`, `Reel`, `Line`, `FloatStyle`, `Upgrade`). |
 
 Žuvų nuotraukos dedamos atskirai: `app/src/main/assets/fish/<rūšies id>.webp`, galva į kairę,

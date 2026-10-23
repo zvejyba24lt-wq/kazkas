@@ -32,6 +32,7 @@ import androidx.compose.foundation.layout.height
 import androidx.compose.foundation.layout.navigationBarsPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.layout.size
+import lt.marcomultiservices.kimba.ui.scene.layers.drawSurprise
 import androidx.compose.foundation.layout.offset
 import androidx.compose.ui.graphics.nativeCanvas
 import androidx.compose.ui.graphics.drawscope.drawIntoCanvas
@@ -305,6 +306,8 @@ fun LakeScreen(
             Box(Modifier.fillMaxSize().background(Color(0x66000000)).clickable(enabled = false) {}, contentAlignment = Alignment.Center) {
                 if (lake.caught != null && stage == Stage.CAUGHT) {
                     CatchCard(lake.caught, lake.newSpecies, lake.record, lake.reward, lake.doubled, progress.noAds, lake.returnedFrom, onDouble = { rewarded { vm.doubleCoins() } }, onShare = { shareCatch(lake.caught) }, onRelease = { vm.releaseCatch() }) { next() }
+                } else if (lake.surprise != null && stage == Stage.CAUGHT) {
+                    SurpriseCard(lake.surprise, lake.foundLure, onCove = { vm.travel(lt.marcomultiservices.kimba.core.Destinations.secret); next() }) { next() }
                 } else if (lake.lost != null) LostCard(lake.lost) { next() }
             }
         }
@@ -928,6 +931,37 @@ private fun Stat(label: String, value: String) {
     Column(horizontalAlignment = Alignment.CenterHorizontally) {
         Text(value, color = K.Text, fontSize = 22.sp, fontWeight = FontWeight.Bold)
         Text(label, color = K.Muted, fontSize = 12.sp)
+    }
+}
+
+@Composable
+private fun SurpriseCard(s: lt.marcomultiservices.kimba.core.Surprise, lure: lt.marcomultiservices.kimba.core.Lure?, onCove: () -> Unit, onNext: () -> Unit) {
+    val time = lt.marcomultiservices.kimba.ui.scene.rememberSceneTime()
+    val reward = when (s) {
+        lt.marcomultiservices.kimba.core.Surprise.SUNKEN_ROD -> if (lure != null) t(S.foundLure, t(lure.label)) else t(S.plusCoins(s.coins))
+        lt.marcomultiservices.kimba.core.Surprise.BOTTLE -> t(S.foundCove)
+        else -> listOfNotNull(if (s.coins > 0) t(S.plusCoins(s.coins)) else null, "+${s.xp} XP").joinToString("   ")
+    }
+    Glass(Modifier.padding(28.dp).fillMaxWidth(), radius = 26.dp, padding = 22.dp) {
+        Column(horizontalAlignment = Alignment.CenterHorizontally, modifier = Modifier.fillMaxWidth()) {
+            Text(t(S.surpriseHeader).uppercase(), color = K.Amber, fontSize = 12.sp, fontWeight = FontWeight.Bold, letterSpacing = 2.sp)
+            Spacer(Modifier.height(4.dp))
+            Text(t(s.label), style = MaterialTheme.typography.headlineSmall, color = K.Text, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(8.dp))
+            Canvas(Modifier.size(150.dp)) {
+                drawSurprise(androidx.compose.ui.geometry.Rect(0f, 0f, size.width, size.height), s, time.floatValue)
+            }
+            Spacer(Modifier.height(8.dp))
+            Text(t(s.note), color = K.Muted, fontSize = 14.sp, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(8.dp))
+            Text(reward, color = K.Gold, fontSize = 15.sp, fontWeight = FontWeight.Bold, textAlign = TextAlign.Center)
+            Spacer(Modifier.height(16.dp))
+            if (s == lt.marcomultiservices.kimba.core.Surprise.BOTTLE) {
+                OutlinedButton(onCove, modifier = Modifier.fillMaxWidth().height(46.dp)) { Text(t(S.goCove), color = K.Text) }
+                Spacer(Modifier.height(8.dp))
+            }
+            Button(onNext, colors = amberButtonColors(), modifier = Modifier.fillMaxWidth().height(50.dp)) { Text(t(S.again)) }
+        }
     }
 }
 

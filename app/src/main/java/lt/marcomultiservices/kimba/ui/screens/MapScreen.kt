@@ -168,6 +168,24 @@ fun MapScreen(vm: GameViewModel, onBack: () -> Unit, onCamp: () -> Unit = {}, on
                 Text(t(S.campOpen), color = K.Text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold, modifier = Modifier.weight(1f))
                 Text("›", color = K.Amber, fontSize = 24.sp)
             }
+            // The secret cove from the bottle's map, once found.
+            if (lt.marcomultiservices.kimba.core.Destinations.secret.id in p.trips) {
+                Spacer(Modifier.height(10.dp))
+                Row(
+                    Modifier.fillMaxWidth().clip(RoundedCornerShape(14.dp)).background(Brush.horizontalGradient(listOf(Color(0x406FB6A0), Color(0x146FB6A0))))
+                        .border(1.dp, Color(0x886FB6A0), RoundedCornerShape(14.dp))
+                        .clickable { vm.travel(lt.marcomultiservices.kimba.core.Destinations.secret); onFish() }.padding(14.dp),
+                    verticalAlignment = Alignment.CenterVertically,
+                ) {
+                    Text("🗺", fontSize = 22.sp)
+                    Spacer(Modifier.width(10.dp))
+                    Column(Modifier.weight(1f)) {
+                        Text(t(lt.marcomultiservices.kimba.core.Destinations.secret.name), color = K.Text, fontSize = 15.sp, fontWeight = FontWeight.SemiBold)
+                        Text(t(S.secretNote), color = K.Muted, fontSize = 12.sp)
+                    }
+                    Text("›", color = Color(0xFF6FB6A0), fontSize = 24.sp)
+                }
+            }
             Spacer(Modifier.height(18.dp))
             SectionTitle(t(S.trips))
             Spacer(Modifier.height(4.dp))

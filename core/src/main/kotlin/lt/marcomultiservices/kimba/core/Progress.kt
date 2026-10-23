@@ -31,6 +31,8 @@ data class Progress(
     val released: List<Released> = emptyList(),
     /** Good-angler points from released fish. */
     val goodAngler: Int = 0,
+    /** How many of each [Surprise] came up. */
+    val surprises: Map<String, Int> = emptyMap(),
     /** This player's friend code (see [Invites]); made on first start. */
     val inviteCode: String = "",
     /** The friend code this player joined with, once. */

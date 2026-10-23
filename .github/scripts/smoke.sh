@@ -84,6 +84,12 @@ demo --ez sharepreview false; sleep 1
 demo -e catch trout; shot 20_upetakis 5
 demo --ez release true; shot 20b_paleista 3
 tap $((W/2)) $((H*70/100)); sleep 1
+demo -e screen lake; sleep 2
+demo -e surprise bottle; shot 20c_butelis 6
+demo -e surprise rod; shot 20d_meskere 6
+demo -e surprise crayfish; shot 20e_vezys 6
+demo -e screen map; sleep 2
+adb shell input swipe $((W/2)) $((H*3/4)) $((W/2)) $((H/4)) 400; shot 29c_slaptoji_ilanka 2
 demo -e catch grayling; shot 21_kirslys 5
 demo -e catch flounder; shot 22_pleksne 5
 demo -e catch cod; shot 23_menke 5

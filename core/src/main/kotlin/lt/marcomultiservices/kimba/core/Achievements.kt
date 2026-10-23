@@ -26,6 +26,8 @@ enum class Achievement(val title: L, val text: L, val target: Int, val coins: In
     STREAK_7(L("Ištikimas", "Treu", "Faithful"), L("Žvejok 7 dienas iš eilės", "Angle 7 Tage am Stück", "Fish 7 days in a row"), 7, 500),
     RELEASE_10(L("Gero žvejo ženklas", "Fairer Angler", "Good angler"), L("Surink 10 gero žvejo taškų paleisdamas žuvis", "Sammle 10 Fairness-Punkte durch Zurücksetzen", "Earn 10 good-angler points by releasing fish"), 10, 500),
     RELEASE_50(L("Gamtos sargas", "Naturschützer", "Guardian of the water"), L("Surink 50 gero žvejo taškų", "Sammle 50 Fairness-Punkte", "Earn 50 good-angler points"), 50, 2000),
+    BOOTS(L("Batų kolekcininkas", "Stiefelsammler", "Boot collector"), L("Ištrauk 3 senus batus", "Zieh 3 alte Stiefel heraus", "Pull out 3 old boots"), 3, 300),
+    TREASURE(L("Lobių ieškotojas", "Schatzsucher", "Treasure hunter"), L("Rask butelį su žemėlapiu", "Finde eine Flaschenpost mit Karte", "Find a message in a bottle"), 1, 1000),
     LEVEL_10(L("Meistras", "Meister", "Master"), L("Pasiek 10 lygį", "Erreiche Level 10", "Reach level 10"), 10, 1500);
 
     val key: String get() = name.lowercase()
@@ -49,6 +51,8 @@ enum class Achievement(val title: L, val text: L, val target: Int, val coins: In
             STREAK_7 -> p.streak
             LEVEL_10 -> p.level
             RELEASE_10, RELEASE_50 -> p.goodAngler
+            BOOTS -> p.surprises[Surprise.BOOT.name] ?: 0
+            TREASURE -> p.surprises[Surprise.BOTTLE.name] ?: 0
         }
         return v.coerceIn(0, target)
     }
