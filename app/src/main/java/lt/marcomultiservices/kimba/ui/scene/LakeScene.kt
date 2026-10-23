@@ -305,10 +305,10 @@ fun LakeScene(
                 Water.SEA -> { drawBuoy(geo, colors, t); drawGulls(geo, colors, t) }
             }
             if (!frozen && iceCm >= lt.marcomultiservices.kimba.core.Ice.RIM_CM) drawIceRim(geo, colors, (iceCm / lt.marcomultiservices.kimba.core.Ice.SAFE_CM).toFloat())
-            if (s.stage == Stage.CHARGING) {
-                // Where the float will land if released now.
-                val power = GameViewModel.castPower(android.os.SystemClock.uptimeMillis() - s.chargeStart)
-                drawAim(geo, geo.floatTarget(power.toDouble(), s.castId + 1, kind), t)
+            if (s.stage == Stage.CHARGING && !frozen) {
+                // Where the float will land if released now (from the boat, as far out as the cast goes there).
+                val power = GameViewModel.castPower(android.os.SystemClock.uptimeMillis() - s.chargeStart).toDouble()
+                drawAim(geo, geo.floatTarget(if (boat) 0.3 + 0.7 * power else power, s.castId + 1, kind), t)
             }
             if (onWater && kind == Tackle.FLOAT && dip > 0.05f && !frozen) drawFishShadow(geo, floatPos, dip, t, s.bite?.let { (it.cm / 60.0).toFloat() } ?: 0.6f)
             if (onWater && kind != Tackle.SPIN) drawBubbles(geo, floatPos, t, bubbles)

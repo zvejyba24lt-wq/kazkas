@@ -1001,15 +1001,13 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         resetLake()
         val species = Fish.byId(id) ?: return
         val bite = Bite(species, null, (species.minCm + species.maxCm) / 2.0, 1.0, emptyList())
-        _lake.value = LakeState(castDist = 0.7, castId = _lake.value.castId, bite = bite)
-        // A fight held still mid-play (or at the net) so the screenshot shows its controls.
-        job = viewModelScope.launch {
-            delay(300)
-            _lake.value = _lake.value.copy(
-                stage = Stage.FIGHT, tension = 0.62f, fightDistance = if (net) 0.03f else 0.55f, fightStart = 0.7f,
-                fishSide = if (net) 0.5f else 0.35f, fishHeading = 1f, rodAim = -0.2f, steer = 0.2f, atNet = net, tackle = Tackle.FLOAT,
-            )
-        }
+        // A fight held still mid-play (or at the net) so the screenshot shows its controls; set at
+        // once, so nothing that cancels the lake's job can leave the screen idle.
+        _lake.value = LakeState(
+            stage = Stage.FIGHT, castDist = 0.7, castId = _lake.value.castId, bite = bite, tension = 0.62f,
+            fightDistance = if (net) 0.03f else 0.55f, fightStart = 0.7f, fishSide = if (net) 0.5f else 0.35f,
+            fishHeading = 1f, rodAim = -0.2f, steer = 0.2f, atNet = net, tackle = Tackle.FLOAT,
+        )
     }
 
     /** Shows a catch card directly (for screenshots of the fish art). */
@@ -1025,9 +1023,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
             viewModelScope.launch { refresh(force = false) }
         }
         val cm = species.minCm + (species.maxCm - species.minCm) * 0.7
+        // Caught in the weather on screen, so the card's line matches the sky above it.
         _lake.value = LakeState(
             stage = Stage.CAUGHT, castDist = 0.6,
-            caught = Catch(species.id, golden?.id, kotlin.math.round(cm), species.grams(kotlin.math.round(cm)), System.currentTimeMillis(), Sky.CLEAR, 12.0, "", species.waters.first()),
+            caught = Catch(species.id, golden?.id, kotlin.math.round(cm), species.grams(kotlin.math.round(cm)), System.currentTimeMillis(), _conditions.value?.weather?.sky ?: Sky.CLEAR, _conditions.value?.weather?.tempC ?: 12.0, "", species.waters.first()),
             newSpecies = true,
         )
     }

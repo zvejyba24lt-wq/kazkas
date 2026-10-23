@@ -858,7 +858,7 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?
                 OutlinedButton(onShare, modifier = Modifier.weight(1f).height(46.dp)) {
                     Icon(Icons.Rounded.Share, null, tint = K.Text, modifier = Modifier.size(18.dp))
                     Spacer(Modifier.width(6.dp))
-                    Text(t(S.shareCatch), color = K.Text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                    Text(t(if (c.golden == null) S.shareShort else S.shareCatch), color = K.Text, maxLines = 1, overflow = TextOverflow.Ellipsis)
                 }
                 // Catch and release: gives up the fish's coins for experience and good-angler points.
                 if (c.golden == null) OutlinedButton(onRelease, enabled = !c.released && !doubled, modifier = Modifier.weight(1f).height(46.dp)) {

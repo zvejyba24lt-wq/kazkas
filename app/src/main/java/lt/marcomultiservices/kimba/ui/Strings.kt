@@ -363,6 +363,8 @@ object S {
 
     // Sharing a catch and inviting friends
     val shareCatch = L("Pasigirk draugams", "Zeig's deinen Freunden", "Show your friends")
+    /** The share button's label beside the release button, where the long one would be cut. */
+    val shareShort = L("Pasigirk", "Zeigen", "Share")
     val shareBonusNote = L("Pirmas pasigyrimas per dieną: +3 užmetimai", "Erstes Teilen am Tag: +3 Würfe", "First share of the day: +3 casts")
     val shareHeader = L("MANO LAIMIKIS", "MEIN FANG", "MY CATCH")
     val shareCodeLabel = L("Draugo kodas", "Freundescode", "Friend code")
