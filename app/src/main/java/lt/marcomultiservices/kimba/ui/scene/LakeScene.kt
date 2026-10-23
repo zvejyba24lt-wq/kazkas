@@ -260,6 +260,7 @@ fun LakeScene(
             if (boat) cam *= 1.05f
             drawContext.transform.scale(cam, cam, pivot)
             if (boat) drawContext.transform.rotate(rock * 0.9f, Offset(geo.w * 0.5f, geo.h * 0.6f))
+            ArtPack.season = ArtPack.seasonOf(conditions.month)
             drawSky(geo, colors, conditions, t, sun, moon)
             if (sea) {
                 drawShores(geo, colors, waterKind, t)

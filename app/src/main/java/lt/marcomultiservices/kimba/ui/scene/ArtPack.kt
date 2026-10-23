@@ -35,8 +35,28 @@ object ArtPack {
     /** The fish photo from `assets/fish/<id>.webp`, shown in the scene when a fish leaps or is landed. */
     fun fish(id: String): ImageBitmap? = load("fish", id, fishFiles)
 
-    /** The picture for [slot], or null to draw it in code. */
-    operator fun get(slot: String): ImageBitmap? = load("art", slot, files)
+    /**
+     * The real season ("spring", "autumn", "winter"; null in summer). Any slot can have a seasonal
+     * version, `<slot>_<season>` (e.g. `shore_lake_autumn`, `pier_winter`), used in its season.
+     */
+    @Volatile var season: String? = null
+
+    fun seasonOf(month: Int): String? = when (month) {
+        in 3..5 -> "spring"
+        in 9..11 -> "autumn"
+        12, 1, 2 -> "winter"
+        else -> null
+    }
+
+    /** The picture for [slot] (its seasonal version first), or null to draw it in code. */
+    operator fun get(slot: String): ImageBitmap? = season?.let { load("art", "${slot}_$it", files) } ?: load("art", slot, files)
+
+    /** Every numbered variant present, `<slot>_1`, `<slot>_2`, ... (e.g. the autumn leaves). */
+    fun variants(slot: String): List<ImageBitmap> = synchronized(variantCache) {
+        variantCache.getOrPut(slot) { generateSequence(1) { it + 1 }.map { load("art", "${slot}_$it", files) }.takeWhile { it != null }.filterNotNull().toList() }
+    }
+
+    private val variantCache = HashMap<String, List<ImageBitmap>>()
 
     private fun load(dir: String, name: String, names: Set<String>): ImageBitmap? {
         if (names.isEmpty()) return null

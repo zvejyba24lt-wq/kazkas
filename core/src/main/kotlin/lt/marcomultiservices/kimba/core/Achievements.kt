@@ -24,6 +24,8 @@ enum class Achievement(val title: L, val text: L, val target: Int, val coins: In
     STAMPS_40(L("Orų metraštininkas", "Wetterchronist", "Weather chronicler"), L("Surink 40 oro antspaudų", "Sammle 40 Wetterstempel", "Collect 40 weather stamps"), 40, 3000),
     TRAVELER(L("Keliautojas", "Reisender", "Traveller"), L("Aplankyk 3 žvejybos vietas žemėlapyje", "Besuche 3 Angelorte auf der Karte", "Visit 3 places on the map"), 3, 500),
     STREAK_7(L("Ištikimas", "Treu", "Faithful"), L("Žvejok 7 dienas iš eilės", "Angle 7 Tage am Stück", "Fish 7 days in a row"), 7, 500),
+    RELEASE_10(L("Gero žvejo ženklas", "Fairer Angler", "Good angler"), L("Surink 10 gero žvejo taškų paleisdamas žuvis", "Sammle 10 Fairness-Punkte durch Zurücksetzen", "Earn 10 good-angler points by releasing fish"), 10, 500),
+    RELEASE_50(L("Gamtos sargas", "Naturschützer", "Guardian of the water"), L("Surink 50 gero žvejo taškų", "Sammle 50 Fairness-Punkte", "Earn 50 good-angler points"), 50, 2000),
     LEVEL_10(L("Meistras", "Meister", "Master"), L("Pasiek 10 lygį", "Erreiche Level 10", "Reach level 10"), 10, 1500);
 
     val key: String get() = name.lowercase()
@@ -46,6 +48,7 @@ enum class Achievement(val title: L, val text: L, val target: Int, val coins: In
             TRAVELER -> p.trips.size
             STREAK_7 -> p.streak
             LEVEL_10 -> p.level
+            RELEASE_10, RELEASE_50 -> p.goodAngler
         }
         return v.coerceIn(0, target)
     }

@@ -36,4 +36,6 @@
     <string name="achievement_traveler" translatable="false"></string>
     <string name="achievement_streak_7" translatable="false"></string>
     <string name="achievement_level_10" translatable="false"></string>
+    <string name="achievement_release_10" translatable="false"></string>
+    <string name="achievement_release_50" translatable="false"></string>
 </resources>

@@ -122,6 +122,8 @@ data class LakeState(
     val hint: Boolean = false,
     val reward: Reward? = null,
     val doubled: Boolean = false,
+    /** The fish was one the player released earlier: its length then. */
+    val returnedFrom: Double? = null,
 )
 
 /** Things to celebrate in a dialog, one after another. */
@@ -134,6 +136,8 @@ sealed class GameEvent {
     class Frozen(val cm: Int) : GameEvent()
     /** A real thunderstorm: coins ×2; [boat] when the boat was pulled ashore. */
     class Storm(val boat: Boolean) : GameEvent()
+    /** A fish put back: good-angler points earned and the total. */
+    class Released(val points: Int, val total: Int) : GameEvent()
 }
 
 /** Why a [GameEvent.Gift] came: a friend's code, a friend's thank-you code, a shared catch. */
@@ -479,7 +483,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     fun doubleCoins() {
         val s = _lake.value
         val catch = s.caught ?: return
-        if (s.doubled || s.stage != Stage.CAUGHT) return
+        if (s.doubled || s.stage != Stage.CAUGHT || catch.released) return
         _lake.update { it.copy(doubled = true) }
         updateProgress { it.copy(coins = it.coins + catch.coins) }
     }
@@ -516,7 +520,10 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         }
         job = viewModelScope.launch {
             val legends = _saved.value?.catches?.mapNotNull { it.golden }?.filter { it.startsWith("legend_") }?.toSet() ?: emptySet()
-            val rolled = BiteEngine.roll(c, power, rng, p.spot, p.gearHere, legends)
+            val first = BiteEngine.roll(c, power, rng, p.spot, p.gearHere, legends)
+            // Now and then the bite is a fish the player released on an earlier day, grown since.
+            returning = if (first.golden == null) lt.marcomultiservices.kimba.core.Release.returning(p, first.species.id, p.spot.water, today(), rng) else null
+            val rolled = returning?.let { r -> Bite(first.species, null, lt.marcomultiservices.kimba.core.Release.grown(r, first.species, today()), first.waitSeconds, first.nibbles, first.condition) } ?: first
             // The very first fish comes soon, after two clear nibbles, so the tips can teach it.
             val bite = if (knows(Tip.STRIKE)) rolled else
                 Bite(rolled.species, rolled.golden, rolled.cm, rolled.waitSeconds.coerceIn(8.0, 11.0), listOf(3.0, 5.5), rolled.condition)
@@ -743,8 +750,38 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         if (on) reeling = false
     }
 
+    /** The released fish the current cast's bite is, if any. */
+    private var returning: lt.marcomultiservices.kimba.core.Released? = null
+
+    /** Puts the fish on the catch card back in the water. */
+    fun releaseCatch() {
+        val s = _lake.value
+        val catch = s.caught ?: return
+        if (s.stage != Stage.CAUGHT || catch.released || s.doubled) return
+        viewModelScope.launch {
+            var points = 0
+            var total = 0
+            store.update { sv ->
+                val p = lt.marcomultiservices.kimba.core.Release.apply(sv.progress, catch, today()) ?: return@update sv
+                points = p.goodAngler - sv.progress.goodAngler
+                total = p.goodAngler
+                val i = sv.catches.indexOfLast { it.epochMillis == catch.epochMillis && it.species == catch.species }
+                val catches = if (i < 0) sv.catches else sv.catches.toMutableList().also { it[i] = it[i].copy(released = true) }
+                sv.copy(progress = p, catches = catches)
+            }
+            if (points == 0) return@launch
+            sfx.play(Sfx.Fx.SPLASH, 0.6f)
+            _lake.update { it.copy(caught = catch.copy(released = true)) }
+            _events.update { it + GameEvent.Released(points, total) }
+            checkAchievements()
+        }
+    }
+
     private suspend fun landed(bite: Bite) {
         val c = _conditions.value ?: return
+        val back = returning?.takeIf { it.species == bite.species.id }
+        returning = null
+        if (back != null) store.update { it.copy(progress = lt.marcomultiservices.kimba.core.Release.caughtAgain(it.progress, back)) }
         val saved = store.current()
         val spot = saved.progress.spot
         val base = Catch(
@@ -787,7 +824,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         jolt(0.3f)
         delay(LANDING_MS)
         sfx.play(Sfx.Fx.COIN, 0.8f)
-        _lake.update { it.copy(stage = Stage.CAUGHT, caught = catch, newSpecies = isNew, record = record, reward = reward) }
+        _lake.update { it.copy(stage = Stage.CAUGHT, caught = catch, newSpecies = isNew, record = record, reward = reward, returnedFrom = back?.cm) }
         reward?.let { r ->
             if (r.quests.isNotEmpty()) _events.update { it + GameEvent.QuestsDone(r.quests, r.allQuests) }
             r.levelUp?.let { l -> _events.update { it + GameEvent.LevelUp(l) } }

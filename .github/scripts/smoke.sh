@@ -82,6 +82,8 @@ demo -e catch moon_pike; shot 19_auksine_lydeka 5
 demo --ez sharepreview true; shot 19b_pasigyrimas 4
 demo --ez sharepreview false; sleep 1
 demo -e catch trout; shot 20_upetakis 5
+demo --ez release true; shot 20b_paleista 3
+tap $((W/2)) $((H*70/100)); sleep 1
 demo -e catch grayling; shot 21_kirslys 5
 demo -e catch flounder; shot 22_pleksne 5
 demo -e catch cod; shot 23_menke 5

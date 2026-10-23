@@ -79,6 +79,7 @@ class MainActivity : AppCompatActivity() {
         extras.getString("ice")?.toDoubleOrNull()?.let { vm.setDemoIce(it) }
         extras.getString("stormin")?.toIntOrNull()?.let { vm.demoStorm(it) }
         if (extras.getBoolean("stormevent", false)) vm.demoStormEvent()
+        if (extras.getBoolean("release", false)) vm.releaseCatch()
         extras.getString("stand")?.let { st -> lt.marcomultiservices.kimba.core.Stand.entries.firstOrNull { it.name.equals(st, true) }?.let { vm.demoStand(it) } }
         extras.getString("screen")?.let { s -> Screen.entries.firstOrNull { it.name.equals(s, ignoreCase = true) }?.let { startScreen.value = it to System.nanoTime() } }
     }

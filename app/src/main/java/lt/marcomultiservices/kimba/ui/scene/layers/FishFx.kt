@@ -24,6 +24,7 @@ import lt.marcomultiservices.kimba.ui.scene.Palette
 import lt.marcomultiservices.kimba.ui.scene.SceneColors
 import lt.marcomultiservices.kimba.ui.scene.SceneGeometry
 import lt.marcomultiservices.kimba.ui.scene.drawArt
+import lt.marcomultiservices.kimba.ui.scene.drawBentArt
 import kotlin.math.PI
 import kotlin.math.abs
 import kotlin.math.cos
@@ -95,7 +96,7 @@ internal fun DrawScope.drawHookedFish(geo: SceneGeometry, mouth: Offset, t: Floa
         if (photo != null) {
             val ht = rect.width * photo.height / photo.width
             val r = Rect(rect.left, c.y - ht / 2, rect.right, c.y + ht / 2)
-            lt.marcomultiservices.kimba.ui.scene.drawBentArt(
+            drawBentArt(
                 photo, r, { u -> swimWave(u, t, freq, amp) },
                 light = tint, alpha = if (running) 0.85f else 0.7f, filter = if (golden) lt.marcomultiservices.kimba.ui.fish.FishPhotos.goldFilter else null,
             )
@@ -209,7 +210,7 @@ internal fun DrawScope.drawFishPicture(species: String, golden: Boolean, rect: R
     val ht = rect.width * photo.height / photo.width
     val r = Rect(rect.left, rect.center.y - ht / 2, rect.right, rect.center.y + ht / 2)
     val filter = if (golden) lt.marcomultiservices.kimba.ui.fish.FishPhotos.goldFilter else null
-    if (bend != null) lt.marcomultiservices.kimba.ui.scene.drawBentArt(photo, r, bend, filter = filter) else drawArt(photo, r, filter = filter)
+    if (bend != null) drawBentArt(photo, r, bend, filter = filter) else drawArt(photo, r, filter = filter)
 }
 
 /** The float landing after a cast: a crown of spray and a ring spreading out. */

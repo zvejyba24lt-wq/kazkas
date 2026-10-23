@@ -304,7 +304,7 @@ fun LakeScreen(
         AnimatedVisibility(stage == Stage.CAUGHT || stage == Stage.LOST, enter = fadeIn() + scaleIn(initialScale = 0.9f), exit = fadeOut()) {
             Box(Modifier.fillMaxSize().background(Color(0x66000000)).clickable(enabled = false) {}, contentAlignment = Alignment.Center) {
                 if (lake.caught != null && stage == Stage.CAUGHT) {
-                    CatchCard(lake.caught, lake.newSpecies, lake.record, lake.reward, lake.doubled, progress.noAds, onDouble = { rewarded { vm.doubleCoins() } }, onShare = { shareCatch(lake.caught) }) { next() }
+                    CatchCard(lake.caught, lake.newSpecies, lake.record, lake.reward, lake.doubled, progress.noAds, lake.returnedFrom, onDouble = { rewarded { vm.doubleCoins() } }, onShare = { shareCatch(lake.caught) }, onRelease = { vm.releaseCatch() }) { next() }
                 } else if (lake.lost != null) LostCard(lake.lost) { next() }
             }
         }
@@ -725,7 +725,7 @@ private fun CastButton(charging: Boolean, chargeStart: Long, ice: Boolean = fals
 
 @OptIn(androidx.compose.foundation.layout.ExperimentalLayoutApi::class)
 @Composable
-private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?, doubled: Boolean, noAds: Boolean, onDouble: () -> Unit, onShare: () -> Unit, onNext: () -> Unit) {
+private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?, doubled: Boolean, noAds: Boolean, returnedFrom: Double?, onDouble: () -> Unit, onShare: () -> Unit, onRelease: () -> Unit, onNext: () -> Unit) {
     val species = Fish.byId(c.species) ?: return
     val golden = c.golden?.let { Fish.goldenById(it) }
     val time = lt.marcomultiservices.kimba.ui.scene.rememberSceneTime()
@@ -757,6 +757,7 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?
                 if (frac >= 0.75) Tag(t(S.trophy), K.Gold)
                 if (reward?.challenge == true) Tag(t(S.challengeTag), K.Amber)
                 if (reward?.storm == true) Tag(t(S.stormTag), Color(0xFFFFE07A))
+                if (returnedFrom != null) Tag(t(S.returnedTag, returnedFrom.roundToInt(), c.cm.roundToInt()), Color(0xFF8DC26F))
             }
             Spacer(Modifier.height(10.dp))
             // The fish swings up into view, dripping, and the numbers count up.
@@ -859,10 +860,16 @@ private fun CatchCard(c: Catch, isNew: Boolean, record: Boolean, reward: Reward?
                 Spacer(Modifier.height(8.dp))
             }
             // Anglers love to show a fish off: the picture carries the friend code to whoever sees it.
-            OutlinedButton(onShare, modifier = Modifier.fillMaxWidth().height(46.dp)) {
-                Icon(Icons.Rounded.Share, null, tint = K.Text, modifier = Modifier.size(18.dp))
-                Spacer(Modifier.width(8.dp))
-                Text(t(S.shareCatch), color = K.Text)
+            Row(Modifier.fillMaxWidth(), horizontalArrangement = Arrangement.spacedBy(8.dp)) {
+                OutlinedButton(onShare, modifier = Modifier.weight(1f).height(46.dp)) {
+                    Icon(Icons.Rounded.Share, null, tint = K.Text, modifier = Modifier.size(18.dp))
+                    Spacer(Modifier.width(6.dp))
+                    Text(t(S.shareCatch), color = K.Text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
+                // Catch and release: gives up the fish's coins for experience and good-angler points.
+                if (c.golden == null) OutlinedButton(onRelease, enabled = !c.released && !doubled, modifier = Modifier.weight(1f).height(46.dp)) {
+                    Text(t(if (c.released) S.releasedDone else S.release), color = if (c.released) Color(0xFF8DC26F) else K.Text, maxLines = 1, overflow = TextOverflow.Ellipsis)
+                }
             }
             Spacer(Modifier.height(8.dp))
             Button(onNext, colors = amberButtonColors(), modifier = Modifier.fillMaxWidth().height(50.dp)) { Text(t(S.again)) }
@@ -882,6 +889,7 @@ private fun EventDialog(event: GameEvent, onClose: () -> Unit) {
             )
         is GameEvent.Achieved -> t(S.achieved) to event.list.joinToString("\n\n") { "🏆 " + it.title[lang] + "\n" + it.text[lang] + "  +" + it.coins }
         is GameEvent.Frozen -> t(S.frozenTitle) to t(S.frozenBody, event.cm)
+        is GameEvent.Released -> t(S.releasedTitle) to t(S.releasedBody, lt.marcomultiservices.kimba.core.Release.XP, event.points, event.total)
         is GameEvent.Storm -> t(S.stormTitle) to (if (event.boat) t(S.stormBoat) + "\n\n" else "") + t(S.stormBody)
         is GameEvent.Gift -> {
             val gifts = listOfNotNull(if (event.coins > 0) S.plusCoins(event.coins)[lang] else null, if (event.casts > 0) S.plusCasts(event.casts)[lang] else null).joinToString("   ")

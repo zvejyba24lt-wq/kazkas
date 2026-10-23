@@ -27,6 +27,10 @@ data class Progress(
     val caught: Int = 0,
     /** Keys of the [Achievement]s already earned. */
     val achieved: Set<String> = emptySet(),
+    /** Fish put back that may bite again ([Release]). */
+    val released: List<Released> = emptyList(),
+    /** Good-angler points from released fish. */
+    val goodAngler: Int = 0,
     /** This player's friend code (see [Invites]); made on first start. */
     val inviteCode: String = "",
     /** The friend code this player joined with, once. */

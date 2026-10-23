@@ -295,6 +295,16 @@ object S {
         "Bei dir hat es tagelang gefroren, das Eis ist schon %d cm dick. Jetzt angelst du durchs Eisloch mit der Eisangel: Barsche, Rotaugen und Quappen beißen am besten, Karpfen und Schleien ruhen im Schlamm.\n\nIm echten Leben betritt das Eis erst ab 10 cm Dicke, und nie allein.",
         "It has been freezing where you are for days, and the ice is already %d cm thick. Now you fish through a hole with an ice rod: perch, roach and burbot bite best, while carp and tench rest in the mud.\n\nIn real life only step onto ice thicker than 10 cm, and never alone.",
     )
+    // Catch and release
+    val release = L("🐟 Paleisti", "🐟 Zurücksetzen", "🐟 Release")
+    val releasedDone = L("Paleista ✓", "Zurückgesetzt ✓", "Released ✓")
+    val releasedTitle = L("Žuvis grįžo į vandenį", "Zurück ins Wasser", "Back in the water")
+    val releasedBody = L(
+        "+%d patirties · +%d gero žvejo taškai (iš viso %d).\n\nPaleistos žuvys auga ir nuo rytojaus gali vėl užkibti didesnės. Už paleistą mažylį taškai dvigubi.",
+        "+%d Erfahrung · +%d Fairness-Punkte (insgesamt %d).\n\nZurückgesetzte Fische wachsen und können ab morgen größer wieder beißen. Für einen jungen Fisch gibt es doppelt.",
+        "+%d experience · +%d good-angler points (%d in total).\n\nReleased fish grow and may bite again, bigger, from tomorrow. A young fish counts double.",
+    )
+    val returnedTag = L("Sugrįžo! Buvo %d cm, dabar %d cm", "Wieder da! Erst %d cm, jetzt %d cm", "It's back! %d cm then, %d cm now")
     // Play Games
     val leaderboards = L("🏆 Lyderių lentelės", "🏆 Bestenlisten", "🏆 Leaderboards")
     val playAchievements = L("Play pasiekimai", "Play-Erfolge", "Play achievements")

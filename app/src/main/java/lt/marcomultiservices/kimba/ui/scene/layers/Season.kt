@@ -5,7 +5,11 @@ import androidx.compose.ui.geometry.Size
 import androidx.compose.ui.graphics.Color
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.rotate
+import androidx.compose.ui.geometry.Rect
+import androidx.compose.ui.graphics.drawscope.withTransform
+import lt.marcomultiservices.kimba.ui.scene.ArtPack
 import lt.marcomultiservices.kimba.ui.scene.SceneColors
+import lt.marcomultiservices.kimba.ui.scene.drawArt
 import lt.marcomultiservices.kimba.ui.scene.SceneGeometry
 import kotlin.math.sin
 
@@ -25,9 +29,14 @@ private val autumn = listOf(Color(0xFFD9822B), Color(0xFFC4472B), Color(0xFFE8B1
 /** Lilies grow only in the warm months. */
 fun liliesIn(month: Int): Boolean = month in 5..9
 
-/** September to November: leaves lying on the water and a few falling, more in the wind. */
+/**
+ * September to November: leaves lying on the water and a few falling, more in the wind. Picture
+ * slots `leaf_1`, `leaf_2`, ... (any number: maple, oak, birch, aspen in red, yellow, orange and
+ * brown) are mixed at random; without them simple coloured leaves are drawn.
+ */
 fun DrawScope.drawAutumn(geo: SceneGeometry, colors: SceneColors, t: Float, month: Int, onWater: Boolean) {
     if (month !in 9..11) return
+    val leaves = ArtPack.variants("leaf")
     val amount = when (month) { 9 -> 0.4f; 10 -> 1f; else -> 0.7f }
     if (onWater) {
         val n = (26 * amount).toInt()
@@ -38,7 +47,13 @@ fun DrawScope.drawAutumn(geo: SceneGeometry, colors: SceneColors, t: Float, mont
             val x = geo.w * ((seasonRandom(k, 7) + drift) % 1.1f - 0.05f)
             val r = geo.w * 0.012f * s
             val col = colors.lit(autumn[k % autumn.size])
-            rotate(seasonRandom(k, 9) * 360f, Offset(x, y)) {
+            if (leaves.isNotEmpty()) {
+                // Lying flat on the water: squashed by the angle of view.
+                val img = leaves[(seasonRandom(k, 21) * leaves.size).toInt().coerceAtMost(leaves.size - 1)]
+                withTransform({ scale(1f, 0.45f, Offset(x, y)); rotate(seasonRandom(k, 9) * 360f, Offset(x, y)) }) {
+                    drawArt(img, Rect(x - r * 1.3f, y - r * 1.3f, x + r * 1.3f, y + r * 1.3f), colors.lit(Color.White))
+                }
+            } else rotate(seasonRandom(k, 9) * 360f, Offset(x, y)) {
                 drawOval(col, Offset(x - r, y - r * 0.35f), Size(r * 2f, r * 0.7f))
             }
         }
@@ -51,7 +66,15 @@ fun DrawScope.drawAutumn(geo: SceneGeometry, colors: SceneColors, t: Float, mont
         val y = geo.h * (ph * 0.95f)
         val x = geo.w * ((seasonRandom(k, 17) + ph * colors.wind * 0.03f) % 1f) + sin(t * 2f + k) * geo.w * 0.02f
         val r = geo.w * 0.009f * (0.6f + 0.8f * (y / geo.h))
-        rotate(t * 90f * (0.5f + seasonRandom(k, 19)) + k * 40f, Offset(x, y)) {
+        val spin = t * 90f * (0.5f + seasonRandom(k, 19)) + k * 40f
+        if (leaves.isNotEmpty()) {
+            // Tumbling: it turns in the air and flips over as it falls.
+            val img = leaves[k % leaves.size]
+            val flip = kotlin.math.cos(t * (2f + seasonRandom(k, 23) * 2f) + k).coerceIn(-1f, 1f)
+            withTransform({ rotate(spin, Offset(x, y)); scale(flip.let { if (kotlin.math.abs(it) < 0.15f) 0.15f else it }, 1f, Offset(x, y)) }) {
+                drawArt(img, Rect(x - r * 1.4f, y - r * 1.4f, x + r * 1.4f, y + r * 1.4f), colors.lit(Color.White))
+            }
+        } else rotate(spin, Offset(x, y)) {
             drawOval(colors.lit(autumn[(k + 1) % autumn.size]), Offset(x - r, y - r * 0.4f), Size(r * 2f, r * 0.8f))
         }
     }

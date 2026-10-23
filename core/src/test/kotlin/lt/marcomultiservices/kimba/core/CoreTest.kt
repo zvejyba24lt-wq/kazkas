@@ -539,4 +539,21 @@ class CoreTest {
         assertTrue(storm.storm && !calm.storm)
         assertTrue(storm.coins >= calm.coins + Economy.coins(Fish.byId("perch")!!, null, 400))
     }
+
+    @Test
+    fun releasedFishComeBackBigger() {
+        val perch = Fish.byId("perch")!!
+        val c = Catch("perch", null, perch.minCm + 1.0, 100, 0L, Sky.CLEAR, 15.0, "x", coins = 20)
+        val p = Release.apply(Progress(coins = 100), c, day = 10)!!
+        assertEquals(80, p.coins)
+        assertEquals(2, p.goodAngler)
+        assertEquals(1, p.released.size)
+        // Not the same day; from the next day it can come back, grown.
+        assertEquals(null, Release.returning(p, "perch", Water.LAKE, 10, Random(1)))
+        val back = (1..50).firstNotNullOf { Release.returning(p, "perch", Water.LAKE, 13, Random(it)) }
+        assertTrue(Release.grown(back, perch, 13) > c.cm)
+        assertTrue(Release.caughtAgain(p, back).released.isEmpty())
+        assertEquals(null, Release.apply(p, c.copy(golden = "moon_pike"), 10))
+    }
 }
+

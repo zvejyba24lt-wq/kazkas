@@ -231,6 +231,8 @@ data class Catch(
     val coins: Int = 0,
     /** Caught through the ice. */
     val ice: Boolean = false,
+    /** Put back after the photo. */
+    val released: Boolean = false,
 )
 
 /**
