@@ -312,6 +312,7 @@ object S {
     val emptyIce = L("Niekas nepuolė", "Kein Biss", "Nothing took it")
     val emptyIceHint = L("Žaisk blizge su pauzėmis: plėšrūnas puola krentančią.", "Mit Pausen zupfen: Räuber packen den absinkenden Blinker.", "Jig with pauses: predators take the falling spoon.")
     val missedHintIce = L("Kai linktukas nusilenkia – kirsk iškart.", "Schlägt der Nicker aus – sofort anschlagen.", "When the nod dips, strike at once.")
+    val liftLead = L("Iškelk žuvį už valo", "Fisch am Schnurende herausheben", "Swing the fish in on the line")
     val boatLead = L("Kelk žuvį į valtį", "Fisch ins Boot heben", "Lift the fish into the boat")
     val frozenTitle = L("Ežeras užšalo!", "Der See ist zugefroren!", "The lake has frozen!")
     val frozenBody = L(

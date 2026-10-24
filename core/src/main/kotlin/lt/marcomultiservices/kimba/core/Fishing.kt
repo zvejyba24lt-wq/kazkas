@@ -21,6 +21,9 @@ class Bite(
 ) {
     val grams: Int get() = (species.grams(cm) * condition).toInt()
 
+    /** Anglers only reach for the landing net for a fish of a kilo or more; a smaller one is swung in on the line. */
+    val needsNet: Boolean get() = grams >= 1000
+
     /** Fight strength: species power scaled by size. */
     val pull: Double get() {
         val s = (cm - species.minCm) / (species.maxCm - species.minCm)

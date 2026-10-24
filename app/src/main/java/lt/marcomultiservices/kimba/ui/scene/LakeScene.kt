@@ -356,7 +356,7 @@ fun LakeScene(
             if (s.stage == Stage.WAITING && splash.value < 1f) drawCastSplash(geo, floatPos, splash.value)
             // At the bank the fish is guided into the landing net and lifted out in it.
             val netLift = if (s.stage == Stage.LANDING) lift.value else 0f
-            val inNet = !frozen && !boat && s.surprise == null && s.bite != null &&
+            val inNet = !frozen && !boat && s.surprise == null && s.bite?.needsNet == true &&
                 ((s.stage == Stage.FIGHT && s.atNet) || s.stage == Stage.LANDING)
             val netAt = landingNetHoop(geo, if (s.stage == Stage.LANDING) geo.w * 0.56f else floatPos.x, geo.h * (0.88f - 0.085f * lookDown), t, netLift)
             val fishSize = s.bite?.let { (it.cm / 60.0).toFloat() } ?: 1f

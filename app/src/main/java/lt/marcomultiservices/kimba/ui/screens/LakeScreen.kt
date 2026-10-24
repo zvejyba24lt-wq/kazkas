@@ -262,7 +262,7 @@ fun LakeScreen(
                     else -> Unit
                 }
                 Stage.BITE -> if (tip(Tip.STRIKE)) Coach(Tip.STRIKE)
-                Stage.FIGHT -> if (tip(Tip.REEL)) Coach(Tip.REEL) else FightCue(lake.running, lake.atNet, lake.fishSide, lake.fishHeading, lake.steer, progress.onIce, boat = progress.trip == null && progress.standHere == lt.marcomultiservices.kimba.core.Stand.BOAT)
+                Stage.FIGHT -> if (tip(Tip.REEL)) Coach(Tip.REEL) else FightCue(lake.running, lake.atNet, lake.fishSide, lake.fishHeading, lake.steer, progress.onIce, boat = progress.trip == null && progress.standHere == lt.marcomultiservices.kimba.core.Stand.BOAT, small = lake.bite?.needsNet == false)
                 else -> Unit
             }
             Spacer(Modifier.weight(1f))
@@ -582,11 +582,11 @@ private fun StrikeBanner() {
 
 /** One line high on the screen during the fight: what the fish does and which way to lead the rod. */
 @Composable
-private fun FightCue(running: Boolean, atNet: Boolean, side: Float, heading: Float, steer: Float, ice: Boolean = false, boat: Boolean = false) {
+private fun FightCue(running: Boolean, atNet: Boolean, side: Float, heading: Float, steer: Float, ice: Boolean = false, boat: Boolean = false, small: Boolean = false) {
     val (cue, color) = when {
         running -> t(S.fishRuns) to K.Danger
         atNet && kotlin.math.abs(side) >= 0.4f -> t(if (side > 0f) S.steerLeft else S.steerRight) to K.Amber
-        atNet -> t(if (ice) S.holeLead else if (boat) S.boatLead else S.netLead) to Color(0xFF8DC26F)
+        atNet -> t(if (ice) S.holeLead else if (boat) S.boatLead else if (small) S.liftLead else S.netLead) to Color(0xFF8DC26F)
         steer > 0.35f -> t(S.steerGood) to Color(0xFF8DC26F)
         heading > 0f -> t(S.steerLeft) to K.Amber
         else -> t(S.steerRight) to K.Amber
