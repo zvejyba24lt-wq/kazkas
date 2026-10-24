@@ -130,7 +130,7 @@ internal fun landingNetHoop(geo: SceneGeometry, fishX: Float, atY: Float, t: Flo
 
 /** How long the fish lies in the net: its own length, but bent to fit a hoop smaller than it. */
 internal fun netFishLength(geo: SceneGeometry, hoop: Offset, lift: Float, size: Float): Float =
-    minOf(geo.w * 0.26f * geo.scaleAt(hoop.y) * size.coerceIn(0.5f, 2f), netRadius(geo, lift) * 1.75f)
+    minOf(geo.w * 0.26f * geo.scaleAt(hoop.y) * size.coerceIn(0.5f, 2f), netRadius(geo, lift) * 1.55f)
 
 /** The middle of the fish lying in the bag. */
 internal fun netFishCentre(geo: SceneGeometry, hoop: Offset, lift: Float, t: Float): Offset {
