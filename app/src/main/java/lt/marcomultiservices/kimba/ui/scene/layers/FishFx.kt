@@ -267,52 +267,87 @@ internal fun DrawScope.drawFishInNet(centre: Offset, len: Float, t: Float, speci
     }
 }
 
-private const val JUMP_PERIOD = 2.6f
-private const val JUMP_SHARE = 0.32f
+/** How long a leap lasts, from breaking the surface to diving back in, in seconds. */
+internal const val JUMP_S = 1.5f
+/** The fewest seconds between two leaps of the same fish. */
+internal const val JUMP_REST_S = 7f
+/** Fish that really jump on the line: pike, perch, asp, the trouts and salmon, grayling, garfish. */
+internal val JUMPERS = setOf("pike", "perch", "asp", "trout", "sea_trout", "grayling", "huchen", "garfish")
 
-/** Whether the running fish is in the air right now (it is not drawn under the water meanwhile). */
-internal fun fishAirborne(t: Float): Boolean = (t % JUMP_PERIOD) / JUMP_PERIOD <= JUMP_SHARE
+private class JumpPose(val x: Float, val y: Float, val angle: Float, val len: Float, val dir: Float)
 
-/** Where the leaping fish's mouth is, so the line follows it up out of the water. */
-internal fun fishJumpMouth(geo: SceneGeometry, pos: Offset, t: Float, size: Float, heading: Float): Offset {
-    val f = ((t % JUMP_PERIOD) / JUMP_PERIOD / JUMP_SHARE).coerceIn(0f, 1f)
+/**
+ * The fish at [f] (0..1) through a leap: it bursts up head first, hangs at the top shaking its
+ * head, and falls back in on a gravity curve, turning head down as it goes.
+ */
+private fun jumpPose(geo: SceneGeometry, pos: Offset, f: Float, size: Float, heading: Float, t: Float): JumpPose {
     val len = geo.w * 0.26f * geo.scaleAt(pos.y) * size.coerceIn(0.5f, 2f)
     val dir = if (heading >= 0f) 1f else -1f
-    val x = pos.x + dir * (f - 0.5f) * len * 0.9f
-    val y = pos.y - sin(f * PI.toFloat()) * len * 0.6f
-    val a = dir * (f - 0.5f) * 80f * PI.toFloat() / 180f
-    return Offset(x + dir * cos(a) * len * 0.5f, y + dir * sin(a) * len * 0.5f)
+    val arc = 4f * f * (1f - f)
+    val x = pos.x + dir * (f - 0.5f) * len * 0.6f
+    val y = pos.y + len * 0.3f - arc * len * 0.95f
+    // Head up on the way out, level at the top, head down on the way back in.
+    val e = f * f * (3f - 2f * f)
+    val shake = sin(t * 34f) * 9f * sin(f * PI.toFloat())
+    return JumpPose(x, y, dir * (-70f + 125f * e + shake), len, dir)
+}
+
+/** Where the leaping fish's mouth is, so the line follows it up out of the water. */
+internal fun fishJumpMouth(geo: SceneGeometry, pos: Offset, f: Float, size: Float, heading: Float, t: Float): Offset {
+    val p = jumpPose(geo, pos, f, size, heading, t)
+    val a = p.angle * PI.toFloat() / 180f
+    return Offset(p.x + p.dir * cos(a) * p.len * 0.5f, p.y + p.dir * sin(a) * p.len * 0.5f)
 }
 
 /**
- * During a run the hooked fish itself leaps clear of the water now and then: the same size as
- * under the water, out of where it swims and on the way it [heading]s.
+ * The hooked fish itself leaping clear of the water during a run, [f] (0..1) through the leap.
+ * Below the surface line it is hidden, so it really comes out of and goes back into the water,
+ * with a burst of spray where it breaks out, drops falling off it, and a crash and rings where
+ * it lands.
  */
-internal fun DrawScope.drawFishJump(geo: SceneGeometry, pos: Offset, t: Float, species: String, golden: Boolean, size: Float, heading: Float = 1f) {
-    val ph = (t % JUMP_PERIOD) / JUMP_PERIOD
-    if (ph > JUMP_SHARE) return
-    val f = ph / JUMP_SHARE
+internal fun DrawScope.drawFishJump(geo: SceneGeometry, pos: Offset, f: Float, t: Float, species: String, golden: Boolean, size: Float, heading: Float) {
+    val p = jumpPose(geo, pos, f, size, heading, t)
     val s = geo.scaleAt(pos.y)
-    val len = geo.w * 0.26f * s * size.coerceIn(0.5f, 2f)
-    val dir = if (heading >= 0f) 1f else -1f
-    val x = pos.x + dir * (f - 0.5f) * len * 0.9f
-    val y = pos.y - sin(f * PI.toFloat()) * len * 0.6f
-    // Head up on the way out, down on the way back in.
-    val angle = dir * (f - 0.5f) * 80f
-    rotate(angle, Offset(x, y)) {
-        withTransform({ if (dir > 0) scale(-1f, 1f, Offset(x, y)) }) {
-            // Arched in the air, tail kicking.
-            drawFishPicture(species, golden, Rect(x - len / 2, y - len * 0.2f, x + len / 2, y + len * 0.2f), t) { u ->
-                -len * 0.1f * sin(u * PI.toFloat()) + swimWave(u, t, 24f, len * 0.08f)
+    val surface = pos.y + p.len * 0.02f
+    val out = Offset(pos.x - p.dir * p.len * 0.3f, pos.y)
+    val into = Offset(pos.x + p.dir * p.len * 0.3f, pos.y)
+    // Rings spreading where it broke out and where it fell back.
+    for ((at, from) in listOf(out to 0f, into to 0.72f)) {
+        val k = ((f - from) / (1.3f - from)).coerceIn(0f, 1f)
+        if (f < from || k >= 1f) continue
+        val r = p.len * (0.15f + 0.6f * k)
+        drawOval(Color.White.copy(alpha = (1f - k) * 0.45f), Offset(at.x - r, at.y - r * 0.28f), Size(r * 2, r * 0.56f), style = Stroke(1.5f + 1.5f * s))
+    }
+    clipRect(bottom = surface) {
+        rotate(p.angle, Offset(p.x, p.y)) {
+            withTransform({ if (p.dir > 0) scale(-1f, 1f, Offset(p.x, p.y)) }) {
+                // Body arched in the air, tail beating hard.
+                drawFishPicture(species, golden, Rect(p.x - p.len / 2, p.y - p.len * 0.2f, p.x + p.len / 2, p.y + p.len * 0.2f), t) { u ->
+                    -p.len * 0.08f * sin(u * PI.toFloat()) + swimWave(u, t, 22f, p.len * 0.07f)
+                }
             }
         }
     }
-    // Spray where it left and where it falls back.
-    for (i in 0 until 8) {
-        val k = (f * 1.5f + i * 0.13f) % 1f
-        val spot = if (f < 0.5f) Offset(pos.x - dir * len * 0.7f, pos.y) else Offset(pos.x + dir * len * 0.7f, pos.y)
-        drawCircle(Palette.Spray.copy(alpha = (1 - k) * 0.6f), (2f + 3f * s) * (1 - k * 0.5f), Offset(spot.x + cos(i * 2.4f) * len * 0.25f * k, spot.y - sin(k * PI.toFloat()) * len * 0.3f))
+    // Drops streaming off the fish while it is in the air.
+    if (f in 0.1f..0.85f) for (i in 0 until 7) {
+        val k = (t * 2.2f + i * 0.29f) % 1f
+        val along = (i / 6f - 0.5f) * p.len * 0.7f
+        drawCircle(Palette.Spray.copy(alpha = (1f - k) * 0.8f), (1.5f + 2f * s) * (1f - k * 0.4f), Offset(p.x + along, p.y + p.len * 0.1f + k * p.len * 0.5f))
     }
+    // The burst as it breaks out, then the crash as it lands.
+    fun crown(at: Offset, k: Float, big: Float) {
+        if (k !in 0f..1f) return
+        for (i in 0 until 14) {
+            val a = (i / 13f - 0.5f) * 2.4f
+            val reach = p.len * big * (0.15f + 0.35f * ((i * 37) % 10) / 10f)
+            val x = at.x + sin(a) * reach * k
+            val y = at.y - cos(a) * reach * 1.4f * (k * 2f - k * k * 1.6f)
+            drawCircle(Palette.Spray.copy(alpha = (1f - k) * 0.85f), (2f + 3.5f * s) * (1f - 0.5f * k), Offset(x, y))
+        }
+        drawOval(Color.White.copy(alpha = (1f - k) * 0.5f), Offset(at.x - p.len * 0.25f * big, at.y - p.len * 0.05f), Size(p.len * 0.5f * big, p.len * 0.1f))
+    }
+    crown(out, f / 0.35f, 0.9f)
+    crown(into, (f - 0.8f) / 0.45f, 1.2f)
 }
 
 /** The hooked fish thrashing just under the surface, with spray and rings. */

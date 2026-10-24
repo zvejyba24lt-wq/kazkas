@@ -47,6 +47,7 @@ shot 05_laukiam 6
 demo -e fight pike; shot 06_kova 6
 demo -e fight pike --ez net true; shot 06d_graibstas 6
 demo -e fight pike --ez land true; shot 06m_istraukta 5
+demo -e fight pike --ez run true; shot 06n_suolis 1
 # The other rods: a feeder on its rest watching the tip, the tackle box, a spinning lure coming back.
 demo -e screen lake -e tackle feeder; sleep 6
 demo -e cast 0.6; shot 06a_fideris 9

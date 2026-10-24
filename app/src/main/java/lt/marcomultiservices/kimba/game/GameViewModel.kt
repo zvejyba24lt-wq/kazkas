@@ -1071,7 +1071,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
     }
 
     /** Starts a fight with a mid-sized fish directly (for screenshots). */
-    fun demoFight(id: String, net: Boolean = false, land: Boolean = false) {
+    fun demoFight(id: String, net: Boolean = false, land: Boolean = false, run: Boolean = false) {
         resetLake()
         val species = Fish.byId(id) ?: return
         val bite = Bite(species, null, (species.minCm + species.maxCm) / 2.0, 1.0, emptyList())
@@ -1080,7 +1080,7 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         _lake.value = LakeState(
             stage = if (land) Stage.LANDING else Stage.FIGHT, castDist = 0.7, castId = _lake.value.castId, bite = bite, tension = if (land) 0f else 0.62f,
             fightDistance = if (net) 0.03f else 0.55f, fightStart = 0.7f, fishSide = if (net) 0.5f else 0.35f,
-            fishHeading = 1f, rodAim = -0.2f, steer = 0.2f, atNet = net || land, tackle = Tackle.FLOAT,
+            fishHeading = 1f, rodAim = -0.2f, steer = 0.2f, atNet = net || land, tackle = Tackle.FLOAT, running = run,
         )
     }
 

@@ -70,6 +70,8 @@ fun LakeScene(
         val water = remember { if (Build.VERSION.SDK_INT >= 33) runCatching { WaterShader() }.getOrNull() else null }
 
         val time = rememberSceneTime()
+        // When the hooked fish last leapt (scene seconds) and which way, read and set while drawing.
+        val jumpAt = remember { floatArrayOf(-100f, 1f) }
         // Layers that stand still are drawn once into a picture and reused every frame.
         val shoreCache = remember { LayerCache() }
         val pierCache = remember { LayerCache() }
@@ -358,10 +360,16 @@ fun LakeScene(
                 ((s.stage == Stage.FIGHT && s.atNet) || s.stage == Stage.LANDING)
             val netAt = landingNetHoop(geo, if (s.stage == Stage.LANDING) geo.w * 0.56f else floatPos.x, geo.h * (0.88f - 0.085f * lookDown), t, netLift)
             val fishSize = s.bite?.let { (it.cm / 60.0).toFloat() } ?: 1f
+            // A fish that really jumps leaps out once in a run (never more often than every few
+            // seconds) and the leap plays out to the end even if the run stops meanwhile.
+            val jumper = s.stage == Stage.FIGHT && !frozen && !inNet && s.surprise == null && s.bite?.species?.id in JUMPERS
+            if (jumper && s.running && t - jumpAt[0] > JUMP_S + JUMP_REST_S) { jumpAt[0] = t; jumpAt[1] = s.fishHeading }
+            val jumpF = if (jumper) (t - jumpAt[0]) / JUMP_S else -1f
+            val leaping = jumpF in 0f..1f
             // The line runs to the fish's mouth: up into the air on a leap, into the net at the end.
             val lineEnd = when {
                 inNet -> netFishMouth(geo, netAt, netLift, fishSize, t)
-                s.stage == Stage.FIGHT && !frozen && s.surprise == null && s.running && fishAirborne(t) -> fishJumpMouth(geo, floatPos, t, fishSize, s.fishHeading)
+                leaping -> fishJumpMouth(geo, floatPos, jumpF, fishSize, jumpAt[1], t)
                 else -> floatPos
             }
             if (s.stage == Stage.FIGHT && frozen) {
@@ -371,11 +379,10 @@ fun LakeScene(
                 drawDraggedThing(floatPos, geo.scaleAt(floatPos.y), t)
             } else if (s.stage == Stage.FIGHT && !inNet) {
                 // A running fish leaps out now and then: while it is in the air it is not also under the water.
-                val leaping = s.running && fishAirborne(t)
                 if (!leaping) s.bite?.let { b -> drawHookedFish(geo, floatPos, t, b.species.id, lt.marcomultiservices.kimba.core.Fish.gold(b.golden?.id), (b.cm / 60.0).toFloat(), s.fishHeading, s.running, colors) }
-                drawFightSplash(geo, floatPos, t, s.running)
+                if (!leaping) drawFightSplash(geo, floatPos, t, s.running)
                 val b = s.bite
-                if (leaping && b != null) drawFishJump(geo, floatPos, t, b.species.id, lt.marcomultiservices.kimba.core.Fish.gold(b.golden?.id), (b.cm / 60.0).toFloat(), s.fishHeading)
+                if (leaping && b != null) drawFishJump(geo, floatPos, jumpF, t, b.species.id, lt.marcomultiservices.kimba.core.Fish.gold(b.golden?.id), fishSize, jumpAt[1])
             }
             val reeds = !sea && !boat && !frozen
             // Reeds grow off to the left along the shore, behind the jetty or bank and away from the rod.

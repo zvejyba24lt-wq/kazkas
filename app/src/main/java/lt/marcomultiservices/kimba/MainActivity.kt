@@ -91,7 +91,7 @@ class MainActivity : AppCompatActivity() {
         extras.getString("trip")?.let { id -> lt.marcomultiservices.kimba.core.Destinations.byId(id)?.let { vm.demoTrip(it) } }
         extras.getString("scene")?.let { vm.setDemo(it.takeIf { s -> s != "live" }) }
         extras.getString("catch")?.let { vm.showDemoCatch(it) }
-        extras.getString("fight")?.let { vm.demoFight(it, net = extras.getBoolean("net", false), land = extras.getBoolean("land", false)) }
+        extras.getString("fight")?.let { vm.demoFight(it, net = extras.getBoolean("net", false), land = extras.getBoolean("land", false), run = extras.getBoolean("run", false)) }
         extras.getString("tackle")?.let { vm.demoTackle(it) }
         if (extras.containsKey("box")) vm.demoBox.value = extras.getBoolean("box")
         if (extras.keySet().any { it in setOf("scene", "water", "trip", "screen", "tackle") } && !extras.containsKey("box")) vm.demoBox.value = false
