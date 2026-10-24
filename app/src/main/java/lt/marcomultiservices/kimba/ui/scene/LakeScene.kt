@@ -357,7 +357,8 @@ fun LakeScene(
             // At the bank the fish is guided into the landing net and lifted out in it.
             val netLift = if (s.stage == Stage.LANDING) lift.value else 0f
             val inNet = !frozen && !boat && s.surprise == null && s.bite?.needsNet == true &&
-                ((s.stage == Stage.FIGHT && s.atNet) || s.stage == Stage.LANDING)
+                // Only once it is led round in front of the angler, calm, does it slide into the net.
+                ((s.stage == Stage.FIGHT && s.atNet && s.netReady) || s.stage == Stage.LANDING)
             val netAt = landingNetHoop(geo, if (s.stage == Stage.LANDING) geo.w * 0.56f else floatPos.x, geo.h * (0.88f - 0.085f * lookDown), t, netLift)
             val fishSize = s.bite?.let { (it.cm / 60.0).toFloat() } ?: 1f
             // A fish that really jumps leaps out once in a run (never more often than every few
@@ -407,8 +408,10 @@ fun LakeScene(
                     drawFishInNet(netFishCentre(geo, netAt, netLift, t), netFishLength(geo, netAt, netLift, fishSize), t, b.species.id, lt.marcomultiservices.kimba.core.Fish.gold(b.golden?.id), netLift)
                 }
             }
-            if (resting) drawRodRest(geo, colors, tip, hasAlarm, s.alarm, t)
-            drawRod(geo, colors, tip, quiver = kind == Tackle.FEEDER, winter = frozen)
+            // The rod on its rest keeps still; only the quiver tip moves.
+            val restTip = if (resting) Offset(geo.w * 0.62f, geo.h * 0.40f) else null
+            if (restTip != null) drawRodRest(geo, colors, restTip, hasAlarm, s.alarm, t)
+            drawRod(geo, colors, tip, quiver = kind == Tackle.FEEDER, winter = frozen, rest = restTip)
             if (frozen && kind == Tackle.FLOAT) drawNod(geo, colors, tip, if (s.stage == Stage.FIGHT) 0.6f else dip, tremble, t)
             drawLine(geo, lineFrom, lineEnd, s.stage, tension, slack = when { frozen -> 0f; kind == Tackle.FEEDER -> 0.12f; kind == Tackle.SPIN -> 0.25f; else -> 1f })
             if (s.stage == Stage.LANDING && s.surprise != null) drawSurpriseLifted(floatPos, geo.w, geo.h, t, lift.value, s.surprise)

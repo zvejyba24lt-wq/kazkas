@@ -142,17 +142,20 @@ internal fun DrawScope.drawAim(geo: SceneGeometry, at: Offset, t: Float) {
  * a cork handle, a spinning reel hanging below it, guides with thread whippings, and on a
  * feeder rod ([quiver]) a bright orange quiver tip with white bands that shows the bite.
  */
-internal fun DrawScope.drawRod(geo: SceneGeometry, colors: SceneColors, tip: Offset, quiver: Boolean = false, winter: Boolean = false) {
+internal fun DrawScope.drawRod(geo: SceneGeometry, colors: SceneColors, tip: Offset, quiver: Boolean = false, winter: Boolean = false, rest: Offset? = null) {
     // A winter rod is short and slim, held low over the hole, with a small inline reel.
     val base = if (winter) Offset(geo.w * 0.86f, geo.h * 1.04f) else geo.rodBase
     val ctrl = if (winter) Offset(geo.w * 0.76f, geo.h * 0.87f) else Offset(geo.w * 0.92f, geo.h * 0.70f)
     val slim = if (winter) 0.7f else 1f
     val n = 48
+    // A rod lying on its rest stays put: only the soft top third bends to [tip] on a bite.
+    val still = rest ?: tip
     val pts = Array(n + 1) { i ->
         val u = i / n.toFloat()
+        val bendIn = if (rest == null) 0f else ((u - 0.68f) / 0.32f).coerceIn(0f, 1f).let { it * it }
         Offset(
-            (1 - u) * (1 - u) * base.x + 2 * (1 - u) * u * ctrl.x + u * u * tip.x,
-            (1 - u) * (1 - u) * base.y + 2 * (1 - u) * u * ctrl.y + u * u * tip.y,
+            (1 - u) * (1 - u) * base.x + 2 * (1 - u) * u * ctrl.x + u * u * still.x + (tip.x - still.x) * bendIn,
+            (1 - u) * (1 - u) * base.y + 2 * (1 - u) * u * ctrl.y + u * u * still.y + (tip.y - still.y) * bendIn,
         )
     }
     fun normal(i: Int): Offset {
@@ -203,10 +206,19 @@ internal fun DrawScope.drawRod(geo: SceneGeometry, colors: SceneColors, tip: Off
         val nn = normal(i)
         val wdt = width(u)
         val along = Offset(nn.y, -nn.x)
-        drawLine(colors.lit(Palette.RodWhip), c - along * (wdt * 0.9f), c + along * (wdt * 0.9f), strokeWidth = wdt * 1.25f)
-        val ring = c - nn * (wdt * 1.6f)
-        drawLine(colors.lit(Palette.RodGuide), c, ring, strokeWidth = 1.4f)
-        drawCircle(colors.lit(Palette.RodGuide), wdt * 0.75f + 2f, ring, style = Stroke(1.4f))
+        drawLine(colors.lit(Palette.RodWhip), c - along * (wdt * 0.8f), c + along * (wdt * 0.8f), strokeWidth = wdt * 1.08f)
+        // A small guide seen from behind the reel: two wire legs up to a ring standing across the
+        // blank, so it shows as a narrow dark frame round a lighter ceramic insert.
+        val r = wdt * 0.62f + 1.2f
+        val ring = c - nn * (wdt * 0.5f + r * 1.15f)
+        val foot = ring + nn * (r * 0.85f)
+        val frame = colors.lit(Color(0xFF26292D))
+        drawLine(frame, c - along * (wdt * 0.55f), foot, strokeWidth = 1.5f, cap = StrokeCap.Round)
+        drawLine(frame, c + along * (wdt * 0.55f), foot, strokeWidth = 1.5f, cap = StrokeCap.Round)
+        rotate(kotlin.math.atan2(along.y, along.x) * 180f / PI.toFloat(), ring) {
+            drawOval(frame, Offset(ring.x - r * 0.42f, ring.y - r), Size(r * 0.84f, r * 2f), style = Stroke(r * 0.42f))
+            drawOval(colors.lit(Color(0xFF8E959E)), Offset(ring.x - r * 0.3f, ring.y - r * 0.82f), Size(r * 0.6f, r * 1.64f), style = Stroke(r * 0.16f))
+        }
     }
     if (quiver) for (u in floatArrayOf(0.88f, 0.93f)) {
         val i = (u * n).toInt()

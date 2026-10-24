@@ -1079,8 +1079,8 @@ class GameViewModel(application: Application) : AndroidViewModel(application) {
         // once, so nothing that cancels the lake's job can leave the screen idle.
         _lake.value = LakeState(
             stage = if (land) Stage.LANDING else Stage.FIGHT, castDist = 0.7, castId = _lake.value.castId, bite = bite, tension = if (land) 0f else 0.62f,
-            fightDistance = if (net) 0.03f else 0.55f, fightStart = 0.7f, fishSide = if (net) 0.5f else 0.35f,
-            fishHeading = 1f, rodAim = -0.2f, steer = 0.2f, atNet = net || land, tackle = Tackle.FLOAT, running = run,
+            fightDistance = if (net) 0.03f else 0.55f, fightStart = 0.7f, fishSide = if (net) 0.2f else 0.35f,
+            fishHeading = 1f, rodAim = -0.2f, steer = 0.2f, atNet = net || land, netReady = net || land, tackle = Tackle.FLOAT, running = run,
         )
     }
 

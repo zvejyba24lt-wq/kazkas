@@ -585,7 +585,7 @@ private fun StrikeBanner() {
 private fun FightCue(running: Boolean, atNet: Boolean, side: Float, heading: Float, steer: Float, ice: Boolean = false, boat: Boolean = false, small: Boolean = false) {
     val (cue, color) = when {
         running -> t(S.fishRuns) to K.Danger
-        atNet && kotlin.math.abs(side) >= 0.4f -> t(if (side > 0f) S.steerLeft else S.steerRight) to K.Amber
+        atNet && kotlin.math.abs(side) >= lt.marcomultiservices.kimba.core.NET_SIDE.toFloat() -> t(if (side > 0f) S.steerLeft else S.steerRight) to K.Amber
         atNet -> t(if (ice) S.holeLead else if (boat) S.boatLead else if (small) S.liftLead else S.netLead) to Color(0xFF8DC26F)
         steer > 0.35f -> t(S.steerGood) to Color(0xFF8DC26F)
         heading > 0f -> t(S.steerLeft) to K.Amber
@@ -645,7 +645,7 @@ private fun SteerBar(aim: Float, heading: Float, atNet: Boolean, side: Float, ru
         drawRoundRect(Color(0x99101A28), cornerRadius = r)
         // The good side: against the fish, or the middle when netting.
         val (from, to) = when {
-            atNet -> if (kotlin.math.abs(side) < 0.4f) -0.25f to 0.25f else if (side > 0f) -1f to -0.2f else 0.2f to 1f
+            atNet -> if (kotlin.math.abs(side) < lt.marcomultiservices.kimba.core.NET_SIDE.toFloat()) -0.25f to 0.25f else if (side > 0f) -1f to -0.2f else 0.2f to 1f
             heading > 0f -> -1f to -0.15f
             else -> 0.15f to 1f
         }
@@ -653,7 +653,7 @@ private fun SteerBar(aim: Float, heading: Float, atNet: Boolean, side: Float, ru
         if (!running) {
             drawRoundRect(Color(0x558DC26F), topLeft = Offset(x(from), 4.dp.toPx()), size = Size(x(to) - x(from), size.height - 8.dp.toPx()), cornerRadius = r)
             // Chevrons running towards the good side.
-            val dir = if (atNet && kotlin.math.abs(side) < 0.4f) 0f else if ((from + to) < 0f) -1f else 1f
+            val dir = if (atNet && kotlin.math.abs(side) < lt.marcomultiservices.kimba.core.NET_SIDE.toFloat()) 0f else if ((from + to) < 0f) -1f else 1f
             if (dir != 0f) for (k in 0..2) {
                 val cx = x(dir * (0.25f + 0.22f * k + 0.1f * pulse))
                 val a = (1f - k * 0.3f) * (0.4f + 0.6f * pulse)

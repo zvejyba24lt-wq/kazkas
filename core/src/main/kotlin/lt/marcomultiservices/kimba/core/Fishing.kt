@@ -112,6 +112,9 @@ const val IDLE_LIMIT = 8.0
  * .. 1 right): held against the way the fish swims, side strain turns its head and tires it;
  * held the same way, the fish swims on with the rod and wins line.
  */
+/** How far off to the side (of -1..1) the fish may still be for the net to take it. */
+const val NET_SIDE = 0.5
+
 class Fight(
     private val pull: Double,
     private val rng: Random,
@@ -149,7 +152,7 @@ class Fight(
     /** Close in at the bank: the fish must be led into the landing net. */
     val atNet: Boolean get() = distance < netAt
     /** The fish is calm and in front of the angler, where the net can take it. */
-    val netReady: Boolean get() = abs(side) < 0.4 && !running
+    val netReady: Boolean get() = abs(side) < NET_SIDE && !running
 
     private var runLeft = 0.0
     private var calmLeft = 1.0 + rng.nextDouble() * 1.5
@@ -171,7 +174,7 @@ class Fight(
         } else {
             calmLeft -= dt
             // A tired fish at the net only splashes; it no longer tears off on a run.
-            if (calmLeft <= 0 && atNet && stamina < 0.35) calmLeft = 0.8
+            if (calmLeft <= 0 && atNet && stamina < 0.6) calmLeft = 0.8
             if (calmLeft <= 0) { running = true; runStarted = true; runLeft = 0.5 + rng.nextDouble() * 0.8 }
         }
         // The fish turns now and then, and always at the edge of the swim.
@@ -185,9 +188,10 @@ class Fight(
         val against = steer.coerceAtLeast(0.0)
         val with = (-steer).coerceAtLeast(0.0)
         // Side strain slows it across the water; a rod pointed its way lets it go.
-        side = (side + heading * dt * (0.25 + 0.35 * pull) * (if (running) 1.6 else 1.0) * (1 - 0.6 * against)).coerceIn(-1.0, 1.0)
+        // Close in at the bank a tired fish hardly swims across any more.
+        side = (side + heading * dt * (0.25 + 0.35 * pull) * (if (running) 1.6 else 1.0) * (1 - 0.6 * against) * (if (atNet) 0.35 else 1.0)).coerceIn(-1.0, 1.0)
         // Close in, winding draws the fish round in front of the angler, over the net.
-        if (atNet && reeling && !running) side *= (1 - min(1.0, dt * (1.6 + 2.0 * against)))
+        if (atNet && reeling && !running) side *= (1 - min(1.0, dt * (2.4 + 2.0 * against)))
 
         val p = currentPull
         val target = ((if (reeling) 0.28 + p * 0.42 else 0.04 + p * 0.18) + with * 0.14 - against * 0.05) / strength
