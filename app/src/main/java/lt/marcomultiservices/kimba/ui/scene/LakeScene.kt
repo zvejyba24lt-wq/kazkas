@@ -352,13 +352,24 @@ fun LakeScene(
                 else -> drawBubbles(geo, floatPos, t, 0.25f)
             }
             if (s.stage == Stage.WAITING && splash.value < 1f) drawCastSplash(geo, floatPos, splash.value)
-            if (s.stage == Stage.FIGHT && s.atNet && !frozen && !boat) drawLandingNet(geo, colors, t, floatPos, geo.h * (0.88f - 0.085f * lookDown))
+            // At the bank the fish is guided into the landing net and lifted out in it.
+            val netLift = if (s.stage == Stage.LANDING) lift.value else 0f
+            val inNet = !frozen && !boat && s.surprise == null && s.bite != null &&
+                ((s.stage == Stage.FIGHT && s.atNet) || s.stage == Stage.LANDING)
+            val netAt = landingNetHoop(geo, if (s.stage == Stage.LANDING) geo.w * 0.56f else floatPos.x, geo.h * (0.88f - 0.085f * lookDown), t, netLift)
+            val fishSize = s.bite?.let { (it.cm / 60.0).toFloat() } ?: 1f
+            // The line runs to the fish's mouth: up into the air on a leap, into the net at the end.
+            val lineEnd = when {
+                inNet -> netFishMouth(geo, netAt, netLift, fishSize, t)
+                s.stage == Stage.FIGHT && !frozen && s.surprise == null && s.running && fishAirborne(t) -> fishJumpMouth(geo, floatPos, t, fishSize, s.fishHeading)
+                else -> floatPos
+            }
             if (s.stage == Stage.FIGHT && frozen) {
                 drawBubbles(geo, floatPos, t, if (s.running) 0.9f else 0.35f)
             } else if (s.stage == Stage.FIGHT && s.surprise != null) {
                 // Something heavy and lifeless coming in: no fish to see, only a drag under the surface.
                 drawDraggedThing(floatPos, geo.scaleAt(floatPos.y), t)
-            } else if (s.stage == Stage.FIGHT) {
+            } else if (s.stage == Stage.FIGHT && !inNet) {
                 // A running fish leaps out now and then: while it is in the air it is not also under the water.
                 val leaping = s.running && fishAirborne(t)
                 if (!leaping) s.bite?.let { b -> drawHookedFish(geo, floatPos, t, b.species.id, lt.marcomultiservices.kimba.core.Fish.gold(b.golden?.id), (b.cm / 60.0).toFloat(), s.fishHeading, s.running, colors) }
@@ -384,12 +395,17 @@ fun LakeScene(
                 stand == Stand.BANK -> drawLantern(geo, colors, bankLanternBase(geo), t)
                 else -> drawLantern(geo, colors, pierLanternBase(geo), t)
             }
+            if (inNet) s.bite?.let { b ->
+                drawLandingNet(geo, colors, t, netAt, netLift) {
+                    drawFishInNet(netFishCentre(geo, netAt, netLift, t), netFishLength(geo, netAt, netLift, fishSize), t, b.species.id, lt.marcomultiservices.kimba.core.Fish.gold(b.golden?.id), netLift)
+                }
+            }
             if (resting) drawRodRest(geo, colors, tip, hasAlarm, s.alarm, t)
             drawRod(geo, colors, tip, quiver = kind == Tackle.FEEDER, winter = frozen)
             if (frozen && kind == Tackle.FLOAT) drawNod(geo, colors, tip, if (s.stage == Stage.FIGHT) 0.6f else dip, tremble, t)
-            drawLine(geo, lineFrom, floatPos, s.stage, tension, slack = when { frozen -> 0f; kind == Tackle.FEEDER -> 0.12f; kind == Tackle.SPIN -> 0.25f; else -> 1f })
+            drawLine(geo, lineFrom, lineEnd, s.stage, tension, slack = when { frozen -> 0f; kind == Tackle.FEEDER -> 0.12f; kind == Tackle.SPIN -> 0.25f; else -> 1f })
             if (s.stage == Stage.LANDING && s.surprise != null) drawSurpriseLifted(floatPos, geo.w, geo.h, t, lift.value, s.surprise)
-            else if (s.stage == Stage.LANDING) s.bite?.let { b -> drawLandedFish(geo, floatPos, t, lift.value, b.species.id, lt.marcomultiservices.kimba.core.Fish.gold(b.golden?.id), (b.cm / 60.0).toFloat()) }
+            else if (s.stage == Stage.LANDING && !inNet) s.bite?.let { b -> drawLandedFish(geo, floatPos, t, lift.value, b.species.id, lt.marcomultiservices.kimba.core.Fish.gold(b.golden?.id), (b.cm / 60.0).toFloat()) }
             if (frozen && (hanging || s.stage == Stage.FLYING)) {
                 val u = geo.h * 0.006f
                 if (kind == Tackle.SPIN) drawSpoon(floatPos, u * 1.4f, t, colors) else drawMormyshka(floatPos, u, colors)
@@ -408,7 +424,7 @@ fun LakeScene(
             drawWeather(geo, colors, conditions, t)
             // The headlamp follows the bait in the water; with the float still on the rod it is not needed.
             when {
-                onWater || s.stage == Stage.FIGHT || s.stage == Stage.LANDING -> drawHeadlamp(geo, colors, floatPos, t)
+                onWater || s.stage == Stage.FIGHT || s.stage == Stage.LANDING -> drawHeadlamp(geo, colors, lineEnd, t)
                 frozen -> drawHeadlamp(geo, colors, target, t)
                 else -> Unit
             }

@@ -10,6 +10,7 @@ import androidx.compose.ui.graphics.PathEffect
 import androidx.compose.ui.graphics.StrokeCap
 import androidx.compose.ui.graphics.drawscope.DrawScope
 import androidx.compose.ui.graphics.drawscope.Stroke
+import androidx.compose.ui.graphics.drawscope.clipPath
 import androidx.compose.ui.graphics.drawscope.clipRect
 import androidx.compose.ui.graphics.drawscope.rotate
 import androidx.compose.ui.graphics.drawscope.withTransform
@@ -119,48 +120,151 @@ internal fun DrawScope.drawHookedFish(geo: SceneGeometry, mouth: Offset, t: Floa
 }
 
 /**
- * The landing net held out into the water at the bank, reaching after the fish as it swims
- * across. Picture slot `landing_net` (see docs/GRAFIKA.md): the net seen from above and behind,
- * hoop at the top right, handle running out of the bottom left corner.
+ * Where the landing net's hoop is: on the surface below the angler, reaching a little towards
+ * the fish, and on [lift] (0..1) raised out of the water and drawn in towards the angler.
  */
-internal fun DrawScope.drawLandingNet(geo: SceneGeometry, colors: SceneColors, t: Float, fish: Offset, atY: Float = geo.h * 0.88f) {
+internal fun landingNetHoop(geo: SceneGeometry, fishX: Float, atY: Float, t: Float, lift: Float): Offset {
+    val reach = ((fishX - geo.w * 0.56f) * 0.45f).coerceIn(-geo.w * 0.1f, geo.w * 0.1f) * (1f - lift)
+    return Offset(geo.w * (0.56f - 0.06f * lift) + reach, atY - geo.h * 0.24f * lift + sin(t * 2.2f) * geo.h * 0.003f * (1f - lift))
+}
+
+/** How long the fish lies in the net: its own length, but bent to fit a hoop smaller than it. */
+internal fun netFishLength(geo: SceneGeometry, hoop: Offset, lift: Float, size: Float): Float =
+    minOf(geo.w * 0.26f * geo.scaleAt(hoop.y) * size.coerceIn(0.5f, 2f), netRadius(geo, lift) * 1.75f)
+
+/** The middle of the fish lying in the bag. */
+internal fun netFishCentre(geo: SceneGeometry, hoop: Offset, lift: Float, t: Float): Offset {
+    val rx = netRadius(geo, lift)
+    return Offset(hoop.x, hoop.y + rx * (0.3f + 0.25f * lift) * (0.9f + 0.7f * lift) + sin(t * 3f) * rx * 0.03f)
+}
+
+/** Where the line meets the fish in the net: its mouth, at the end towards the rod. */
+internal fun netFishMouth(geo: SceneGeometry, hoop: Offset, lift: Float, size: Float, t: Float): Offset {
+    val c = netFishCentre(geo, hoop, lift, t)
+    val len = netFishLength(geo, hoop, lift, size)
+    val a = netFishTilt(lift) * PI.toFloat() / 180f
+    return Offset(c.x + cos(a) * len * 0.5f, c.y + sin(a) * len * 0.5f)
+}
+
+private fun netFishTilt(lift: Float) = -8f - 6f * lift
+
+private fun netRadius(geo: SceneGeometry, lift: Float) = geo.w * 0.17f * (1f + 0.22f * lift)
+
+/**
+ * The landing net: a knotless rubber mesh bag under an aluminium hoop on a telescopic handle
+ * coming in from the angler at the bottom left. The fish lies in the bag, between its back and
+ * front mesh, seen through the water until the net is [lift]ed out, dripping.
+ */
+internal fun DrawScope.drawLandingNet(geo: SceneGeometry, colors: SceneColors, t: Float, hoop: Offset, lift: Float, fish: (DrawScope.() -> Unit)?) {
     // At night the net is in the headlamp's light, so it never sinks into the dark water.
     val lamp = nightStrength(colors) * 0.7f
     fun c(col: Color) = lerp(colors.lit(col), col, lamp)
-    val reach = ((fish.x - geo.w * 0.56f) * 0.45f).coerceIn(-geo.w * 0.12f, geo.w * 0.12f)
-    val hoop = Offset(geo.w * 0.56f + reach, atY + sin(t * 2.2f) * geo.h * 0.003f)
-    val rx = geo.w * 0.15f
-    val ry = rx * 0.32f
-    ArtPack["landing_net"]?.let { img ->
-        // The hoop fills the top right of the picture; the rest is handle and mesh.
-        val w = rx * 2 / 0.62f
-        val h = w * img.height / img.width
-        drawArt(img, androidx.compose.ui.geometry.Rect(hoop.x + rx - w, hoop.y - ry - h * 0.04f, hoop.x + rx + w * 0.02f, hoop.y - ry - h * 0.04f + h), c(Color.White))
-        return
-    }
-    // The handle comes in from the angler at the bottom left.
-    drawLine(c(Color(0xFF3C424A)), Offset(geo.w * 0.08f, geo.h * 1.02f), Offset(hoop.x - rx * 0.95f, hoop.y + ry * 0.2f), strokeWidth = geo.w * 0.016f, cap = StrokeCap.Round)
-    drawLine(c(Color(0xFF6F6F78)).copy(alpha = 0.6f), Offset(geo.w * 0.09f, geo.h * 1.01f), Offset(hoop.x - rx * 0.95f, hoop.y + ry * 0.05f), strokeWidth = geo.w * 0.004f, cap = StrokeCap.Round)
-    // The mesh hangs under the water, seen through it.
+    val rx = netRadius(geo, lift)
+    // Lifted, the hoop tilts up towards the angler and shows more of its inside.
+    val ry = rx * (0.3f + 0.25f * lift)
+    val sway = sin(t * 1.4f) * rx * 0.06f * (1f - 0.5f * lift)
+    val deep = ry * (3.3f - 0.9f * lift) + rx * 0.35f * lift
+    val bottom = Offset(hoop.x + rx * 0.08f + sway, hoop.y + deep)
     val bag = Path().apply {
         moveTo(hoop.x - rx, hoop.y)
-        quadraticTo(hoop.x - rx * 0.5f, hoop.y + ry * 3.2f, hoop.x + rx * 0.1f, hoop.y + ry * 3.0f)
-        quadraticTo(hoop.x + rx * 0.8f, hoop.y + ry * 2.4f, hoop.x + rx, hoop.y)
+        cubicTo(hoop.x - rx * 0.98f, hoop.y + deep * 0.55f, bottom.x - rx * 0.55f, bottom.y, bottom.x, bottom.y)
+        cubicTo(bottom.x + rx * 0.55f, bottom.y, hoop.x + rx * 0.98f, hoop.y + deep * 0.55f, hoop.x + rx, hoop.y)
+        // Back along the far half of the hoop.
+        arcTo(Rect(hoop.x - rx, hoop.y - ry, hoop.x + rx, hoop.y + ry), 0f, -180f, false)
         close()
     }
-    drawPath(bag, c(Color(0xFF203833)).copy(alpha = 0.35f))
-    for (i in 1..6) {
-        val u = i / 7f
-        val x = hoop.x - rx + 2 * rx * u
-        drawLine(c(Color(0xFF9DB7AE)).copy(alpha = 0.22f), Offset(x, hoop.y), Offset(hoop.x - rx * 0.2f + (x - hoop.x) * 0.3f, hoop.y + ry * 2.9f), strokeWidth = 1.2f)
+    val oval = Rect(hoop.x - rx, hoop.y - ry, hoop.x + rx, hoop.y + ry)
+    val metal = c(Color(0xFF3A4048))
+    val shine = c(Color(0xFFD4DAE0))
+    val mesh = c(Color(0xFF16201D))
+    val rim = geo.w * 0.011f
+
+    // Far half of the hoop and the shadowy inside of the bag.
+    drawArc(metal, 180f, 180f, false, oval.topLeft, oval.size, style = Stroke(rim, cap = StrokeCap.Round))
+    drawArc(shine.copy(alpha = 0.55f), 200f, 140f, false, Offset(oval.left, oval.top - rim * 0.25f), oval.size, style = Stroke(rim * 0.25f, cap = StrokeCap.Round))
+    drawPath(bag, mesh.copy(alpha = 0.32f))
+
+    // The fish lies in the bag, head towards the line.
+    fish?.invoke(this)
+
+    // Front mesh: a fine diamond weave over the fish, darker along the folds.
+    clipPath(bag) {
+        val step = rx / 6.5f
+        val strand = mesh.copy(alpha = 0.55f)
+        val glint = c(Color(0xFF6C8079)).copy(alpha = 0.25f)
+        val top = hoop.y - ry
+        val span = deep + ry * 2f
+        var x = hoop.x - rx - span
+        while (x < hoop.x + rx + span) {
+            val w = sin(t * 1.4f + x * 0.01f) * rx * 0.02f
+            drawLine(strand, Offset(x, top), Offset(x + span * 0.7f + w, top + span), strokeWidth = 1.6f)
+            drawLine(strand, Offset(x + span * 0.7f, top), Offset(x + w, top + span), strokeWidth = 1.6f)
+            drawLine(glint, Offset(x + 1.2f, top), Offset(x + 1.2f + span * 0.7f + w, top + span), strokeWidth = 0.8f)
+            x += step
+        }
+        // Shading towards the bottom of the bag and its sides.
+        drawPath(bag, Brush.verticalGradient(listOf(Color.Transparent, mesh.copy(alpha = 0.45f)), hoop.y, bottom.y))
+        // Under the surface everything is seen through the water.
+        val under = (1f - lift * 1.6f).coerceIn(0f, 1f)
+        if (under > 0f) {
+            clipRect(top = hoop.y, bottom = geo.h * 2f) {
+                drawRect(c(Color(0xFF1B3A42)).copy(alpha = 0.42f * under), Offset(hoop.x - rx * 1.2f, hoop.y), Size(rx * 2.4f, deep + rx))
+            }
+        }
     }
-    for (j in 1..3) {
-        val k = j / 4f
-        drawOval(c(Color(0xFF9DB7AE)).copy(alpha = 0.18f), Offset(hoop.x - rx * (1 - 0.45f * k), hoop.y + ry * 2.6f * k - ry * 0.3f), Size(rx * 2 * (1 - 0.45f * k), ry * 0.7f), style = Stroke(1.2f))
+    drawPath(bag, mesh.copy(alpha = 0.7f), style = Stroke(1.6f))
+
+    // Rings on the water around the hoop while it is in.
+    if (lift < 0.4f) {
+        for (k in 0 until 2) {
+            val ph = (t * 0.5f + k / 2f) % 1f
+            val r = 1f + ph * 0.25f
+            drawOval(Color.White.copy(alpha = (1f - ph) * 0.22f * (1f - lift / 0.4f)), Offset(hoop.x - rx * r, hoop.y - ry * r), Size(rx * 2 * r, ry * 2 * r), style = Stroke(1.4f))
+        }
     }
-    // The hoop itself on the surface.
-    drawOval(c(Color(0xFF46505A)), Offset(hoop.x - rx, hoop.y - ry), Size(rx * 2, ry * 2), style = Stroke(geo.w * 0.007f))
-    drawOval(c(Color(0xFFC4CCD4)).copy(alpha = 0.7f), Offset(hoop.x - rx, hoop.y - ry * 1.06f), Size(rx * 2, ry * 2), style = Stroke(geo.w * 0.0018f))
+
+    // Near half of the hoop, over the bag.
+    drawArc(metal, 0f, 180f, false, oval.topLeft, oval.size, style = Stroke(rim * 1.15f, cap = StrokeCap.Round))
+    drawArc(shine.copy(alpha = 0.8f), 20f, 140f, false, Offset(oval.left, oval.top - rim * 0.3f), oval.size, style = Stroke(rim * 0.3f, cap = StrokeCap.Round))
+
+    // Yoke and telescopic handle in from the angler, with a black grip at the end.
+    val yoke = Offset(hoop.x - rx * 0.92f, hoop.y + ry * 0.45f)
+    val end = Offset(geo.w * 0.04f, geo.h * 1.05f)
+    val joint = Offset(yoke.x + (end.x - yoke.x) * 0.45f, yoke.y + (end.y - yoke.y) * 0.45f)
+    val grip = Offset(yoke.x + (end.x - yoke.x) * 0.78f, yoke.y + (end.y - yoke.y) * 0.78f)
+    drawLine(metal, yoke, joint, strokeWidth = geo.w * 0.013f, cap = StrokeCap.Round)
+    drawLine(c(Color(0xFF2B3036)), joint, end, strokeWidth = geo.w * 0.018f, cap = StrokeCap.Round)
+    drawLine(shine.copy(alpha = 0.5f), Offset(yoke.x, yoke.y - geo.w * 0.004f), Offset(joint.x, joint.y - geo.w * 0.004f), strokeWidth = geo.w * 0.003f, cap = StrokeCap.Round)
+    drawLine(shine.copy(alpha = 0.35f), Offset(joint.x, joint.y - geo.w * 0.006f), Offset(end.x, end.y - geo.w * 0.006f), strokeWidth = geo.w * 0.004f, cap = StrokeCap.Round)
+    drawLine(c(Color(0xFF111316)), grip, end, strokeWidth = geo.w * 0.024f, cap = StrokeCap.Round)
+    drawCircle(shine.copy(alpha = 0.7f), geo.w * 0.011f, joint, style = Stroke(geo.w * 0.004f))
+    drawCircle(metal, geo.w * 0.012f, yoke)
+
+    // Lifted out, the water runs off the bottom of the bag.
+    if (lift > 0.25f) {
+        for (i in 0 until 9) {
+            val k = (t * 1.8f + i * 0.17f) % 1f
+            val x = bottom.x + sin(i * 2.3f) * rx * 0.35f
+            drawCircle(Palette.Spray.copy(alpha = (1f - k) * 0.75f * lift), 2f + 2f * lift, Offset(x, bottom.y + k * geo.h * 0.12f))
+        }
+    }
+}
+
+/**
+ * The fish lying in the net: its own picture, head towards the rod on the right, body curved
+ * along the bag, flapping now and then. [centre] is the middle of the fish.
+ */
+internal fun DrawScope.drawFishInNet(centre: Offset, len: Float, t: Float, species: String, golden: Boolean, lift: Float) {
+    val flap = ((sin(t * 0.8f + 0.7f) - 0.4f) / 0.6f).coerceIn(0f, 1f)
+    val tilt = netFishTilt(lift) + sin(t * 9f) * 6f * flap
+    rotate(tilt, centre) {
+        withTransform({ scale(-1f, 1f, centre) }) {
+            drawFishPicture(species, golden, Rect(centre.x - len / 2, centre.y - len * 0.2f, centre.x + len / 2, centre.y + len * 0.2f), t) { u ->
+                // Sagging in the middle like a fish lying in mesh, the tail kicking on a flap.
+                len * 0.06f * sin(u * PI.toFloat()) + swimWave(u, t, 12f, len * 0.07f * (0.3f + flap))
+            }
+        }
+    }
 }
 
 private const val JUMP_PERIOD = 2.6f
@@ -168,6 +272,17 @@ private const val JUMP_SHARE = 0.32f
 
 /** Whether the running fish is in the air right now (it is not drawn under the water meanwhile). */
 internal fun fishAirborne(t: Float): Boolean = (t % JUMP_PERIOD) / JUMP_PERIOD <= JUMP_SHARE
+
+/** Where the leaping fish's mouth is, so the line follows it up out of the water. */
+internal fun fishJumpMouth(geo: SceneGeometry, pos: Offset, t: Float, size: Float, heading: Float): Offset {
+    val f = ((t % JUMP_PERIOD) / JUMP_PERIOD / JUMP_SHARE).coerceIn(0f, 1f)
+    val len = geo.w * 0.26f * geo.scaleAt(pos.y) * size.coerceIn(0.5f, 2f)
+    val dir = if (heading >= 0f) 1f else -1f
+    val x = pos.x + dir * (f - 0.5f) * len * 0.9f
+    val y = pos.y - sin(f * PI.toFloat()) * len * 0.6f
+    val a = dir * (f - 0.5f) * 80f * PI.toFloat() / 180f
+    return Offset(x + dir * cos(a) * len * 0.5f, y + dir * sin(a) * len * 0.5f)
+}
 
 /**
  * During a run the hooked fish itself leaps clear of the water now and then: the same size as

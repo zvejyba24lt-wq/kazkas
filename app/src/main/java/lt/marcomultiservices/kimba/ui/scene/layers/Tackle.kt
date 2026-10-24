@@ -294,12 +294,18 @@ private fun DrawScope.drawReel(geo: SceneGeometry, colors: SceneColors, at: Offs
 
 /** The fishing line from the rod tip to the float: slack while waiting, tight and red when about to snap. */
 internal fun DrawScope.drawLine(geo: SceneGeometry, tip: Offset, end: Offset, stage: Stage, tension: Float, slack: Float = 1f) {
+    // A real line is never ruler-straight: it hangs in a curve under its own weight, the longer
+    // it is the more, and only pulls nearly straight when a fish leans on it.
+    val d = (end - tip).getDistance()
     val sag = when (stage) {
-        Stage.FIGHT -> geo.h * 0.03f * (1f - tension).coerceIn(0f, 1f)
-        Stage.WAITING, Stage.BITE -> geo.h * 0.04f * slack
-        else -> geo.h * 0.005f
+        Stage.FIGHT -> d * (0.025f + 0.11f * (1f - tension).coerceIn(0f, 1f))
+        Stage.WAITING, Stage.BITE -> d * 0.11f * slack
+        Stage.FLYING -> d * 0.07f
+        Stage.LANDING -> d * 0.02f
+        else -> d * 0.03f * slack.coerceAtLeast(0.3f)
     }
-    val mid = Offset((tip.x + end.x) / 2, (tip.y + end.y) / 2 + sag)
+    // A quadratic curve bows only half as far as its control point.
+    val mid = Offset((tip.x + end.x) / 2 + sag * 0.25f, (tip.y + end.y) / 2 + sag * 2f)
     val path = Path().apply { moveTo(tip.x, tip.y); quadraticTo(mid.x, mid.y, end.x, end.y) }
     val col = if (stage == Stage.FIGHT && tension > 0.85f) Palette.LineStrain else Palette.Line
     drawPath(path, col, style = Stroke(if (stage == Stage.FIGHT) 2.2f else 1.4f))
